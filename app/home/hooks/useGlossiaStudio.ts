@@ -54,6 +54,7 @@ type StudioActions = {
   generate: (overrideMode?: GenerateMode) => Promise<void>;
   loadExample: (index: number) => void;
   setActiveTab: (tab: OutputTab) => void;
+  setPseudocode: (value: string) => void;
   setOpenAiApiKey: (value: string) => void;
   toggleOpenAiApiKeyVisibility: () => void;
   clearOpenAiApiKey: () => void;
@@ -297,13 +298,21 @@ export function useGlossiaStudio(): GlossiaStudioModel {
 
   async function generate(overrideMode?: GenerateMode) {
     if (!domain || !prompt.trim()) return;
+    const effectiveMode = overrideMode ?? mode;
     setLoading(true);
-    resetOutput();
+    setServerError("");
+    if (effectiveMode === "json") {
+      setRawJson("");
+      setPatch(null);
+      setValidationErrors([]);
+    } else {
+      resetOutput();
+    }
 
     const body: GenerateRequest = {
       prompt,
-      mode: overrideMode ?? mode,
-      pseudocode: overrideMode === "json" ? pseudocode : undefined,
+      mode: effectiveMode,
+      pseudocode: effectiveMode === "json" ? pseudocode : undefined,
       domain,
       openAiApiKey: openAiApiKey.trim() || undefined,
     };
@@ -389,6 +398,7 @@ export function useGlossiaStudio(): GlossiaStudioModel {
       generate,
       loadExample,
       setActiveTab,
+      setPseudocode,
       setOpenAiApiKey,
       toggleOpenAiApiKeyVisibility: () => setShowOpenAiApiKey((value) => !value),
       clearOpenAiApiKey: () => setOpenAiApiKey(""),

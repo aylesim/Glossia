@@ -30,6 +30,10 @@ html[data-theme="light"] {
   --graph-node-id-bg: #f5f5f5;
   --graph-node-id-border: #d4d4d4;
   --graph-node-id-text: #525252;
+  --node-chrome-accent-s: 72%;
+  --node-chrome-accent-l: 38%;
+  --node-chrome-tint-s: 60%;
+  --node-chrome-tint-l: 42%;
 }
 
 html[data-theme="dark"] {
@@ -62,6 +66,10 @@ html[data-theme="dark"] {
   --graph-node-id-bg: #1f1f1f;
   --graph-node-id-border: #333333;
   --graph-node-id-text: #a3a3a3;
+  --node-chrome-accent-s: 62%;
+  --node-chrome-accent-l: 62%;
+  --node-chrome-tint-s: 52%;
+  --node-chrome-tint-l: 58%;
 }
 
 html {
@@ -72,6 +80,17 @@ html {
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-newsreader), ui-serif, Georgia, serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 body {

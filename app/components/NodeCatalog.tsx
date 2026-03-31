@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { Domain, DomainNode } from "@/lib/domain";
 import { buildDomainNodeTooltip, formatParamLine } from "@/lib/node-chrome";
 import NodeTypeFrame from "@/app/components/NodeTypeFrame";
@@ -38,6 +38,8 @@ function NodeCard({ node }: { node: DomainNode }) {
 export default function NodeCatalog({ domain }: { domain: Domain | null }) {
   const [open, setOpen] = useState(true);
   const nodeCount = domain?.nodes.length ?? 0;
+  const regionId = useId();
+  const toggleId = `${regionId}-toggle`;
 
   return (
     <section className="border border-[var(--border)] bg-[var(--surface)] px-5 py-4 sm:px-6">
@@ -52,32 +54,41 @@ export default function NodeCatalog({ domain }: { domain: Domain | null }) {
             </p>
           </div>
           <button
+            id={toggleId}
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="flex shrink-0 items-center gap-2 rounded-sm text-left transition-opacity hover:opacity-80"
+            className="flex shrink-0 items-center gap-2 rounded-sm text-left transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-strong)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]"
             aria-expanded={open}
+            aria-controls={regionId}
+            aria-label={open ? "Collapse node catalog" : "Expand node catalog"}
           >
             <span className="font-mono text-[10px] tabular-nums text-[var(--fg-muted)]">{nodeCount} types</span>
-            <span className={`text-[var(--fg-subtle)] transition-transform ${open ? "rotate-90" : ""}`}>›</span>
+            <span className={`text-[var(--fg-subtle)] transition-transform ${open ? "rotate-90" : ""}`} aria-hidden={true}>
+              ›
+            </span>
           </button>
         </div>
       </div>
 
-      {open && (
-        <>
-          {domain ? (
+      <div id={regionId} hidden={!open}>
+        {domain ? (
+          nodeCount === 0 ? (
+            <p className="mt-4 text-sm leading-relaxed text-[var(--fg-muted)]">
+              This domain has no node types yet. Edit the domain JSON or generate a new domain.
+            </p>
+          ) : (
             <div className="mt-5 flex flex-wrap gap-3">
               {domain.nodes.map((node) => (
                 <NodeCard key={node.id} node={node} />
               ))}
             </div>
-          ) : (
-            <p className="mt-4 text-sm leading-relaxed text-[var(--fg-muted)]">
-              Load a domain in Step 1 to list the node types available for composition.
-            </p>
-          )}
-        </>
-      )}
+          )
+        ) : (
+          <p className="mt-4 text-sm leading-relaxed text-[var(--fg-muted)]">
+            Load a domain in Step 1 to list the node types available for composition.
+          </p>
+        )}
+      </div>
     </section>
   );
 }

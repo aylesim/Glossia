@@ -12,8 +12,8 @@ export function nodeHue(id: string): number {
 export function getNodeTypeChromeColors(typeId: string): { accent: string; tint: string } {
   const hue = nodeHue(typeId);
   return {
-    accent: `hsl(${hue} 72% 48%)`,
-    tint: `color-mix(in srgb, hsl(${hue} 60% 50%) 16%, var(--surface-raised))`,
+    accent: `hsl(${hue} var(--node-chrome-accent-s) var(--node-chrome-accent-l))`,
+    tint: `color-mix(in srgb, hsl(${hue} var(--node-chrome-tint-s) var(--node-chrome-tint-l)) 16%, var(--surface-raised))`,
   };
 }
 

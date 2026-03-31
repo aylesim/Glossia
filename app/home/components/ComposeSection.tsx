@@ -14,6 +14,12 @@ type ComposeSectionProps = {
   onGenerate: (overrideMode?: GenerateMode) => Promise<void>;
 };
 
+const MODES: { value: GenerateMode; label: string }[] = [
+  { value: "full", label: "Full" },
+  { value: "pseudocode", label: "Pseudocode" },
+  { value: "json", label: "JSON from pseudocode" },
+];
+
 export default function ComposeSection({
   showMidiExamples,
   canCompose,
@@ -59,7 +65,7 @@ export default function ComposeSection({
               key={example.label}
               type="button"
               onClick={() => onLoadExample(index)}
-              className="border-r border-[var(--border)] px-3 py-2 text-[var(--fg-muted)] transition-colors last:border-r-0 hover:bg-[var(--surface-raised)] hover:text-[var(--fg)]"
+              className="border-r border-[var(--border)] px-3 py-2 text-[var(--fg-muted)] transition-colors last:border-r-0 hover:bg-[var(--surface-raised)] hover:text-[var(--fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-strong)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]"
             >
               {example.label}
             </button>
@@ -73,7 +79,11 @@ export default function ComposeSection({
             Complete Step 1 first. A domain must be loaded before you can generate a graph.
           </p>
         )}
+        <label htmlFor="studio-compose-prompt" className="text-xs text-[var(--fg-muted)]">
+          Compose prompt
+        </label>
         <textarea
+          id="studio-compose-prompt"
           value={prompt}
           onChange={(event) => onPromptChange(event.target.value)}
           rows={3}
@@ -87,19 +97,47 @@ export default function ComposeSection({
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex flex-wrap border border-[var(--border)] text-xs">
-          {(["full", "pseudocode", "json"] as GenerateMode[]).map((nextMode) => (
+        <div
+          role="radiogroup"
+          aria-label="Generation mode"
+          className="flex flex-wrap border border-[var(--border)] text-xs"
+          onKeyDown={(event) => {
+            if (
+              event.key !== "ArrowRight" &&
+              event.key !== "ArrowLeft" &&
+              event.key !== "Home" &&
+              event.key !== "End"
+            ) {
+              return;
+            }
+            event.preventDefault();
+            const i = MODES.findIndex((m) => m.value === mode);
+            let next = i;
+            if (event.key === "ArrowRight") next = (i + 1) % MODES.length;
+            if (event.key === "ArrowLeft") next = (i - 1 + MODES.length) % MODES.length;
+            if (event.key === "Home") next = 0;
+            if (event.key === "End") next = MODES.length - 1;
+            const nextMode = MODES[next].value;
+            onSetMode(nextMode);
+            queueMicrotask(() => document.getElementById(`compose-mode-${nextMode}`)?.focus());
+          }}
+        >
+          {MODES.map((item) => (
             <button
-              key={nextMode}
+              key={item.value}
+              id={`compose-mode-${item.value}`}
               type="button"
-              onClick={() => onSetMode(nextMode)}
-              className={`border-r border-[var(--border)] px-3 py-2 transition-colors last:border-r-0 ${
-                mode === nextMode
+              role="radio"
+              aria-checked={mode === item.value}
+              tabIndex={mode === item.value ? 0 : -1}
+              onClick={() => onSetMode(item.value)}
+              className={`border-r border-[var(--border)] px-3 py-2 transition-colors last:border-r-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-strong)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)] ${
+                mode === item.value
                   ? "bg-[var(--inverse-bg)] text-[var(--inverse-fg)]"
                   : "text-[var(--fg-muted)] hover:bg-[var(--surface-raised)] hover:text-[var(--fg)]"
               }`}
             >
-              {nextMode === "full" ? "Full" : nextMode === "pseudocode" ? "Pseudocode" : "JSON from pseudocode"}
+              {item.label}
             </button>
           ))}
         </div>
@@ -108,8 +146,9 @@ export default function ComposeSection({
           onClick={() => void onGenerate()}
           disabled={!canCompose || loading || !prompt.trim()}
           className={BUTTON_PRIMARY_CLASS}
+          aria-keyshortcuts="Meta+Enter Control+Enter"
         >
-          {loading ? "Generating…" : "Generate ⌘↵"}
+          {loading ? "Generating…" : "Generate"}
         </button>
       </div>
     </section>

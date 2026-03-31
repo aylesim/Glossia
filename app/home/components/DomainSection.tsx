@@ -34,6 +34,11 @@ export default function DomainSection({
   onTriggerImportDomain,
   onDomainFileInputChange,
 }: DomainSectionProps) {
+  function handleClearDomain() {
+    if (!window.confirm("Clear the domain, prompt, JSON editor, and all generated outputs?")) return;
+    onClearDomain();
+  }
+
   return (
     <section className="space-y-5 border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">
       <div className="border-b border-[var(--border)] pb-4">
@@ -64,12 +69,12 @@ export default function DomainSection({
       </div>
 
       <div className="space-y-1">
-        <p className="text-xs text-[var(--fg-muted)]">
-          Describe the kind of system you want to model (e.g. &ldquo;a modular audio synthesiser&rdquo;, &ldquo;an image
-          processing pipeline&rdquo;, &ldquo;a text NLP chain&rdquo;).
-        </p>
+        <label htmlFor="studio-domain-prompt" className="text-xs text-[var(--fg-muted)]">
+          Domain description
+        </label>
         <div className="grid gap-3 md:grid-cols-[1fr_auto]">
           <textarea
+            id="studio-domain-prompt"
             value={domainPrompt}
             onChange={(event) => onDomainPromptChange(event.target.value)}
             rows={3}
@@ -88,7 +93,7 @@ export default function DomainSection({
             >
               {domainLoading ? "Generating…" : "Generate domain"}
             </button>
-            <button type="button" onClick={onClearDomain} className={BUTTON_SECONDARY_CLASS}>
+            <button type="button" onClick={handleClearDomain} className={BUTTON_SECONDARY_CLASS}>
               Clear
             </button>
           </div>
@@ -110,11 +115,11 @@ export default function DomainSection({
       </div>
 
       <div className="space-y-1">
-        <p className="text-xs text-[var(--fg-muted)]">
-          The raw domain JSON. Edits you make here are validated live; errors appear below. You normally don&apos;t need
-          to touch this unless you want fine-grained control over node types.
-        </p>
+        <label htmlFor="studio-domain-json" className="text-xs text-[var(--fg-muted)]">
+          Domain JSON
+        </label>
         <textarea
+          id="studio-domain-json"
           value={domainRawJson}
           onChange={(event) => onDomainRawJsonChange(event.target.value)}
           rows={10}
@@ -134,14 +139,20 @@ export default function DomainSection({
       />
 
       {domainError && (
-        <div className="border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error-fg)]">
+        <div
+          role="alert"
+          className="border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error-fg)]"
+        >
           <span className="font-medium">Domain error · </span>
           {domainError}
         </div>
       )}
 
       {domainValidationErrors.length > 0 && (
-        <div className="space-y-1 border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3">
+        <div
+          role="alert"
+          className="space-y-1 border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3"
+        >
           {domainValidationErrors.map((error, index) => (
             <p key={`${error}-${index}`} className="font-mono text-sm text-[var(--error-fg)]">
               {error}

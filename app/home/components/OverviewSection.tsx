@@ -12,40 +12,39 @@ export default function OverviewSection() {
             Domain and patch stay separate sources of truth, which helps when you experiment across MIDI, image
             pipelines, NLP chains, or modular synths.
           </p>
+          <p className="max-w-prose text-sm leading-[1.75] text-[var(--fg)]">
+            Below, pick a starting path, then use <span className="text-[var(--fg-muted)]">Continue</span> to reveal the
+            next block. Everything already on the page stays put—new sections are added underneath so you can scroll
+            back at any time.
+          </p>
         </div>
-        <div className="space-y-8">
-          <div className="border-l-2 border-[var(--border-strong)] pl-5">
+        <ol className="list-none space-y-8 p-0">
+          <li className="border-l-2 border-[var(--border-strong)] pl-5">
             <p className="font-mono text-[11px] uppercase tracking-widest text-[var(--fg-subtle)]">01</p>
-            <p className="mt-2 text-sm font-medium">Bootstrap the domain</p>
+            <p className="mt-2 text-sm font-medium">Pick how you start</p>
             <p className="mt-1 text-sm leading-relaxed text-[var(--fg-muted)]">
-              Start with a workflow preset or import JSON to load a domain in the browser with no API key, or describe the
-              problem space and generate a domain with the model once you have added a key below.
+              Preset path loads a bundled domain first; API key is offered in the same step as the domain editor and is
+              optional until you call the model. API key path starts with your key. The choice stays visible at the top
+              after you decide.
             </p>
-          </div>
-          <div className="border-l-2 border-[var(--border-strong)] pl-5">
+          </li>
+          <li className="border-l-2 border-[var(--border-strong)] pl-5">
             <p className="font-mono text-[11px] uppercase tracking-widest text-[var(--fg-subtle)]">02</p>
-            <p className="mt-2 text-sm font-medium">Compose the graph</p>
+            <p className="mt-2 text-sm font-medium">Stack the steps</p>
             <p className="mt-1 text-sm leading-relaxed text-[var(--fg-muted)]">
-              Prompt for a pipeline. Full generation, pseudocode only, or JSON from edited pseudocode.
+              Each Continue reveals the next section below the previous ones. Domain only unlocks further when the JSON
+              validates. Use Change path to reset from scratch.
             </p>
-          </div>
-          <div className="border-l-2 border-[var(--border-strong)] pl-5">
+          </li>
+          <li className="border-l-2 border-[var(--border-strong)] pl-5">
             <p className="font-mono text-[11px] uppercase tracking-widest text-[var(--fg-subtle)]">03</p>
-            <p className="mt-2 text-sm font-medium">Review outputs</p>
+            <p className="mt-2 text-sm font-medium">Compose, then review</p>
             <p className="mt-1 text-sm leading-relaxed text-[var(--fg-muted)]">
-              Pseudocode, copyable JSON, and a pannable graph. Tabs switch the main view; validation appears above the
-              content.
+              Generate from compose, then open results for pseudocode, JSON, and the graph. If you jump to results early,
+              a short note points you back to compose.
             </p>
-          </div>
-          <div className="border-l-2 border-[var(--border-strong)] pl-5">
-            <p className="font-mono text-[11px] uppercase tracking-widest text-[var(--fg-subtle)]">04</p>
-            <p className="mt-2 text-sm font-medium">API key</p>
-            <p className="mt-1 text-sm leading-relaxed text-[var(--fg-muted)]">
-              Add a key when you use text-to-domain or Compose. Exploring presets or editing imported JSON does not
-              require it. Nodes are semantic stubs, not a live runtime.
-            </p>
-          </div>
-        </div>
+          </li>
+        </ol>
       </div>
     </section>
   );

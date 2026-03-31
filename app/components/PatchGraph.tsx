@@ -117,7 +117,8 @@ export default function PatchGraph({ patch, domain }: { patch: Patch; domain: Do
     <div
       style={{
         width: "100%",
-        height: 520,
+        height: "min(520px, 70vh)",
+        minHeight: 280,
         background: "var(--graph-bg)",
         overflow: "hidden",
       }}
