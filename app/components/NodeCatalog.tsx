@@ -3,52 +3,30 @@
 import { useState } from "react";
 import { Domain, DomainNode } from "@/lib/domain";
 
-function colorFor(value: string): string {
-  let hash = 0;
-  for (let i = 0; i < value.length; i += 1) hash = value.charCodeAt(i) + ((hash << 5) - hash);
-  const hue = Math.abs(hash) % 360;
-  return `hsl(${hue} 75% 55%)`;
-}
-
 function NodeCard({ node }: { node: DomainNode }) {
-  const color = colorFor(node.id);
-
   return (
-    <div
-      className="rounded-lg border bg-slate-900 p-3 flex flex-col gap-2 transition-colors hover:bg-slate-800/70"
-      style={{ borderColor: `${color}44` }}
-    >
-      <div className="flex items-start gap-2">
-        <span
-          className="mt-0.5 w-2.5 h-2.5 rounded-full shrink-0"
-          style={{ background: color, boxShadow: `0 0 6px ${color}` }}
-        />
+    <div className="border border-[var(--border)] bg-[var(--surface-raised)] p-4 transition-colors hover:border-[var(--border-strong)]">
+      <div className="flex items-start gap-3">
+        <span className="mt-1 h-px w-6 shrink-0 bg-[var(--border-strong)]" aria-hidden />
         <div className="min-w-0">
-          <p className="text-xs font-semibold text-slate-100 leading-tight">
-            {node.name}
-          </p>
-          <p
-            className="text-[10px] font-mono mt-0.5"
-            style={{ color }}
-          >
-            {node.id}
-          </p>
+          <p className="text-xs font-medium leading-tight text-[var(--fg)]">{node.name}</p>
+          <p className="mt-1 font-mono text-[10px] tracking-wide text-[var(--fg-subtle)]">{node.id}</p>
         </div>
       </div>
 
-      <p className="text-xs text-slate-400 leading-snug">{node.description}</p>
+      <p className="mt-3 text-xs leading-relaxed text-[var(--fg-muted)]">{node.description}</p>
 
       {node.params.length > 0 && (
-        <div className="border-t border-slate-800 pt-2 space-y-1">
+        <div className="mt-3 space-y-1.5 border-t border-[var(--border)] pt-3">
           {node.params.map((param) => (
-            <div key={param.key} className="flex items-baseline gap-1.5 flex-wrap">
-              <code className="text-[10px] text-slate-300 bg-slate-800 px-1 py-0.5 rounded">
+            <div key={param.key} className="flex flex-wrap items-baseline gap-1.5">
+              <code className="border border-[var(--border)] bg-[var(--code)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--fg)]">
                 {param.key}
               </code>
-              <span className="text-[10px] text-slate-600">{param.valueType}</span>
+              <span className="font-mono text-[10px] text-[var(--fg-subtle)]">{param.valueType}</span>
               {param.default !== undefined && (
-                <span className="text-[10px] text-slate-600">
-                  default: <span className="text-slate-500">{String(param.default)}</span>
+                <span className="font-mono text-[10px] text-[var(--fg-subtle)]">
+                  = {String(param.default)}
                 </span>
               )}
             </div>
@@ -57,45 +35,42 @@ function NodeCard({ node }: { node: DomainNode }) {
       )}
 
       {node.params.length === 0 && (
-        <p className="text-[10px] text-slate-700 italic">no params</p>
+        <p className="mt-2 font-mono text-[10px] text-[var(--fg-subtle)]">No parameters</p>
       )}
     </div>
   );
 }
 
 export default function NodeCatalog({ domain }: { domain: Domain | null }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const nodeCount = domain?.nodes.length ?? 0;
 
   return (
-    <section>
+    <section className="border border-[var(--border)] bg-[var(--surface)] px-5 py-4 sm:px-6">
       <button
+        type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 group w-full text-left"
+        className="flex w-full items-center gap-2 text-left transition-opacity hover:opacity-80"
       >
-        <p className="text-xs text-slate-500 uppercase tracking-widest group-hover:text-slate-400 transition-colors">
-          Available Nodes
-        </p>
-        <span className="text-xs text-slate-600 group-hover:text-slate-500 transition-colors">
-          ({nodeCount})
+        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--fg-subtle)]">
+          Node catalog
         </span>
-        <span
-          className={`ml-1 text-slate-600 transition-transform duration-200 ${open ? "rotate-90" : ""}`}
-        >
-          ▶
-        </span>
+        <span className="font-mono text-[10px] tabular-nums text-[var(--fg-muted)]">{nodeCount}</span>
+        <span className={`text-[var(--fg-subtle)] transition-transform ${open ? "rotate-90" : ""}`}>›</span>
       </button>
 
       {open && (
         <>
           {domain ? (
-            <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+            <div className="mt-5 grid grid-cols-1 gap-3">
               {domain.nodes.map((node) => (
                 <NodeCard key={node.id} node={node} />
               ))}
             </div>
           ) : (
-            <p className="mt-3 text-xs text-slate-500">Define or load a domain to view the catalog.</p>
+            <p className="mt-4 text-sm leading-relaxed text-[var(--fg-muted)]">
+              Load a domain in Step 1 to list the node types available for composition.
+            </p>
           )}
         </>
       )}

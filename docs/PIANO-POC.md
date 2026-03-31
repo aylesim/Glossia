@@ -80,12 +80,12 @@ Node types are semantic stubs in this PoC: they define structure and meaning, no
 
 ## 6. Generation Pipeline
 
-### Step A — Domain Bootstrap
+### Step A: Domain Bootstrap
 
 Input: domain description in natural language.  
 Output: validated domain JSON.
 
-### Step B — Graph Composition
+### Step B: Graph Composition
 
 Input: graph request + active domain.  
 Output: pseudocode and patch JSON validated against domain + patch schema.

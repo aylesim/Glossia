@@ -1,4 +1,4 @@
-# Glossia — graph composer PoC
+# Glossia: graph composer PoC
 
 Proof of concept: **compose multi-domain semantic graphs** using an LLM, with validated JSON artifacts as source of truth.
 
@@ -32,7 +32,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `OPENAI_API_KEY` | yes | — | OpenAI API key |
+| `OPENAI_API_KEY` | yes | (required) | OpenAI API key |
 | `OPENAI_MODEL` | no | `gpt-4o-mini` | Model to use (e.g. `gpt-4o`) |
 
 ## Project Structure

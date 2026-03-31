@@ -14,6 +14,7 @@ import type {
   DomainBootstrapResponse,
 } from "@/lib/api-types";
 import NodeCatalog from "./components/NodeCatalog";
+import ThemeToggle from "./components/theme-toggle";
 
 const PatchGraph = dynamic(() => import("./components/PatchGraph"), { ssr: false });
 const LOCAL_STORAGE_DOMAIN_KEY = "glossia.current-domain.v1";
@@ -43,6 +44,7 @@ export default function HomePage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const domainTextareaRef = useRef<HTMLTextAreaElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
+  const lastCommittedDomainJson = useRef<string | null>(null);
 
   useEffect(() => {
     const raw = localStorage.getItem(LOCAL_STORAGE_DOMAIN_KEY);
@@ -53,6 +55,7 @@ export default function HomePage() {
       if (validation.ok) {
         setDomain(validation.domain);
         setDomainRawJson(JSON.stringify(validation.domain, null, 2));
+        lastCommittedDomainJson.current = JSON.stringify(validation.domain);
       }
     } catch {}
   }, []);
@@ -76,6 +79,7 @@ export default function HomePage() {
     setDomainRawJson(raw ?? JSON.stringify(nextDomain, null, 2));
     persistDomain(nextDomain);
     resetOutput();
+    lastCommittedDomainJson.current = JSON.stringify(nextDomain);
   }
 
   async function bootstrapDomain() {
@@ -118,23 +122,6 @@ export default function HomePage() {
     setDomainState(preset);
   }
 
-  function loadDomainFromEditor() {
-    if (!domainRawJson.trim()) return;
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(domainRawJson);
-    } catch {
-      setDomainValidationErrors(["Domain JSON is not valid"]);
-      return;
-    }
-    const validation = validateDomain(parsed);
-    if (!validation.ok) {
-      setDomainValidationErrors(validation.errors);
-      return;
-    }
-    setDomainState(validation.domain, domainRawJson);
-  }
-
   function clearDomain() {
     setDomain(null);
     setDomainRawJson("");
@@ -143,7 +130,43 @@ export default function HomePage() {
     setDomainError("");
     localStorage.removeItem(LOCAL_STORAGE_DOMAIN_KEY);
     resetOutput();
+    lastCommittedDomainJson.current = null;
   }
+
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      const raw = domainRawJson.trim();
+      if (!raw) {
+        setDomainValidationErrors(domain ? ["Domain JSON cannot be empty"] : []);
+        return;
+      }
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        setDomainValidationErrors(["Domain JSON is not valid"]);
+        return;
+      }
+      const validation = validateDomain(parsed);
+      if (!validation.ok) {
+        setDomainValidationErrors(validation.errors);
+        return;
+      }
+      const next = validation.domain;
+      const snapshot = JSON.stringify(next);
+      if (snapshot === lastCommittedDomainJson.current) {
+        setDomainValidationErrors([]);
+        return;
+      }
+      lastCommittedDomainJson.current = snapshot;
+      setDomain(next);
+      setDomainValidationErrors([]);
+      setDomainError("");
+      persistDomain(next);
+      resetOutput();
+    }, 400);
+    return () => window.clearTimeout(id);
+  }, [domainRawJson, domain]);
 
   async function importDomainFromFile(file: File) {
     const fileContent = await file.text();
@@ -234,23 +257,90 @@ export default function HomePage() {
   const canCompose = !!domain;
   const showMidiExamples = domain?.id === "midi-poc";
 
+  const fieldClass =
+    "w-full rounded-none border border-[var(--border)] bg-[var(--surface-raised)] px-3 py-3 text-sm text-[var(--fg)] outline-none transition-colors placeholder:text-[var(--fg-subtle)] focus:border-[var(--border-strong)]";
+  const btnPrimary =
+    "rounded-none border border-[var(--border-strong)] bg-[var(--inverse-bg)] px-4 py-2.5 text-sm font-medium text-[var(--inverse-fg)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-35";
+  const btnSecondary =
+    "rounded-none border border-[var(--border)] bg-transparent px-3 py-2 text-xs text-[var(--fg-muted)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--fg)] disabled:opacity-35";
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
-      <header className="border-b border-slate-800 px-6 py-4 flex items-center gap-3">
-        <div className="w-3 h-3 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]" />
-        <h1 className="text-lg font-bold tracking-tight">
-          Glossia <span className="text-slate-500 font-normal">/ graph composer PoC</span>
-        </h1>
-        <span className="ml-auto text-xs text-slate-600">domain bootstrap to graph composition</span>
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)]">
+      <header className="sticky top-0 z-10 border-b border-[var(--border)] bg-[var(--bg)] px-5 py-5 sm:px-10">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--fg-subtle)]">
+              Proof of concept
+            </p>
+            <h1 className="mt-1 font-serif text-3xl font-normal tracking-tight sm:text-4xl">Glossia</h1>
+            <p className="mt-2 max-w-md text-sm leading-relaxed text-[var(--fg-muted)]">
+              Natural language → domain JSON → flow → validated patch graph.
+            </p>
+          </div>
+          <ThemeToggle />
+        </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-8 space-y-6">
-        <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4">
-          <div className="flex items-center gap-3 justify-between">
-            <p className="text-xs text-slate-400 uppercase tracking-widest">Step 1 · Domain Bootstrap</p>
+      <main className="mx-auto max-w-5xl px-5 pb-20 pt-12 sm:px-10">
+        <section className="mb-16 border-b border-[var(--border)] pb-16">
+          <div className="space-y-12">
+            <div className="space-y-6">
+              <h2 className="max-w-xl text-2xl font-light leading-snug tracking-tight sm:text-3xl">
+                Turn descriptions into structured graphs you can inspect and validate.
+              </h2>
+              <p className="max-w-prose text-sm leading-[1.75] text-[var(--fg-muted)]">
+                You define a domain (the vocabulary of node types, ports, and parameters), then describe a flow in plain
+                language. An LLM proposes pseudocode and patch JSON; the client validates with Zod and draws the graph.
+                Domain and patch stay separate sources of truth, which helps when you experiment across MIDI, image
+                pipelines, NLP chains, or modular synths.
+              </p>
+            </div>
+            <div className="space-y-8">
+              <div className="border-l-2 border-[var(--border-strong)] pl-5">
+                <p className="font-mono text-[11px] uppercase tracking-widest text-[var(--fg-subtle)]">01</p>
+                <p className="mt-2 text-sm font-medium">Bootstrap the domain</p>
+                <p className="mt-1 text-sm leading-relaxed text-[var(--fg-muted)]">
+                  Describe the problem space or load a preset or JSON file. Domain JSON fixes what nodes mean for the
+                  session.
+                </p>
+              </div>
+              <div className="border-l-2 border-[var(--border-strong)] pl-5">
+                <p className="font-mono text-[11px] uppercase tracking-widest text-[var(--fg-subtle)]">02</p>
+                <p className="mt-2 text-sm font-medium">Compose the graph</p>
+                <p className="mt-1 text-sm leading-relaxed text-[var(--fg-muted)]">
+                  Prompt for a pipeline. Full generation, pseudocode only, or JSON from edited pseudocode.
+                </p>
+              </div>
+              <div className="border-l-2 border-[var(--border-strong)] pl-5">
+                <p className="font-mono text-[11px] uppercase tracking-widest text-[var(--fg-subtle)]">03</p>
+                <p className="mt-2 text-sm font-medium">Review outputs</p>
+                <p className="mt-1 text-sm leading-relaxed text-[var(--fg-muted)]">
+                  Pseudocode, copyable JSON, and a pannable graph. Tabs switch the main view; validation appears above the
+                  content.
+                </p>
+              </div>
+              <div className="border-l-2 border-[var(--border-strong)] pl-5">
+                <p className="font-mono text-[11px] uppercase tracking-widest text-[var(--fg-subtle)]">04</p>
+                <p className="mt-2 text-sm font-medium">Setup</p>
+                <p className="mt-1 text-sm leading-relaxed text-[var(--fg-muted)]">
+                  Set <code className="font-mono text-[12px] text-[var(--fg)]">OPENAI_API_KEY</code> in{" "}
+                  <code className="font-mono text-[12px] text-[var(--fg)]">.env.local</code>. Nodes are semantic stubs,
+                  not a live runtime.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div className="space-y-10">
+        <section className="space-y-5 border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">
+          <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-[var(--border)] pb-4">
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--fg-subtle)]">
+              Step 1 · Domain
+            </p>
             {domain && (
-              <span className="text-xs text-green-400 bg-green-950 border border-green-700 px-2 py-0.5 rounded-full">
-                Active domain: {domain.name}
+              <span className="border border-[var(--border-strong)] bg-[var(--bg)] px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-[var(--fg-muted)]">
+                {domain.name}
               </span>
             )}
           </div>
@@ -261,7 +351,7 @@ export default function HomePage() {
               onChange={(event) => setDomainPrompt(event.target.value)}
               rows={3}
               placeholder="Describe the domain to generate (e.g. image processing pipeline, modular synth, text NLP chain)..."
-              className="w-full rounded-lg bg-slate-900 border border-slate-700 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none px-4 py-3 text-sm resize-none placeholder:text-slate-600 transition-colors"
+              className={`${fieldClass} resize-none`}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) bootstrapDomain();
               }}
@@ -270,23 +360,24 @@ export default function HomePage() {
               <button
                 onClick={() => bootstrapDomain()}
                 disabled={domainLoading || !domainPrompt.trim()}
-                className="px-4 py-2 rounded-md bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium transition-colors"
+                className={btnPrimary}
               >
-                {domainLoading ? "Generating domain..." : "Generate domain"}
+                {domainLoading ? "Generating…" : "Generate domain"}
               </button>
-              <button
-                onClick={clearDomain}
-                className="px-4 py-2 rounded-md bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs transition-colors"
-              >
+              <button type="button" onClick={clearDomain} className={btnSecondary}>
                 Clear
               </button>
             </div>
           </div>
-          <div className="grid gap-3 md:grid-cols-[1fr_auto_auto_auto_auto] items-center">
+          <div className="flex flex-wrap gap-2">
             <select
               value={selectedPresetId}
-              onChange={(event) => setSelectedPresetId(event.target.value)}
-              className="rounded-md bg-slate-900 border border-slate-700 px-3 py-2 text-xs text-slate-200"
+              onChange={(event) => {
+                const id = event.target.value;
+                setSelectedPresetId(id);
+                loadPresetDomain(id);
+              }}
+              className={`${fieldClass} max-w-full py-2 font-mono text-xs md:min-w-[12rem]`}
             >
               {DOMAIN_PRESETS.map((preset) => (
                 <option key={preset.id} value={preset.id}>
@@ -294,31 +385,11 @@ export default function HomePage() {
                 </option>
               ))}
             </select>
-            <button
-              onClick={() => loadPresetDomain(selectedPresetId)}
-              className="px-3 py-2 rounded-md bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs transition-colors"
-            >
-              Load preset
+            <button type="button" onClick={exportDomainToFile} disabled={!domain} className={btnSecondary}>
+              Export
             </button>
-            <button
-              onClick={loadDomainFromEditor}
-              disabled={!domainRawJson.trim()}
-              className="px-3 py-2 rounded-md bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs transition-colors disabled:opacity-40"
-            >
-              Validate and use JSON
-            </button>
-            <button
-              onClick={exportDomainToFile}
-              disabled={!domain}
-              className="px-3 py-2 rounded-md bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs transition-colors disabled:opacity-40"
-            >
-              Export JSON
-            </button>
-            <button
-              onClick={() => importInputRef.current?.click()}
-              className="px-3 py-2 rounded-md bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs transition-colors"
-            >
-              Import JSON
+            <button type="button" onClick={() => importInputRef.current?.click()} className={btnSecondary}>
+              Import
             </button>
           </div>
           <textarea
@@ -326,7 +397,7 @@ export default function HomePage() {
             onChange={(event) => setDomainRawJson(event.target.value)}
             rows={10}
             placeholder="Domain JSON editor"
-            className="w-full rounded-lg bg-slate-950 border border-slate-800 px-4 py-3 text-xs text-green-300 font-mono whitespace-pre resize-y"
+            className={`${fieldClass} resize-y bg-[var(--code)] font-mono text-xs leading-relaxed`}
           />
           <input
             ref={importInputRef}
@@ -341,14 +412,17 @@ export default function HomePage() {
             }}
           />
           {domainError && (
-            <div className="rounded-md bg-red-950 border border-red-700 px-4 py-3 text-sm text-red-300">
-              <span className="font-semibold">Domain error: </span>{domainError}
+            <div className="border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error-fg)]">
+              <span className="font-medium">Domain error · </span>
+              {domainError}
             </div>
           )}
           {domainValidationErrors.length > 0 && (
-            <div className="rounded-md bg-red-950 border border-red-800 px-4 py-3 space-y-1">
+            <div className="space-y-1 border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3">
               {domainValidationErrors.map((error, i) => (
-                <p key={i} className="text-sm text-red-300 font-mono">{error}</p>
+                <p key={i} className="font-mono text-sm text-[var(--error-fg)]">
+                  {error}
+                </p>
               ))}
             </div>
           )}
@@ -356,16 +430,19 @@ export default function HomePage() {
 
         <NodeCatalog domain={domain} />
 
-        <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4">
-          <p className="text-xs text-slate-400 uppercase tracking-widest">Step 2 · Graph Composition</p>
+        <section className="space-y-5 border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">
+          <p className="border-b border-[var(--border)] pb-4 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--fg-subtle)]">
+            Step 2 · Graph
+          </p>
 
           {showMidiExamples && (
-            <div className="flex rounded-md border border-slate-700 overflow-hidden text-xs">
+            <div className="flex flex-wrap border border-[var(--border)] text-xs">
               {EXAMPLES.map((ex, i) => (
                 <button
                   key={i}
+                  type="button"
                   onClick={() => loadExample(i)}
-                  className="px-3 py-1.5 bg-slate-900 text-slate-400 hover:bg-slate-800 transition-colors border-r border-slate-700 last:border-r-0"
+                  className="border-r border-[var(--border)] px-3 py-2 text-[var(--fg-muted)] transition-colors last:border-r-0 hover:bg-[var(--surface-raised)] hover:text-[var(--fg)]"
                 >
                   {ex.label}
                 </button>
@@ -381,137 +458,177 @@ export default function HomePage() {
             disabled={!canCompose}
             placeholder={
               canCompose
-                ? "Describe the flow to build in the current domain..."
+                ? "Describe the flow to build in the current domain…"
                 : "Define a domain first in Step 1"
             }
-            className="w-full rounded-lg bg-slate-900 border border-slate-700 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none px-4 py-3 text-sm resize-none placeholder:text-slate-600 transition-colors disabled:opacity-50"
+            className={`${fieldClass} resize-none disabled:opacity-45`}
             onKeyDown={(e) => {
               if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) generate();
             }}
           />
 
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex rounded-md border border-slate-700 overflow-hidden text-xs">
+            <div className="flex flex-wrap border border-[var(--border)] text-xs">
               {(["full", "pseudocode", "json"] as GenerateMode[]).map((m) => (
                 <button
                   key={m}
+                  type="button"
                   onClick={() => setMode(m)}
-                  className={`px-3 py-1.5 transition-colors ${
+                  className={`border-r border-[var(--border)] px-3 py-2 transition-colors last:border-r-0 ${
                     mode === m
-                      ? "bg-green-600 text-white"
-                      : "bg-slate-900 text-slate-400 hover:bg-slate-800"
+                      ? "bg-[var(--inverse-bg)] text-[var(--inverse-fg)]"
+                      : "text-[var(--fg-muted)] hover:bg-[var(--surface-raised)] hover:text-[var(--fg)]"
                   }`}
                 >
-                  {m === "full" ? "Full pipeline" : m === "pseudocode" ? "Pseudocode only" : "JSON from pseudocode"}
+                  {m === "full" ? "Full" : m === "pseudocode" ? "Pseudocode" : "JSON from pseudocode"}
                 </button>
               ))}
             </div>
             <button
+              type="button"
               onClick={() => generate()}
               disabled={!canCompose || loading || !prompt.trim()}
-              className="px-4 py-1.5 rounded-md bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium transition-colors"
+              className={btnPrimary}
             >
-              {loading ? "Generating..." : "Generate ⌘↵"}
+              {loading ? "Generating…" : "Generate ⌘↵"}
             </button>
           </div>
         </section>
 
         {serverError && (
-          <div className="rounded-md bg-red-950 border border-red-700 px-4 py-3 text-sm text-red-300">
-            <span className="font-semibold">Error: </span>{serverError}
+          <div className="border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error-fg)]">
+            <span className="font-medium">Error · </span>
+            {serverError}
           </div>
         )}
 
         {hasOutput && (
-          <section className="space-y-3">
-            <div className="flex border-b border-slate-800 gap-1">
-              {(["pseudocode", "json", "graph"] as Tab[]).map((t) => {
-                const available =
-                  t === "pseudocode" ? !!pseudocode :
-                  t === "json" ? !!rawJson :
-                  !!patch;
-                return (
-                  <button
-                    key={t}
-                    disabled={!available}
-                    onClick={() => setActiveTab(t)}
-                    className={`px-4 py-2 text-xs font-medium border-b-2 -mb-px transition-colors ${
-                      activeTab === t
-                        ? "border-green-500 text-green-400"
-                        : "border-transparent text-slate-500 hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed"
-                    }`}
-                  >
-                    {t === "pseudocode" ? "Pseudocode" : t === "json" ? "JSON" : "Graph"}
-                  </button>
-                );
-              })}
+          <section className="border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">
+            <div className="min-w-0 space-y-4">
+              <div className="flex flex-wrap items-center gap-x-1 gap-y-2 border-b border-[var(--border)]">
+                {(["pseudocode", "json", "graph"] as Tab[]).map((t) => {
+                  const available =
+                    t === "pseudocode" ? !!pseudocode :
+                    t === "json" ? !!rawJson :
+                    !!patch;
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      disabled={!available}
+                      onClick={() => setActiveTab(t)}
+                      className={`px-3 py-2 font-mono text-[10px] uppercase tracking-wider transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${
+                        activeTab === t
+                          ? "border-b-2 border-[var(--border-strong)] text-[var(--fg)]"
+                          : "border-b-2 border-transparent text-[var(--fg-muted)] hover:text-[var(--fg)]"
+                      }`}
+                    >
+                      {t === "pseudocode" ? "Pseudocode" : t === "json" ? "JSON" : "Graph"}
+                    </button>
+                  );
+                })}
+                {validationErrors.length > 0 && (
+                  <span className="ml-auto border border-[var(--error-border)] px-2 py-1 font-mono text-[10px] text-[var(--error-fg)]">
+                    {validationErrors.length} error{validationErrors.length > 1 ? "s" : ""}
+                  </span>
+                )}
+                {patch && validationErrors.length === 0 && (
+                  <span className="ml-auto border border-[var(--border-strong)] px-2 py-1 font-mono text-[10px] text-[var(--fg-muted)]">
+                    Valid
+                  </span>
+                )}
+              </div>
 
               {validationErrors.length > 0 && (
-                <span className="ml-auto self-center text-xs text-red-400 bg-red-950 border border-red-700 px-2 py-0.5 rounded-full">
-                  {validationErrors.length} validation error{validationErrors.length > 1 ? "s" : ""}
-                </span>
+                <div className="space-y-1 border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3">
+                  <p className="font-mono text-[10px] uppercase tracking-widest text-[var(--error-fg)]">
+                    Validation
+                  </p>
+                  {validationErrors.map((e, i) => (
+                    <p key={i} className="font-mono text-sm text-[var(--error-fg)]">
+                      {e}
+                    </p>
+                  ))}
+                </div>
               )}
-              {patch && validationErrors.length === 0 && (
-                <span className="ml-auto self-center text-xs text-green-400 bg-green-950 border border-green-700 px-2 py-0.5 rounded-full">
-                  Valid JSON ✓
-                </span>
+
+              {activeTab === "graph" && patch && domain ? (
+                <div className="min-w-0">
+                  <div className="overflow-hidden border border-[var(--border)]">
+                    <PatchGraph patch={patch} domain={domain} />
+                  </div>
+                  <div className="flex flex-wrap gap-4 border border-t-0 border-[var(--border)] px-4 py-2 font-mono text-[10px] text-[var(--fg-subtle)]">
+                    <span>{patch.nodes.length} nodes</span>
+                    <span>{patch.edges.length} edges</span>
+                    <span>v{patch.version}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="min-w-0 space-y-10">
+                  <div className="min-w-0 space-y-4">
+                    {activeTab === "pseudocode" && pseudocode && (
+                      <pre className="max-h-80 overflow-auto border border-[var(--border)] bg-[var(--code)] p-4 text-sm leading-relaxed text-[var(--fg-muted)] whitespace-pre-wrap">
+                        {pseudocode}
+                      </pre>
+                    )}
+
+                    {activeTab === "json" && rawJson && (
+                      <div className="relative">
+                        <pre className="max-h-96 overflow-auto border border-[var(--border)] bg-[var(--code)] p-4 font-mono text-sm text-[var(--fg)] whitespace-pre">
+                          {rawJson}
+                        </pre>
+                        <button
+                          type="button"
+                          onClick={() => navigator.clipboard.writeText(rawJson)}
+                          className="absolute right-2 top-2 border border-[var(--border)] bg-[var(--surface-raised)] px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-[var(--fg-muted)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--fg)]"
+                        >
+                          Copy
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {patch && domain ? (
+                    <div className="min-w-0">
+                      <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--fg-subtle)]">
+                        Graph
+                      </p>
+                      <div className="overflow-hidden border border-[var(--border)]">
+                        <PatchGraph patch={patch} domain={domain} />
+                      </div>
+                      <div className="flex flex-wrap gap-4 border border-t-0 border-[var(--border)] px-4 py-2 font-mono text-[10px] text-[var(--fg-subtle)]">
+                        <span>{patch.nodes.length} nodes</span>
+                        <span>{patch.edges.length} edges</span>
+                        <span>v{patch.version}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex min-h-[min(420px,50vh)] items-center justify-center border border-dashed border-[var(--border)] px-6 text-center text-sm text-[var(--fg-subtle)]">
+                      Graph appears when generation returns a valid patch.
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 
-            {validationErrors.length > 0 && (
-              <div className="rounded-md bg-red-950 border border-red-800 px-4 py-3 space-y-1">
-                <p className="text-xs font-semibold text-red-400 uppercase tracking-wide">Validation errors</p>
-                {validationErrors.map((e, i) => (
-                  <p key={i} className="text-sm text-red-300 font-mono">{e}</p>
-                ))}
-              </div>
-            )}
-
-            {activeTab === "pseudocode" && pseudocode && (
-              <pre className="bg-slate-900 border border-slate-800 rounded-lg px-5 py-4 text-sm text-slate-300 whitespace-pre-wrap leading-relaxed overflow-auto max-h-80">
-                {pseudocode}
-              </pre>
-            )}
-
-            {activeTab === "json" && rawJson && (
-              <div className="relative">
-                <pre className="bg-slate-900 border border-slate-800 rounded-lg px-5 py-4 text-sm text-green-300 font-mono whitespace-pre overflow-auto max-h-96">
-                  {rawJson}
-                </pre>
-                <button
-                  onClick={() => navigator.clipboard.writeText(rawJson)}
-                  className="absolute top-3 right-3 text-xs px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 transition-colors"
-                >
-                  copy
-                </button>
-              </div>
-            )}
-
-            {activeTab === "graph" && patch && domain && (
-              <div className="rounded-xl overflow-hidden border border-slate-800">
-                <PatchGraph patch={patch} domain={domain} />
-                <div className="bg-slate-900 border-t border-slate-800 px-4 py-2 flex flex-wrap gap-4 text-xs text-slate-500">
-                  <span>{patch.nodes.length} nodes</span>
-                  <span>{patch.edges.length} edges</span>
-                  <span>version {patch.version}</span>
-                </div>
-              </div>
-            )}
-
             {pseudocode && (
-              <div className="flex items-center gap-3 pt-1">
-                <p className="text-xs text-slate-600">Did you edit the pseudocode?</p>
+              <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-[var(--border)] pt-6">
+                <p className="text-sm text-[var(--fg-muted)]">Edited pseudocode?</p>
                 <button
+                  type="button"
                   onClick={() => generate("json")}
                   disabled={loading}
-                  className="text-xs px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors disabled:opacity-40"
+                  className={btnSecondary}
                 >
-                  Regenerate JSON from pseudocode
+                  Regenerate JSON
                 </button>
               </div>
             )}
           </section>
         )}
+
+        </div>
+
       </main>
     </div>
   );
