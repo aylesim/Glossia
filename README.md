@@ -1,36 +1,77 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ribosoma — graph composer PoC
 
-## Getting Started
+Proof of concept: **promptare un grafo di funzioni MIDI** usando un LLM come generatore del JSON che funge da unica fonte di verità (SoT) della patch.
 
-First, run the development server:
+## Cosa fa
+
+1. Scrivi un prompt in linguaggio naturale (es. _"filtra le note basse, quantizza a sedicesimi"_).
+2. Il sistema genera **pseudocodice** che descrive il flusso nodo per nodo.
+3. Dal pseudocodice viene generato il **JSON della patch**, validato contro lo schema Zod.
+4. La UI mostra il **grafo interattivo** dei nodi e degli archi.
+
+Il JSON è l'unica SoT: tutto ciò che vedi nella UI deriva dal parse del JSON validato.
+
+## Avvio in locale
 
 ```bash
+# 1. Installa le dipendenze
+npm install
+
+# 2. Configura la chiave API
+cp .env.local.example .env.local
+# Poi apri .env.local e inserisci la tua OPENAI_API_KEY
+
+# 3. Avvia il server di sviluppo
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Apri [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Variabili d'ambiente
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variabile | Obbligatoria | Default | Descrizione |
+|-----------|-------------|---------|-------------|
+| `OPENAI_API_KEY` | sì | — | Chiave API OpenAI |
+| `OPENAI_MODEL` | no | `gpt-4o-mini` | Modello da usare (es. `gpt-4o`) |
 
-## Learn More
+## Struttura del progetto
 
-To learn more about Next.js, take a look at the following resources:
+```
+lib/
+  node-kinds.ts     # Catalogo dei tipi di nodo (pallini) del PoC
+  schema.ts         # Schema Zod della patch + validazione
+  context.ts        # System prompt e user prompt builder per LLM
+  examples.ts       # Fixture di patch di esempio
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+app/
+  page.tsx                    # UI demo
+  components/PatchGraph.tsx   # Visualizzatore grafo (ReactFlow)
+  api/generate/route.ts       # Endpoint POST: pipeline pseudocodice → JSON
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+examples/
+  sample-patch.json   # Patch di esempio in formato JSON
 
-## Deploy on Vercel
+docs/
+  PIANO-POC.md        # Documentazione dettagliata del progetto
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Tipi di nodo disponibili
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| `type` | Funzione |
+|--------|----------|
+| `midi.in` | Ingresso del flusso MIDI |
+| `midi.out` | Uscita MIDI |
+| `filter.pitch` | Filtra note per range di pitch |
+| `filter.channel` | Filtra per canale MIDI |
+| `transform.transpose` | Trasposizione in semitoni |
+| `time.quantize` | Quantizzazione a griglia |
+| `velocity.scale` | Scala la velocity |
+| `cc.map` | Rimappa Control Change |
+
+> I nodi sono **stub semantici** per il PoC: descrivono il grafo ma non eseguono trasformazioni MIDI reali.
+
+## Modalità di generazione
+
+- **Pipeline completa**: pseudocodice → JSON in sequenza.
+- **Solo pseudocodice**: produce solo la descrizione intermedia.
+- **JSON da pseudocodice**: rigenera il JSON a partire da pseudocodice esistente (utile dopo correzioni manuali).

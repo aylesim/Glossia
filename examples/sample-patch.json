@@ -1,0 +1,42 @@
+{
+  "version": "1",
+  "nodes": [
+    {
+      "id": "in1",
+      "type": "midi.in",
+      "params": {}
+    },
+    {
+      "id": "ch1",
+      "type": "filter.channel",
+      "params": { "channel": 1 }
+    },
+    {
+      "id": "pitch1",
+      "type": "filter.pitch",
+      "params": { "minPitch": 48, "maxPitch": 84 }
+    },
+    {
+      "id": "q1",
+      "type": "time.quantize",
+      "params": { "grid": "1/16" }
+    },
+    {
+      "id": "vel1",
+      "type": "velocity.scale",
+      "params": { "factor": 0.85 }
+    },
+    {
+      "id": "out1",
+      "type": "midi.out",
+      "params": {}
+    }
+  ],
+  "edges": [
+    { "from": "in1", "to": "ch1" },
+    { "from": "ch1", "to": "pitch1" },
+    { "from": "pitch1", "to": "q1" },
+    { "from": "q1", "to": "vel1" },
+    { "from": "vel1", "to": "out1" }
+  ]
+}
