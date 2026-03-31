@@ -288,7 +288,7 @@ export default function HomePage() {
           <div className="min-w-0 flex-1">
             <h1 className="font-serif text-2xl font-normal tracking-tight sm:text-3xl">
               Glossia
-              <span className="font-normal text-[var(--fg-muted)]">, demo</span>
+              <span className="font-normal text-[var(--fg-muted)]"> demo</span>
             </h1>
             <p className="mt-1 max-w-2xl text-xs leading-snug text-[var(--fg-muted)]">
               Natural language → domain JSON → flow → validated patch graph.
