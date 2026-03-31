@@ -1,58 +1,37 @@
 "use client";
 
 import { useState } from "react";
-import { Domain, DomainNode } from "@/lib/domain";
-
-function nodeHue(id: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < id.length; i++) {
-    h ^= id.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return Math.abs(h) % 360;
-}
-
-function buildNodeTitle(node: DomainNode): string {
-  const lines = [node.description];
-  if (node.params.length > 0) {
-    lines.push(
-      "",
-      "Parameters:",
-      ...node.params.map(
-        (p) =>
-          `${p.key}: ${p.valueType}${p.default !== undefined ? ` = ${String(p.default)}` : ""}`,
-      ),
-    );
-  } else {
-    lines.push("", "No parameters");
-  }
-  return lines.join("\n");
-}
+import type { Domain, DomainNode } from "@/lib/domain";
+import { buildDomainNodeTooltip, formatParamLine } from "@/lib/node-chrome";
+import NodeTypeFrame from "@/app/components/NodeTypeFrame";
 
 function NodeCard({ node }: { node: DomainNode }) {
-  const hue = nodeHue(node.id);
-  const accent = `hsl(${hue} 72% 48%)`;
-  const tint = `color-mix(in srgb, hsl(${hue} 60% 50%) 16%, var(--surface-raised))`;
-
   return (
-    <div
-      title={buildNodeTitle(node)}
-      className="flex h-28 w-28 shrink-0 flex-col overflow-hidden rounded-md border border-[var(--border)] transition-[border-color,box-shadow] hover:border-[var(--border-strong)] hover:shadow-sm"
-      style={{ backgroundColor: tint }}
+    <NodeTypeFrame
+      typeId={node.id}
+      title={buildDomainNodeTooltip(node)}
+      className="min-h-[7rem] w-[min(100%,14rem)] shrink-0 hover:border-[var(--border-strong)] hover:shadow-sm"
     >
-      <div className="h-2 w-full shrink-0" style={{ backgroundColor: accent }} aria-hidden />
       <div className="flex min-h-0 flex-1 flex-col p-2.5">
         <p className="line-clamp-2 text-xs font-medium leading-tight text-[var(--fg)]">{node.name}</p>
         <p className="mt-1 truncate font-mono text-[9px] tracking-wide text-[var(--fg-subtle)]">
           {node.id}
         </p>
-        <p className="mt-auto pt-1 font-mono text-[9px] tabular-nums text-[var(--fg-muted)]">
-          {node.params.length === 0
-            ? "No params"
-            : `${node.params.length} param${node.params.length === 1 ? "" : "s"}`}
-        </p>
+        <div className="mt-2 min-h-0 max-h-28 overflow-y-auto border-t border-[color-mix(in_srgb,var(--border)_70%,transparent)] pt-2">
+          {node.params.length === 0 ? (
+            <p className="font-mono text-[9px] text-[var(--fg-muted)]">No params</p>
+          ) : (
+            <ul className="space-y-1">
+              {node.params.map((p) => (
+                <li key={p.key} className="break-all font-mono text-[9px] leading-snug text-[var(--fg-muted)]">
+                  {formatParamLine(p)}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
-    </div>
+    </NodeTypeFrame>
   );
 }
 

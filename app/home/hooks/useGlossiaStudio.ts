@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, RefObject } from "react";
 import { EXAMPLES } from "@/lib/examples";
 import { Domain, validateDomain } from "@/lib/domain";
-import { DOMAIN_PRESETS, getDomainPresetById } from "@/lib/domain-presets";
+import { STUDIO_PRESETS, getStudioPresetById } from "@/lib/domain-presets";
 import { Patch } from "@/lib/schema";
 import type {
   DomainBootstrapRequest,
@@ -70,7 +70,7 @@ export type GlossiaStudioModel = {
 };
 
 export function useGlossiaStudio(): GlossiaStudioModel {
-  const [selectedPresetId, setSelectedPresetId] = useState(DOMAIN_PRESETS[0]?.id ?? "");
+  const [selectedPresetId, setSelectedPresetId] = useState(STUDIO_PRESETS[0]?.id ?? "");
   const [domainPrompt, setDomainPrompt] = useState("");
   const [domainRawJson, setDomainRawJson] = useState("");
   const [domain, setDomain] = useState<Domain | null>(null);
@@ -221,12 +221,37 @@ export function useGlossiaStudio(): GlossiaStudioModel {
     return () => window.clearTimeout(id);
   }, [domainRawJson, domain]);
 
+  function applyPresetDomain(nextDomain: Domain) {
+    setDomain(nextDomain);
+    setDomainValidationErrors([]);
+    setDomainError("");
+    const raw = JSON.stringify(nextDomain, null, 2);
+    setDomainRawJson(raw);
+    persistDomain(nextDomain);
+    lastCommittedDomainJson.current = JSON.stringify(nextDomain);
+  }
+
   function selectPreset(presetId: string) {
-    setSelectedPresetId(presetId);
-    const preset = getDomainPresetById(presetId);
+    const preset = getStudioPresetById(presetId);
     if (!preset) return;
-    setDomainPrompt(`Preset domain: ${preset.name}`);
-    setDomainState(preset);
+    setSelectedPresetId(presetId);
+    setDomainPrompt(`Preset: ${preset.name}`);
+    applyPresetDomain(preset.domain);
+    setPrompt(preset.prompt);
+    setMode(preset.mode);
+    setValidationErrors([]);
+    setServerError("");
+    if (preset.demo) {
+      setPseudocode(preset.demo.pseudocode);
+      setRawJson(JSON.stringify(preset.demo.patch, null, 2));
+      setPatch(preset.demo.patch);
+      setActiveTab("graph");
+    } else {
+      setPseudocode("");
+      setRawJson("");
+      setPatch(null);
+      setActiveTab("pseudocode");
+    }
   }
 
   async function importDomainFromFile(file: File) {

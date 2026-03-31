@@ -18,8 +18,8 @@ export default function OverviewSection() {
             <p className="font-mono text-[11px] uppercase tracking-widest text-[var(--fg-subtle)]">01</p>
             <p className="mt-2 text-sm font-medium">Bootstrap the domain</p>
             <p className="mt-1 text-sm leading-relaxed text-[var(--fg-muted)]">
-              Describe the problem space or load a preset or JSON file. Domain JSON fixes what nodes mean for the
-              session.
+              Describe the problem space, import JSON, or choose a workflow preset (after the API key) to load domain
+              plus starter prompt (and a sample graph when the preset includes one).
             </p>
           </div>
           <div className="border-l-2 border-[var(--border-strong)] pl-5">

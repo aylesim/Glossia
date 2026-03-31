@@ -1,11 +1,9 @@
-import { DOMAIN_PRESETS } from "@/lib/domain-presets";
 import type { ChangeEvent, RefObject } from "react";
 import { BUTTON_PRIMARY_CLASS, BUTTON_SECONDARY_CLASS, FIELD_CLASS } from "../styles";
 
 type DomainSectionProps = {
   domainPrompt: string;
   domainLoading: boolean;
-  selectedPresetId: string;
   domainRawJson: string;
   domainError: string;
   domainValidationErrors: string[];
@@ -14,7 +12,6 @@ type DomainSectionProps = {
   onDomainPromptChange: (value: string) => void;
   onBootstrapDomain: () => Promise<void>;
   onClearDomain: () => void;
-  onSelectPreset: (presetId: string) => void;
   onDomainRawJsonChange: (value: string) => void;
   onExportDomain: () => void;
   onTriggerImportDomain: () => void;
@@ -24,7 +21,6 @@ type DomainSectionProps = {
 export default function DomainSection({
   domainPrompt,
   domainLoading,
-  selectedPresetId,
   domainRawJson,
   domainError,
   domainValidationErrors,
@@ -33,7 +29,6 @@ export default function DomainSection({
   onDomainPromptChange,
   onBootstrapDomain,
   onClearDomain,
-  onSelectPreset,
   onDomainRawJsonChange,
   onExportDomain,
   onTriggerImportDomain,
@@ -54,8 +49,8 @@ export default function DomainSection({
             &ldquo;Generate domain&rdquo;. The AI will invent suitable node types for you.
           </li>
           <li>
-            <span className="text-[var(--fg)]">Pick a preset</span>: choose a ready-made domain from the dropdown (good
-            for a quick start).
+            <span className="text-[var(--fg)]">Pick a preset</span>: use the workflow preset below the API key section to
+            load domain, compose prompt, and sample outputs together.
           </li>
           <li>
             <span className="text-[var(--fg)]">Import a file</span>: load a <code>.json</code> file you exported from a
@@ -100,38 +95,18 @@ export default function DomainSection({
         </div>
       </div>
 
-      <div className="space-y-1">
-        <p className="text-xs text-[var(--fg-muted)]">
-          Or skip the description and load one of the built-in presets to get started immediately.
-        </p>
-        <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-x-auto">
-          <label htmlFor="domain-preset" className="shrink-0 font-mono text-xs text-[var(--fg-muted)]">
-            presets
-          </label>
-          <select
-            id="domain-preset"
-            value={selectedPresetId}
-            onChange={(event) => onSelectPreset(event.target.value)}
-            className={`${FIELD_CLASS} min-w-[8rem] max-w-full flex-1 py-2 font-mono text-xs sm:min-w-[12rem]`}
-          >
-            {DOMAIN_PRESETS.map((preset) => (
-              <option key={preset.id} value={preset.id}>
-                {preset.name}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={onExportDomain}
-            disabled={!hasDomain}
-            className={`${BUTTON_SECONDARY_CLASS} shrink-0`}
-          >
-            Export
-          </button>
-          <button type="button" onClick={onTriggerImportDomain} className={`${BUTTON_SECONDARY_CLASS} shrink-0`}>
-            Import
-          </button>
-        </div>
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={onExportDomain}
+          disabled={!hasDomain}
+          className={`${BUTTON_SECONDARY_CLASS} shrink-0`}
+        >
+          Export
+        </button>
+        <button type="button" onClick={onTriggerImportDomain} className={`${BUTTON_SECONDARY_CLASS} shrink-0`}>
+          Import
+        </button>
       </div>
 
       <div className="space-y-1">

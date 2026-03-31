@@ -1,4 +1,7 @@
+import type { GenerateMode } from "./api-types";
 import { Domain, MIDI_DOMAIN_EXAMPLE } from "./domain";
+import { EXAMPLES } from "./examples";
+import type { Patch } from "./schema";
 
 const IMAGE_PROCESSING_PRESET: Domain = {
   version: "1",
@@ -160,13 +163,64 @@ const MODULAR_SYNTH_PRESET: Domain = {
   ],
 };
 
-export const DOMAIN_PRESETS: Domain[] = [
-  MIDI_DOMAIN_EXAMPLE,
-  IMAGE_PROCESSING_PRESET,
-  TEXT_NLP_PRESET,
-  MODULAR_SYNTH_PRESET,
+export type StudioPreset = {
+  id: string;
+  name: string;
+  domain: Domain;
+  prompt: string;
+  mode: GenerateMode;
+  demo?: {
+    pseudocode: string;
+    patch: Patch;
+  };
+};
+
+const midiExample0 = EXAMPLES[0]!;
+
+export const STUDIO_PRESETS: StudioPreset[] = [
+  {
+    id: MIDI_DOMAIN_EXAMPLE.id,
+    name: MIDI_DOMAIN_EXAMPLE.name,
+    domain: MIDI_DOMAIN_EXAMPLE,
+    prompt: midiExample0.prompt,
+    mode: "full",
+    demo: {
+      pseudocode: midiExample0.pseudocode,
+      patch: midiExample0.patch,
+    },
+  },
+  {
+    id: IMAGE_PROCESSING_PRESET.id,
+    name: IMAGE_PROCESSING_PRESET.name,
+    domain: IMAGE_PROCESSING_PRESET,
+    prompt:
+      "Load an image from source camera, apply a gaussian filter with strength 0.45, resize to 1280 by 720, then write to the image output.",
+    mode: "full",
+  },
+  {
+    id: TEXT_NLP_PRESET.id,
+    name: TEXT_NLP_PRESET.name,
+    domain: TEXT_NLP_PRESET,
+    prompt:
+      "Normalize text with lowercase and punctuation removal, compute embeddings with model small, then classify with labels urgent,routine,spam.",
+    mode: "full",
+  },
+  {
+    id: MODULAR_SYNTH_PRESET.id,
+    name: MODULAR_SYNTH_PRESET.name,
+    domain: MODULAR_SYNTH_PRESET,
+    prompt:
+      "Patch saw oscillator through lowpass filter with cutoff CV and resonance 0.45, shape with ADSR envelope on gate, into the audio output.",
+    mode: "full",
+  },
 ];
 
+export const DOMAIN_PRESETS: Domain[] = STUDIO_PRESETS.map((preset) => preset.domain);
+
+export function getStudioPresetById(id: string): StudioPreset | undefined {
+  return STUDIO_PRESETS.find((preset) => preset.id === id);
+}
+
 export function getDomainPresetById(id: string): Domain | undefined {
-  return DOMAIN_PRESETS.find((preset) => preset.id === id);
+  return getStudioPresetById(id)?.domain;
 }

@@ -11,6 +11,8 @@ import {
   BackgroundVariant,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import NodeTypeFrame from "@/app/components/NodeTypeFrame";
+import { buildDomainNodeTooltip, formatParamLineForPatch } from "@/lib/node-chrome";
 import { Patch } from "@/lib/schema";
 import { Domain, getDomainNodeById } from "@/lib/domain";
 
@@ -26,6 +28,10 @@ function buildLayout(patch: Patch, domain: Domain): { nodes: Node[]; edges: Edge
 
     const paramEntries = Object.entries(n.params ?? {});
 
+    const title = kind
+      ? `${n.id}\n\n${buildDomainNodeTooltip(kind)}`
+      : `${n.id}\n\nType: ${n.type}`;
+
     return {
       id: n.id,
       position: { x: col * SPACING_X + 48, y: row * SPACING_Y + 48 },
@@ -33,61 +39,58 @@ function buildLayout(patch: Patch, domain: Domain): { nodes: Node[]; edges: Edge
       targetPosition: Position.Left,
       data: {
         label: (
-          <div style={{ textAlign: "left", fontSize: 12, lineHeight: 1.45, display: "grid", gap: 8 }}>
-            <span
-              style={{
-                display: "inline-flex",
-                width: "fit-content",
-                border: "1px solid var(--graph-node-id-border)",
-                background: "var(--graph-node-id-bg)",
-                color: "var(--graph-node-id-text)",
-                padding: "2px 8px",
-                borderRadius: 999,
-                fontSize: 10,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                fontFamily: "var(--font-geist-mono), monospace",
-              }}
-            >
-              {n.id}
-            </span>
-            <div style={{ color: "var(--graph-node-title)", fontSize: 14, fontWeight: 600, lineHeight: 1.25 }}>
-              {kind?.name ?? n.type}
-            </div>
-            {paramEntries.length > 0 && (
-              <div style={{ display: "grid", gap: 4 }}>
-                {paramEntries.map(([k, v]) => (
-                  <div
-                    key={k}
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "minmax(0, 1fr) auto",
-                      gap: 10,
-                      alignItems: "center",
-                      fontSize: 11,
-                    }}
-                  >
-                    <span style={{ color: "var(--graph-label-muted)", fontFamily: "var(--font-geist-mono), monospace" }}>
-                      {k}
-                    </span>
-                    <span style={{ color: "var(--graph-param)", fontFamily: "var(--font-geist-mono), monospace" }}>
-                      {String(v)}
-                    </span>
-                  </div>
-                ))}
+          <NodeTypeFrame
+            typeId={n.type}
+            title={title}
+            className="min-w-[14rem] max-w-[18rem] hover:border-[var(--border-strong)] hover:shadow-sm"
+          >
+            <div className="flex min-h-0 flex-1 flex-col p-2.5 text-left">
+              <p className="line-clamp-2 text-xs font-medium leading-tight text-[var(--fg)]">
+                {kind?.name ?? n.type}
+              </p>
+              <p className="mt-1 truncate font-mono text-[9px] tracking-wide text-[var(--fg-subtle)]">
+                {kind ? n.type : n.id}
+              </p>
+              {kind ? (
+                <p className="mt-0.5 truncate font-mono text-[9px] text-[var(--fg-muted)]">{n.id}</p>
+              ) : null}
+              <div className="mt-2 min-h-0 max-h-28 overflow-y-auto border-t border-[color-mix(in_srgb,var(--border)_70%,transparent)] pt-2">
+                {kind && kind.params.length > 0 ? (
+                  <ul className="space-y-1">
+                    {kind.params.map((p) => (
+                      <li
+                        key={p.key}
+                        className="break-all font-mono text-[9px] leading-snug text-[var(--fg-muted)]"
+                      >
+                        {formatParamLineForPatch(p, n.params)}
+                      </li>
+                    ))}
+                  </ul>
+                ) : !kind && paramEntries.length > 0 ? (
+                  <ul className="space-y-1">
+                    {paramEntries.map(([k, v]) => (
+                      <li
+                        key={k}
+                        className="break-all font-mono text-[9px] leading-snug text-[var(--fg-muted)]"
+                      >
+                        {k}: {String(v)}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="font-mono text-[9px] text-[var(--fg-muted)]">No params</p>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          </NodeTypeFrame>
         ),
       },
       style: {
-        background: "var(--graph-node-bg)",
-        border: "1px solid var(--graph-node-border)",
-        borderRadius: 14,
-        boxShadow: "var(--graph-node-shadow)",
-        padding: "12px 14px",
-        minWidth: 220,
-        maxWidth: 260,
+        padding: 0,
+        background: "transparent",
+        border: "none",
+        boxShadow: "none",
+        minWidth: "auto",
         color: "var(--fg)",
       },
     };

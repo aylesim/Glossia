@@ -6,6 +6,7 @@ import ComposeSection from "./home/components/ComposeSection";
 import DomainSection from "./home/components/DomainSection";
 import HomeHeader from "./home/components/HomeHeader";
 import OverviewSection from "./home/components/OverviewSection";
+import PresetSection from "./home/components/PresetSection";
 import ResultsSection from "./home/components/ResultsSection";
 import { useGlossiaStudio } from "./home/hooks/useGlossiaStudio";
 
@@ -28,10 +29,14 @@ export default function HomePage() {
             onClearOpenAiApiKey={studio.actions.clearOpenAiApiKey}
           />
 
+          <PresetSection
+            selectedPresetId={studio.state.selectedPresetId}
+            onSelectPreset={studio.actions.selectPreset}
+          />
+
           <DomainSection
             domainPrompt={studio.state.domainPrompt}
             domainLoading={studio.state.domainLoading}
-            selectedPresetId={studio.state.selectedPresetId}
             domainRawJson={studio.state.domainRawJson}
             domainError={studio.state.domainError}
             domainValidationErrors={studio.state.domainValidationErrors}
@@ -40,7 +45,6 @@ export default function HomePage() {
             onDomainPromptChange={studio.actions.setDomainPrompt}
             onBootstrapDomain={studio.actions.bootstrapDomain}
             onClearDomain={studio.actions.clearDomain}
-            onSelectPreset={studio.actions.selectPreset}
             onDomainRawJsonChange={studio.actions.setDomainRawJson}
             onExportDomain={studio.actions.exportDomainToFile}
             onTriggerImportDomain={studio.actions.triggerImportDomain}
