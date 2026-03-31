@@ -1,4 +1,4 @@
-# PoC Plan: Prompting the Ribosoma Graph (JSON as SoT)
+# PoC Plan: Prompting the Glossia Graph (JSON as SoT)
 
 This document describes what to build, in what order, and what final outcome should be demonstrable for a web-based proof of concept.
 
@@ -6,7 +6,7 @@ This document describes what to build, in what order, and what final outcome sho
 
 ## 1. Context and Problem
 
-Ribosoma models transformations as a directed graph:
+Glossia models transformations as a directed graph:
 
 - each node represents a function/operator,
 - edges define data flow between functions,

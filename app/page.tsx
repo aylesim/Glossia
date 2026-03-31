@@ -16,7 +16,7 @@ import type {
 import NodeCatalog from "./components/NodeCatalog";
 
 const PatchGraph = dynamic(() => import("./components/PatchGraph"), { ssr: false });
-const LOCAL_STORAGE_DOMAIN_KEY = "ribosoma.current-domain.v1";
+const LOCAL_STORAGE_DOMAIN_KEY = "glossia.current-domain.v1";
 
 type Tab = "pseudocode" | "json" | "graph";
 
@@ -239,7 +239,7 @@ export default function HomePage() {
       <header className="border-b border-slate-800 px-6 py-4 flex items-center gap-3">
         <div className="w-3 h-3 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]" />
         <h1 className="text-lg font-bold tracking-tight">
-          Ribosoma <span className="text-slate-500 font-normal">/ graph composer PoC</span>
+          Glossia <span className="text-slate-500 font-normal">/ graph composer PoC</span>
         </h1>
         <span className="ml-auto text-xs text-slate-600">domain bootstrap to graph composition</span>
       </header>

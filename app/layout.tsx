@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ribosoma — graph composer PoC",
+  title: "Glossia — graph composer PoC",
   description: "Prompt -> pseudocode -> JSON -> MIDI graph",
 };
 

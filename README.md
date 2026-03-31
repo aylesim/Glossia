@@ -1,4 +1,4 @@
-# Ribosoma — graph composer PoC
+# Glossia — graph composer PoC
 
 Proof of concept: **compose multi-domain semantic graphs** using an LLM, with validated JSON artifacts as source of truth.
 
