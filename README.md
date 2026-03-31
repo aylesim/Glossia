@@ -1,77 +1,76 @@
 # Ribosoma — graph composer PoC
 
-Proof of concept: **promptare un grafo di funzioni MIDI** usando un LLM come generatore del JSON che funge da unica fonte di verità (SoT) della patch.
+Proof of concept: **compose multi-domain semantic graphs** using an LLM, with validated JSON artifacts as source of truth.
 
-## Cosa fa
+## What It Does
 
-1. Scrivi un prompt in linguaggio naturale (es. _"filtra le note basse, quantizza a sedicesimi"_).
-2. Il sistema genera **pseudocodice** che descrive il flusso nodo per nodo.
-3. Dal pseudocodice viene generato il **JSON della patch**, validato contro lo schema Zod.
-4. La UI mostra il **grafo interattivo** dei nodi e degli archi.
+1. Define a domain in natural language (e.g. _"image processing pipeline"_).
+2. The system generates a **Domain JSON** with node types, ports, and params.
+3. In the active domain, describe a flow: the system generates **pseudocode** and then **patch JSON**.
+4. The patch is validated against Zod schemas and the current domain.
+5. The UI renders the graph interactively with nodes and edges.
 
-Il JSON è l'unica SoT: tutto ciò che vedi nella UI deriva dal parse del JSON validato.
+The app keeps two separate SoTs: domain JSON and patch JSON.
 
-## Avvio in locale
+## Local Setup
 
 ```bash
-# 1. Installa le dipendenze
+# 1. Install dependencies
 npm install
 
-# 2. Configura la chiave API
+# 2. Configure API key
 cp .env.local.example .env.local
-# Poi apri .env.local e inserisci la tua OPENAI_API_KEY
+# Then open .env.local and set OPENAI_API_KEY
 
-# 3. Avvia il server di sviluppo
+# 3. Start dev server
 npm run dev
 ```
 
-Apri [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000).
 
-## Variabili d'ambiente
+## Environment Variables
 
-| Variabile | Obbligatoria | Default | Descrizione |
-|-----------|-------------|---------|-------------|
-| `OPENAI_API_KEY` | sì | — | Chiave API OpenAI |
-| `OPENAI_MODEL` | no | `gpt-4o-mini` | Modello da usare (es. `gpt-4o`) |
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `OPENAI_API_KEY` | yes | — | OpenAI API key |
+| `OPENAI_MODEL` | no | `gpt-4o-mini` | Model to use (e.g. `gpt-4o`) |
 
-## Struttura del progetto
+## Project Structure
 
-```
+```text
 lib/
-  node-kinds.ts     # Catalogo dei tipi di nodo (pallini) del PoC
-  schema.ts         # Schema Zod della patch + validazione
-  context.ts        # System prompt e user prompt builder per LLM
-  examples.ts       # Fixture di patch di esempio
+  domain.ts           # Domain Zod schema + validation
+  domain-presets.ts   # Domain preset library (MIDI, image, NLP, modular synth)
+  schema.ts           # Patch Zod schema + validation against active domain
+  context.ts          # Prompt builders for domain bootstrap and composition
+  api-types.ts        # Shared request/response types for client and routes
+  examples.ts         # Example patch fixtures
 
 app/
-  page.tsx                    # UI demo
-  components/PatchGraph.tsx   # Visualizzatore grafo (ReactFlow)
-  api/generate/route.ts       # Endpoint POST: pipeline pseudocodice → JSON
+  page.tsx                      # Demo UI
+  components/PatchGraph.tsx     # Graph viewer (React Flow)
+  api/domain/bootstrap/route.ts # POST: domain description -> Domain JSON
+  api/generate/route.ts         # POST: prompt + domain -> pseudocode/patch JSON
 
 examples/
-  sample-patch.json   # Patch di esempio in formato JSON
+  sample-patch.json   # Example patch JSON
 
 docs/
-  PIANO-POC.md        # Documentazione dettagliata del progetto
+  PIANO-POC.md        # Detailed project plan
 ```
 
-## Tipi di nodo disponibili
+## Domains and Nodes
 
-| `type` | Funzione |
-|--------|----------|
-| `midi.in` | Ingresso del flusso MIDI |
-| `midi.out` | Uscita MIDI |
-| `filter.pitch` | Filtra note per range di pitch |
-| `filter.channel` | Filtra per canale MIDI |
-| `transform.transpose` | Trasposizione in semitoni |
-| `time.quantize` | Quantizzazione a griglia |
-| `velocity.scale` | Scala la velocity |
-| `cc.map` | Rimappa Control Change |
+- The PoC includes domain presets: MIDI, image processing, NLP chain, modular synth.
+- You can generate a new domain with the LLM or paste domain JSON manually.
+- You can import/export a domain as a `.json` file.
+- Nodes remain **semantic stubs**: they describe graph structure and intent, with no real execution.
 
-> I nodi sono **stub semantici** per il PoC: descrivono il grafo ma non eseguono trasformazioni MIDI reali.
+## Generation Modes
 
-## Modalità di generazione
-
-- **Pipeline completa**: pseudocodice → JSON in sequenza.
-- **Solo pseudocodice**: produce solo la descrizione intermedia.
-- **JSON da pseudocodice**: rigenera il JSON a partire da pseudocodice esistente (utile dopo correzioni manuali).
+- **Step 1 Domain Bootstrap**: domain description -> Domain JSON.
+- **Step 2 Graph Composition**:
+  - full pipeline (pseudocode -> JSON),
+  - pseudocode only,
+  - JSON from pseudocode.
+- The active domain is saved in `localStorage`.

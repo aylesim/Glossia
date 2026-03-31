@@ -9,15 +9,15 @@ export type Example = {
 
 export const EXAMPLES: Example[] = [
   {
-    label: "Pipeline filtro → quantize → dinamica",
+    label: "Filter → quantize → dynamics pipeline",
     prompt:
-      "Voglio prendere solo le note nel range do3–sol5, quantizzarle a sedicesimi e abbassare un po' la dinamica",
-    pseudocode: `1. midi.in — ingresso del flusso
-2. filter.channel (channel=1) — accetto solo canale 1
-3. filter.pitch (minPitch=48, maxPitch=79) — range do3–sol5
-4. time.quantize (grid="1/16") — griglia a sedicesimi
-5. velocity.scale (factor=0.75) — attenuazione dinamica
-6. midi.out — uscita`,
+      "Keep only notes in the C3-G5 range, quantize to 1/16, and reduce dynamics slightly",
+    pseudocode: `1. midi.in - flow input
+2. filter.channel (channel=1) - accept only channel 1
+3. filter.pitch (minPitch=48, maxPitch=79) - C3-G5 range
+4. time.quantize (grid="1/16") - sixteenth-note grid
+5. velocity.scale (factor=0.75) - dynamics attenuation
+6. midi.out - output`,
     patch: {
       version: "1",
       nodes: [
@@ -38,13 +38,13 @@ export const EXAMPLES: Example[] = [
     },
   },
   {
-    label: "Trasposizione + rimappatura CC",
+    label: "Transpose + CC remap",
     prompt:
-      "Trasponi tutto un'ottava su e rimappa il sustain (CC 64) al volume (CC 7)",
-    pseudocode: `1. midi.in — ingresso del flusso
-2. transform.transpose (semitones=12) — ottava superiore
-3. cc.map (fromCc=64, toCc=7) — sustain → volume
-4. midi.out — uscita`,
+      "Transpose everything up one octave and remap sustain (CC 64) to volume (CC 7)",
+    pseudocode: `1. midi.in - flow input
+2. transform.transpose (semitones=12) - one octave up
+3. cc.map (fromCc=64, toCc=7) - sustain to volume
+4. midi.out - output`,
     patch: {
       version: "1",
       nodes: [
@@ -61,12 +61,12 @@ export const EXAMPLES: Example[] = [
     },
   },
   {
-    label: "Solo note acute + quantize a quarti",
-    prompt: "Filtra solo le note acute sopra il la4 e quantizza a quarti",
-    pseudocode: `1. midi.in — ingresso del flusso
-2. filter.pitch (minPitch=69, maxPitch=127) — solo note sopra la4
-3. time.quantize (grid="1/4") — griglia a quarti
-4. midi.out — uscita`,
+    label: "High notes only + quarter-note quantize",
+    prompt: "Keep only high notes above A4 and quantize to quarter notes",
+    pseudocode: `1. midi.in - flow input
+2. filter.pitch (minPitch=69, maxPitch=127) - only notes above A4
+3. time.quantize (grid="1/4") - quarter-note grid
+4. midi.out - output`,
     patch: {
       version: "1",
       nodes: [

@@ -1,31 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import {
-  buildSystemPrompt,
+  buildComposeSystemPrompt,
   buildPseudocodePrompt,
   buildJsonPrompt,
 } from "@/lib/context";
 import { validatePatch, extractJsonFromModelOutput } from "@/lib/schema";
-
-export type GenerateMode = "full" | "pseudocode" | "json";
-
-export type GenerateRequest = {
-  prompt: string;
-  mode: GenerateMode;
-  pseudocode?: string;
-};
-
-export type GenerateResponse = {
-  pseudocode?: string;
-  rawJson?: string;
-  validation?: { ok: true } | { ok: false; errors: string[] };
-  patch?: unknown;
-  error?: string;
-};
+import { validateDomain } from "@/lib/domain";
+import type { GenerateRequest, GenerateResponse } from "@/lib/api-types";
 
 function getClient(): OpenAI {
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error("OPENAI_API_KEY non configurata nel server");
+  if (!apiKey) throw new Error("OPENAI_API_KEY is not configured on the server");
   return new OpenAI({ apiKey });
 }
 
@@ -51,16 +37,23 @@ export async function POST(req: NextRequest) {
     body = await req.json();
   } catch {
     return NextResponse.json(
-      { error: "Body JSON non valido" } satisfies GenerateResponse,
+      { error: "Invalid JSON body" } satisfies GenerateResponse,
       { status: 400 },
     );
   }
 
   const { prompt, mode, pseudocode: existingPseudocode } = body;
+  const domainValidation = validateDomain(body.domain);
 
   if (!prompt?.trim()) {
     return NextResponse.json(
-      { error: "Il campo prompt è obbligatorio" } satisfies GenerateResponse,
+      { error: "prompt is required" } satisfies GenerateResponse,
+      { status: 400 },
+    );
+  }
+  if (!domainValidation.ok) {
+    return NextResponse.json(
+      { error: `Invalid domain: ${domainValidation.errors.join(" | ")}` } satisfies GenerateResponse,
       { status: 400 },
     );
   }
@@ -75,7 +68,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const systemPrompt = buildSystemPrompt();
+  const systemPrompt = buildComposeSystemPrompt(domainValidation.domain);
   const result: GenerateResponse = {};
 
   try {
@@ -100,12 +93,12 @@ export async function POST(req: NextRequest) {
       } catch {
         result.validation = {
           ok: false,
-          errors: ["L'output del modello non è JSON valido"],
+          errors: ["Model output is not valid JSON"],
         };
         return NextResponse.json(result);
       }
 
-      const validation = validatePatch(parsed);
+      const validation = validatePatch(parsed, domainValidation.domain);
       result.validation = validation;
       if (validation.ok) {
         result.patch = validation.patch;

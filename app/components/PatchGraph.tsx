@@ -12,29 +12,25 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Patch } from "@/lib/schema";
-import { getNodeKindByType } from "@/lib/node-kinds";
+import { Domain, getDomainNodeById } from "@/lib/domain";
 
-const NODE_COLOR: Record<string, string> = {
-  "midi.in": "#22c55e",
-  "midi.out": "#ef4444",
-  "filter.pitch": "#3b82f6",
-  "filter.channel": "#6366f1",
-  "transform.transpose": "#f59e0b",
-  "time.quantize": "#8b5cf6",
-  "velocity.scale": "#ec4899",
-  "cc.map": "#14b8a6",
-};
+function colorFor(value: string): string {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) hash = value.charCodeAt(i) + ((hash << 5) - hash);
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue} 75% 55%)`;
+}
 
-function buildLayout(patch: Patch): { nodes: Node[]; edges: Edge[] } {
+function buildLayout(patch: Patch, domain: Domain): { nodes: Node[]; edges: Edge[] } {
   const SPACING_X = 220;
   const SPACING_Y = 120;
   const cols = Math.ceil(Math.sqrt(patch.nodes.length));
 
   const flowNodes: Node[] = patch.nodes.map((n, i) => {
-    const kind = getNodeKindByType(n.type);
+    const kind = getDomainNodeById(domain, n.type);
     const col = i % cols;
     const row = Math.floor(i / cols);
-    const color = NODE_COLOR[n.type] ?? "#64748b";
+    const color = colorFor(n.type);
 
     const paramLines = Object.entries(n.params ?? {})
       .map(([k, v]) => `${k}: ${v}`)
@@ -58,7 +54,7 @@ function buildLayout(patch: Patch): { nodes: Node[]; edges: Edge[] } {
                 letterSpacing: "0.05em",
               }}
             >
-              {kind?.label ?? n.type}
+              {kind?.name ?? n.type}
             </div>
             <div style={{ color: "#94a3b8", fontSize: 10 }}>{n.id}</div>
             {paramLines && (
@@ -101,8 +97,8 @@ function buildLayout(patch: Patch): { nodes: Node[]; edges: Edge[] } {
   return { nodes: flowNodes, edges: flowEdges };
 }
 
-export default function PatchGraph({ patch }: { patch: Patch }) {
-  const { nodes, edges } = useMemo(() => buildLayout(patch), [patch]);
+export default function PatchGraph({ patch, domain }: { patch: Patch; domain: Domain }) {
+  const { nodes, edges } = useMemo(() => buildLayout(patch, domain), [patch, domain]);
   const onInit = useCallback(() => {}, []);
 
   return (

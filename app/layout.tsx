@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Ribosoma — graph composer PoC",
-  description: "Prompt → pseudocodice → JSON → grafo MIDI",
+  description: "Prompt -> pseudocode -> JSON -> MIDI graph",
 };
 
 export default function RootLayout({
