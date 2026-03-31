@@ -10,12 +10,7 @@ import type {
   DomainBootstrapRequest,
   DomainBootstrapResponse,
 } from "@/lib/api-types";
-
-function getClient(): OpenAI {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error("OPENAI_API_KEY is not configured on the server");
-  return new OpenAI({ apiKey });
-}
+import { createOpenAiClient, getOpenAiModel } from "@/lib/openai-server";
 
 export async function POST(req: NextRequest) {
   let body: DomainBootstrapRequest;
@@ -37,7 +32,7 @@ export async function POST(req: NextRequest) {
 
   let client: OpenAI;
   try {
-    client = getClient();
+    client = createOpenAiClient(body.openAiApiKey);
   } catch (error) {
     return NextResponse.json(
       { error: (error as Error).message } satisfies DomainBootstrapResponse,
@@ -47,7 +42,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const response = await client.chat.completions.create({
-      model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
+      model: getOpenAiModel(),
       temperature: 0.2,
       messages: [
         { role: "system", content: buildDomainBootstrapSystemPrompt() },

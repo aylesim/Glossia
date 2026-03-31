@@ -8,12 +8,7 @@ import {
 import { validatePatch, extractJsonFromModelOutput } from "@/lib/schema";
 import { validateDomain } from "@/lib/domain";
 import type { GenerateRequest, GenerateResponse } from "@/lib/api-types";
-
-function getClient(): OpenAI {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error("OPENAI_API_KEY is not configured on the server");
-  return new OpenAI({ apiKey });
-}
+import { createOpenAiClient, getOpenAiModel } from "@/lib/openai-server";
 
 async function callModel(
   client: OpenAI,
@@ -21,7 +16,7 @@ async function callModel(
   userMessage: string,
 ): Promise<string> {
   const response = await client.chat.completions.create({
-    model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
+    model: getOpenAiModel(),
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userMessage },
@@ -42,7 +37,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { prompt, mode, pseudocode: existingPseudocode } = body;
+  const { prompt, mode, pseudocode: existingPseudocode, openAiApiKey } = body;
   const domainValidation = validateDomain(body.domain);
 
   if (!prompt?.trim()) {
@@ -60,7 +55,7 @@ export async function POST(req: NextRequest) {
 
   let client: OpenAI;
   try {
-    client = getClient();
+    client = createOpenAiClient(openAiApiKey);
   } catch (e) {
     return NextResponse.json(
       { error: (e as Error).message } satisfies GenerateResponse,

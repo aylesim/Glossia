@@ -3,40 +3,55 @@
 import { useState } from "react";
 import { Domain, DomainNode } from "@/lib/domain";
 
+function nodeHue(id: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return Math.abs(h) % 360;
+}
+
+function buildNodeTitle(node: DomainNode): string {
+  const lines = [node.description];
+  if (node.params.length > 0) {
+    lines.push(
+      "",
+      "Parameters:",
+      ...node.params.map(
+        (p) =>
+          `${p.key}: ${p.valueType}${p.default !== undefined ? ` = ${String(p.default)}` : ""}`,
+      ),
+    );
+  } else {
+    lines.push("", "No parameters");
+  }
+  return lines.join("\n");
+}
+
 function NodeCard({ node }: { node: DomainNode }) {
+  const hue = nodeHue(node.id);
+  const accent = `hsl(${hue} 72% 48%)`;
+  const tint = `color-mix(in srgb, hsl(${hue} 60% 50%) 16%, var(--surface-raised))`;
+
   return (
-    <div className="border border-[var(--border)] bg-[var(--surface-raised)] p-4 transition-colors hover:border-[var(--border-strong)]">
-      <div className="flex items-start gap-3">
-        <span className="mt-1 h-px w-6 shrink-0 bg-[var(--border-strong)]" aria-hidden />
-        <div className="min-w-0">
-          <p className="text-xs font-medium leading-tight text-[var(--fg)]">{node.name}</p>
-          <p className="mt-1 font-mono text-[10px] tracking-wide text-[var(--fg-subtle)]">{node.id}</p>
-        </div>
+    <div
+      title={buildNodeTitle(node)}
+      className="flex h-28 w-28 shrink-0 flex-col overflow-hidden rounded-md border border-[var(--border)] transition-[border-color,box-shadow] hover:border-[var(--border-strong)] hover:shadow-sm"
+      style={{ backgroundColor: tint }}
+    >
+      <div className="h-2 w-full shrink-0" style={{ backgroundColor: accent }} aria-hidden />
+      <div className="flex min-h-0 flex-1 flex-col p-2.5">
+        <p className="line-clamp-2 text-xs font-medium leading-tight text-[var(--fg)]">{node.name}</p>
+        <p className="mt-1 truncate font-mono text-[9px] tracking-wide text-[var(--fg-subtle)]">
+          {node.id}
+        </p>
+        <p className="mt-auto pt-1 font-mono text-[9px] tabular-nums text-[var(--fg-muted)]">
+          {node.params.length === 0
+            ? "No params"
+            : `${node.params.length} param${node.params.length === 1 ? "" : "s"}`}
+        </p>
       </div>
-
-      <p className="mt-3 text-xs leading-relaxed text-[var(--fg-muted)]">{node.description}</p>
-
-      {node.params.length > 0 && (
-        <div className="mt-3 space-y-1.5 border-t border-[var(--border)] pt-3">
-          {node.params.map((param) => (
-            <div key={param.key} className="flex flex-wrap items-baseline gap-1.5">
-              <code className="border border-[var(--border)] bg-[var(--code)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--fg)]">
-                {param.key}
-              </code>
-              <span className="font-mono text-[10px] text-[var(--fg-subtle)]">{param.valueType}</span>
-              {param.default !== undefined && (
-                <span className="font-mono text-[10px] text-[var(--fg-subtle)]">
-                  = {String(param.default)}
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {node.params.length === 0 && (
-        <p className="mt-2 font-mono text-[10px] text-[var(--fg-subtle)]">No parameters</p>
-      )}
     </div>
   );
 }
@@ -62,7 +77,7 @@ export default function NodeCatalog({ domain }: { domain: Domain | null }) {
       {open && (
         <>
           {domain ? (
-            <div className="mt-5 grid grid-cols-1 gap-3">
+            <div className="mt-5 flex flex-wrap gap-3">
               {domain.nodes.map((node) => (
                 <NodeCard key={node.id} node={node} />
               ))}

@@ -18,6 +18,7 @@ import ThemeToggle from "./components/theme-toggle";
 
 const PatchGraph = dynamic(() => import("./components/PatchGraph"), { ssr: false });
 const LOCAL_STORAGE_DOMAIN_KEY = "glossia.current-domain.v1";
+const LOCAL_STORAGE_OPENAI_KEY = "glossia.openai-api-key.v1";
 
 type Tab = "pseudocode" | "json" | "graph";
 
@@ -41,6 +42,8 @@ export default function HomePage() {
   const [serverError, setServerError] = useState("");
 
   const [activeTab, setActiveTab] = useState<Tab>("pseudocode");
+  const [openAiApiKey, setOpenAiApiKey] = useState("");
+  const [showOpenAiApiKey, setShowOpenAiApiKey] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const domainTextareaRef = useRef<HTMLTextAreaElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
@@ -59,6 +62,16 @@ export default function HomePage() {
       }
     } catch {}
   }, []);
+
+  useEffect(() => {
+    const raw = localStorage.getItem(LOCAL_STORAGE_OPENAI_KEY);
+    if (raw) setOpenAiApiKey(raw);
+  }, []);
+
+  useEffect(() => {
+    if (openAiApiKey) localStorage.setItem(LOCAL_STORAGE_OPENAI_KEY, openAiApiKey);
+    else localStorage.removeItem(LOCAL_STORAGE_OPENAI_KEY);
+  }, [openAiApiKey]);
 
   function resetOutput() {
     setPseudocode("");
@@ -88,7 +101,10 @@ export default function HomePage() {
     setDomainError("");
     setDomainValidationErrors([]);
 
-    const body: DomainBootstrapRequest = { description: domainPrompt };
+    const body: DomainBootstrapRequest = {
+      description: domainPrompt,
+      openAiApiKey: openAiApiKey.trim() || undefined,
+    };
     try {
       const res = await fetch("/api/domain/bootstrap", {
         method: "POST",
@@ -206,6 +222,7 @@ export default function HomePage() {
       mode: overrideMode ?? mode,
       pseudocode: overrideMode === "json" ? pseudocode : undefined,
       domain,
+      openAiApiKey: openAiApiKey.trim() || undefined,
     };
 
     try {
@@ -266,22 +283,52 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)]">
-      <header className="sticky top-0 z-10 border-b border-[var(--border)] bg-[var(--bg)] px-5 py-5 sm:px-10">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--fg-subtle)]">
-              Proof of concept
-            </p>
-            <h1 className="mt-1 font-serif text-3xl font-normal tracking-tight sm:text-4xl">Glossia</h1>
-            <p className="mt-2 max-w-md text-sm leading-relaxed text-[var(--fg-muted)]">
+      <header className="border-b border-[var(--border)] bg-[var(--bg)] px-5 py-3 sm:px-10">
+        <div className="mx-auto flex max-w-5xl items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <h1 className="font-serif text-2xl font-normal tracking-tight sm:text-3xl">
+              Glossia
+              <span className="font-normal text-[var(--fg-muted)]">, demo</span>
+            </h1>
+            <p className="mt-1 max-w-2xl text-xs leading-snug text-[var(--fg-muted)]">
               Natural language → domain JSON → flow → validated patch graph.
             </p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10px] text-[var(--fg-muted)]">
+              <span className="tracking-[0.2em]">
+                By{" "}
+                <a
+                  href="https://github.com/aylesim"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition-colors hover:text-[var(--fg)]"
+                >
+                  Aylesim
+                </a>
+              </span>
+              <a
+                href="https://github.com/aylesim/Glossia"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Glossia on GitHub"
+                className="inline-flex items-center gap-1.5 uppercase tracking-[0.2em] transition-colors hover:text-[var(--fg)]"
+              >
+                <svg
+                  className="h-3 w-3 shrink-0"
+                  viewBox="0 0 16 16"
+                  fill="currentColor"
+                  aria-hidden={true}
+                >
+                  <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
+                </svg>
+                GitHub
+              </a>
+            </div>
           </div>
           <ThemeToggle />
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-5 pb-20 pt-12 sm:px-10">
+      <main className="mx-auto max-w-5xl px-5 pb-20 pt-8 sm:px-10">
         <section className="mb-16 border-b border-[var(--border)] pb-16">
           <div className="space-y-12">
             <div className="space-y-6">
@@ -321,11 +368,10 @@ export default function HomePage() {
               </div>
               <div className="border-l-2 border-[var(--border-strong)] pl-5">
                 <p className="font-mono text-[11px] uppercase tracking-widest text-[var(--fg-subtle)]">04</p>
-                <p className="mt-2 text-sm font-medium">Setup</p>
+                <p className="mt-2 text-sm font-medium">API key</p>
                 <p className="mt-1 text-sm leading-relaxed text-[var(--fg-muted)]">
-                  Set <code className="font-mono text-[12px] text-[var(--fg)]">OPENAI_API_KEY</code> in{" "}
-                  <code className="font-mono text-[12px] text-[var(--fg)]">.env.local</code>. Nodes are semantic stubs,
-                  not a live runtime.
+                  Paste an OpenAI API key in the field below so you can try the app in the browser. Nodes are semantic
+                  stubs, not a live runtime.
                 </p>
               </div>
             </div>
@@ -333,72 +379,171 @@ export default function HomePage() {
         </section>
 
         <div className="space-y-10">
+        <section className="space-y-4 border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">
+          <div className="border-b border-[var(--border)] pb-4">
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--fg-subtle)]">
+              OpenAI API key
+            </p>
+            <p className="mt-2 text-sm font-medium">You need this to use the app.</p>
+            <p className="mt-1 text-sm leading-relaxed text-[var(--fg-muted)]">
+              All generation calls go to OpenAI. Paste your key here. It is saved only in your browser and never sent
+              to any server other than OpenAI. The codebase is open source if you want to verify.{" "}
+              <a
+                href="https://platform.openai.com/api-keys"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2 transition-colors hover:text-[var(--fg)]"
+              >
+                Get a key at platform.openai.com →
+              </a>
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <input
+              type={showOpenAiApiKey ? "text" : "password"}
+              value={openAiApiKey}
+              onChange={(e) => setOpenAiApiKey(e.target.value)}
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="sk-…"
+              className={`${fieldClass} min-w-[12rem] flex-1 font-mono text-xs`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowOpenAiApiKey((v) => !v)}
+              className={btnSecondary}
+            >
+              {showOpenAiApiKey ? "Hide" : "Show"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setOpenAiApiKey("")}
+              disabled={!openAiApiKey}
+              className={btnSecondary}
+            >
+              Clear key
+            </button>
+          </div>
+        </section>
+
         <section className="space-y-5 border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">
-          <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-[var(--border)] pb-4">
+          <div className="border-b border-[var(--border)] pb-4">
             <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--fg-subtle)]">
               Step 1 · Domain
             </p>
-            {domain && (
-              <span className="border border-[var(--border-strong)] bg-[var(--bg)] px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-[var(--fg-muted)]">
-                {domain.name}
-              </span>
-            )}
+            <p className="mt-2 text-sm font-medium">Define the vocabulary of your graph.</p>
+            <p className="mt-1 text-sm leading-relaxed text-[var(--fg-muted)]">
+              A domain is a schema that lists every node type available, together with their ports and parameters. Think
+              of it as the &ldquo;alphabet&rdquo; the AI will use when building your graph. You have three ways to set
+              one up:
+            </p>
+            <ul className="mt-2 space-y-1 text-sm leading-relaxed text-[var(--fg-muted)]">
+              <li>
+                <span className="text-[var(--fg)]">Describe it</span>: type a plain-English description below and
+                click &ldquo;Generate domain&rdquo;. The AI will invent suitable node types for you.
+              </li>
+              <li>
+                <span className="text-[var(--fg)]">Pick a preset</span>: choose a ready-made domain from the dropdown
+                (good for a quick start).
+              </li>
+              <li>
+                <span className="text-[var(--fg)]">Import a file</span>: load a <code>.json</code> file you exported
+                from a previous session.
+              </li>
+            </ul>
+            <p className="mt-2 text-sm leading-relaxed text-[var(--fg-muted)]">
+              Once a domain is loaded the JSON editor below shows its contents. You can edit it directly; changes are
+              validated automatically.
+            </p>
           </div>
-          <div className="grid gap-3 md:grid-cols-[1fr_auto]">
-            <textarea
-              ref={domainTextareaRef}
-              value={domainPrompt}
-              onChange={(event) => setDomainPrompt(event.target.value)}
-              rows={3}
-              placeholder="Describe the domain to generate (e.g. image processing pipeline, modular synth, text NLP chain)..."
-              className={`${fieldClass} resize-none`}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) bootstrapDomain();
-              }}
-            />
-            <div className="flex md:flex-col gap-2">
-              <button
-                onClick={() => bootstrapDomain()}
-                disabled={domainLoading || !domainPrompt.trim()}
-                className={btnPrimary}
+          <div className="space-y-1">
+            <p className="text-xs text-[var(--fg-muted)]">
+              Describe the kind of system you want to model (e.g. &ldquo;a modular audio synthesiser&rdquo;, &ldquo;an
+              image processing pipeline&rdquo;, &ldquo;a text NLP chain&rdquo;).
+            </p>
+            <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+              <textarea
+                ref={domainTextareaRef}
+                value={domainPrompt}
+                onChange={(event) => setDomainPrompt(event.target.value)}
+                rows={3}
+                placeholder="Describe the domain to generate (e.g. image processing pipeline, modular synth, text NLP chain)..."
+                className={`${fieldClass} resize-none`}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) bootstrapDomain();
+                }}
+              />
+              <div className="flex md:flex-col gap-2">
+                <button
+                  onClick={() => bootstrapDomain()}
+                  disabled={domainLoading || !domainPrompt.trim()}
+                  className={btnPrimary}
+                >
+                  {domainLoading ? "Generating…" : "Generate domain"}
+                </button>
+                <button type="button" onClick={clearDomain} className={btnSecondary}>
+                  Clear
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs text-[var(--fg-muted)]">
+              Or skip the description and load one of the built-in presets to get started immediately.
+            </p>
+            <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-x-auto">
+              <label
+                htmlFor="domain-preset"
+                className="shrink-0 font-mono text-xs text-[var(--fg-muted)]"
               >
-                {domainLoading ? "Generating…" : "Generate domain"}
+                presets
+              </label>
+              <select
+                id="domain-preset"
+                value={selectedPresetId}
+                onChange={(event) => {
+                  const id = event.target.value;
+                  setSelectedPresetId(id);
+                  loadPresetDomain(id);
+                }}
+                className={`${fieldClass} min-w-[8rem] max-w-full flex-1 py-2 font-mono text-xs sm:min-w-[12rem]`}
+              >
+                {DOMAIN_PRESETS.map((preset) => (
+                  <option key={preset.id} value={preset.id}>
+                    {preset.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={exportDomainToFile}
+                disabled={!domain}
+                className={`${btnSecondary} shrink-0`}
+              >
+                Export
               </button>
-              <button type="button" onClick={clearDomain} className={btnSecondary}>
-                Clear
+              <button
+                type="button"
+                onClick={() => importInputRef.current?.click()}
+                className={`${btnSecondary} shrink-0`}
+              >
+                Import
               </button>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <select
-              value={selectedPresetId}
-              onChange={(event) => {
-                const id = event.target.value;
-                setSelectedPresetId(id);
-                loadPresetDomain(id);
-              }}
-              className={`${fieldClass} max-w-full py-2 font-mono text-xs md:min-w-[12rem]`}
-            >
-              {DOMAIN_PRESETS.map((preset) => (
-                <option key={preset.id} value={preset.id}>
-                  {preset.name}
-                </option>
-              ))}
-            </select>
-            <button type="button" onClick={exportDomainToFile} disabled={!domain} className={btnSecondary}>
-              Export
-            </button>
-            <button type="button" onClick={() => importInputRef.current?.click()} className={btnSecondary}>
-              Import
-            </button>
+          <div className="space-y-1">
+            <p className="text-xs text-[var(--fg-muted)]">
+              The raw domain JSON. Edits you make here are validated live; errors appear below. You normally don&apos;t
+              need to touch this unless you want fine-grained control over node types.
+            </p>
+            <textarea
+              value={domainRawJson}
+              onChange={(event) => setDomainRawJson(event.target.value)}
+              rows={10}
+              placeholder="Domain JSON editor"
+              className={`${fieldClass} resize-y bg-[var(--code)] font-mono text-xs leading-relaxed`}
+            />
           </div>
-          <textarea
-            value={domainRawJson}
-            onChange={(event) => setDomainRawJson(event.target.value)}
-            rows={10}
-            placeholder="Domain JSON editor"
-            className={`${fieldClass} resize-y bg-[var(--code)] font-mono text-xs leading-relaxed`}
-          />
           <input
             ref={importInputRef}
             type="file"
@@ -431,9 +576,34 @@ export default function HomePage() {
         <NodeCatalog domain={domain} />
 
         <section className="space-y-5 border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">
-          <p className="border-b border-[var(--border)] pb-4 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--fg-subtle)]">
-            Step 2 · Graph
-          </p>
+          <div className="border-b border-[var(--border)] pb-4">
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--fg-subtle)]">
+              Step 2 · Graph
+            </p>
+            <p className="mt-2 text-sm font-medium">Describe the flow you want to build.</p>
+            <p className="mt-1 text-sm leading-relaxed text-[var(--fg-muted)]">
+              Now that the AI knows your vocabulary, tell it what you want to wire together. Write a plain-English
+              description of the pipeline, for example &ldquo;read a MIDI file, transpose every note up by 5 semitones, then
+              write the result to disk&rdquo;.
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-[var(--fg-muted)]">
+              Choose a generation mode before clicking Generate:
+            </p>
+            <ul className="mt-2 space-y-1 text-sm leading-relaxed text-[var(--fg-muted)]">
+              <li>
+                <span className="text-[var(--fg)]">Full</span>: produces pseudocode and JSON in one shot. Best for a
+                first attempt.
+              </li>
+              <li>
+                <span className="text-[var(--fg)]">Pseudocode</span>: only generates the human-readable plan. Useful
+                if you want to review the logic before committing to JSON.
+              </li>
+              <li>
+                <span className="text-[var(--fg)]">JSON from pseudocode</span>: converts pseudocode you have already
+                reviewed (and optionally edited) into the final patch JSON.
+              </li>
+            </ul>
+          </div>
 
           {showMidiExamples && (
             <div className="flex flex-wrap border border-[var(--border)] text-xs">
@@ -450,22 +620,29 @@ export default function HomePage() {
             </div>
           )}
 
-          <textarea
-            ref={textareaRef}
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            rows={3}
-            disabled={!canCompose}
-            placeholder={
-              canCompose
-                ? "Describe the flow to build in the current domain…"
-                : "Define a domain first in Step 1"
-            }
-            className={`${fieldClass} resize-none disabled:opacity-45`}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) generate();
-            }}
-          />
+          <div className="space-y-1">
+            {!canCompose && (
+              <p className="text-xs text-[var(--fg-muted)]">
+                Complete Step 1 first. A domain must be loaded before you can generate a graph.
+              </p>
+            )}
+            <textarea
+              ref={textareaRef}
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              rows={3}
+              disabled={!canCompose}
+              placeholder={
+                canCompose
+                  ? "Describe the flow to build in the current domain…"
+                  : "Define a domain first in Step 1"
+              }
+              className={`${fieldClass} resize-none disabled:opacity-45`}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) generate();
+              }}
+            />
+          </div>
 
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex flex-wrap border border-[var(--border)] text-xs">
@@ -505,6 +682,19 @@ export default function HomePage() {
         {hasOutput && (
           <section className="border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">
             <div className="min-w-0 space-y-4">
+              <div className="border-b border-[var(--border)] pb-4 space-y-1">
+                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--fg-subtle)]">
+                  Step 3 · Results
+                </p>
+                <p className="text-sm font-medium">Review what was generated.</p>
+                <p className="text-sm leading-relaxed text-[var(--fg-muted)]">
+                  The tabs below show three views of the same result. <span className="text-[var(--fg)]">Pseudocode</span> is
+                  the plain-English plan the AI wrote first. You can edit it and click &ldquo;Regenerate JSON&rdquo; to
+                  refine the output. <span className="text-[var(--fg)]">JSON</span> is the machine-readable patch you can
+                  copy and use elsewhere. <span className="text-[var(--fg)]">Graph</span> renders the nodes and edges
+                  visually. Pan and scroll to explore it.
+                </p>
+              </div>
               <div className="flex flex-wrap items-center gap-x-1 gap-y-2 border-b border-[var(--border)]">
                 {(["pseudocode", "json", "graph"] as Tab[]).map((t) => {
                   const available =

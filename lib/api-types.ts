@@ -8,6 +8,7 @@ export type GenerateRequest = {
   mode: GenerateMode;
   pseudocode?: string;
   domain: unknown;
+  openAiApiKey?: string;
 };
 
 export type GenerateResponse = {
@@ -20,6 +21,7 @@ export type GenerateResponse = {
 
 export type DomainBootstrapRequest = {
   description: string;
+  openAiApiKey?: string;
 };
 
 export type DomainBootstrapResponse = {
