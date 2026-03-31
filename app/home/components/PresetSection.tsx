@@ -14,7 +14,8 @@ export default function PresetSection({ selectedPresetId, onSelectPreset }: Pres
           <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--fg-subtle)]">Workflow preset</p>
           <p className="text-sm leading-relaxed text-[var(--fg-muted)]">
             Each preset loads a domain, a starter compose prompt, generation mode, and—where available—a sample graph
-            so you can review all steps at once.
+            so you can review all steps at once. All of that is local; no API key until you ask the model for something
+            new.
           </p>
         </div>
         <div className="flex min-w-0 shrink-0 flex-col gap-1 sm:w-72">

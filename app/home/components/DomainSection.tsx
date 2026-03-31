@@ -49,8 +49,8 @@ export default function DomainSection({
             &ldquo;Generate domain&rdquo;. The AI will invent suitable node types for you.
           </li>
           <li>
-            <span className="text-[var(--fg)]">Pick a preset</span>: use the workflow preset below the API key section to
-            load domain, compose prompt, and sample outputs together.
+            <span className="text-[var(--fg)]">Pick a preset</span>: use the workflow preset block above to load domain,
+            compose prompt, and sample outputs together.
           </li>
           <li>
             <span className="text-[var(--fg)]">Import a file</span>: load a <code>.json</code> file you exported from a

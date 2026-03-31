@@ -21,17 +21,17 @@ export default function HomePage() {
         <OverviewSection />
 
         <div className="space-y-10">
+          <PresetSection
+            selectedPresetId={studio.state.selectedPresetId}
+            onSelectPreset={studio.actions.selectPreset}
+          />
+
           <ApiKeySection
             openAiApiKey={studio.state.openAiApiKey}
             showOpenAiApiKey={studio.state.showOpenAiApiKey}
             onOpenAiApiKeyChange={studio.actions.setOpenAiApiKey}
             onToggleOpenAiApiKeyVisibility={studio.actions.toggleOpenAiApiKeyVisibility}
             onClearOpenAiApiKey={studio.actions.clearOpenAiApiKey}
-          />
-
-          <PresetSection
-            selectedPresetId={studio.state.selectedPresetId}
-            onSelectPreset={studio.actions.selectPreset}
           />
 
           <DomainSection

@@ -41,17 +41,27 @@ export default function NodeCatalog({ domain }: { domain: Domain | null }) {
 
   return (
     <section className="border border-[var(--border)] bg-[var(--surface)] px-5 py-4 sm:px-6">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-2 text-left transition-opacity hover:opacity-80"
-      >
-        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--fg-subtle)]">
-          Node catalog
-        </span>
-        <span className="font-mono text-[10px] tabular-nums text-[var(--fg-muted)]">{nodeCount}</span>
-        <span className={`text-[var(--fg-subtle)] transition-transform ${open ? "rotate-90" : ""}`}>›</span>
-      </button>
+      <div className="border-b border-[var(--border)] pb-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0 flex-1 space-y-1">
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--fg-subtle)]">Node catalog</p>
+            <p className="text-sm font-medium">Reference for the types in your domain.</p>
+            <p className="text-sm leading-relaxed text-[var(--fg-muted)]">
+              Each card is a node kind the compose step can use: human-readable name, stable id, and parameters. Use it
+              while writing prompts or reading generated pseudocode so you stay aligned with the schema.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="flex shrink-0 items-center gap-2 rounded-sm text-left transition-opacity hover:opacity-80"
+            aria-expanded={open}
+          >
+            <span className="font-mono text-[10px] tabular-nums text-[var(--fg-muted)]">{nodeCount} types</span>
+            <span className={`text-[var(--fg-subtle)] transition-transform ${open ? "rotate-90" : ""}`}>›</span>
+          </button>
+        </div>
+      </div>
 
       {open && (
         <>
