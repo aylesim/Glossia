@@ -1,5 +1,12 @@
 import type { ChangeEvent, RefObject } from "react";
-import { BUTTON_PRIMARY_CLASS, BUTTON_SECONDARY_CLASS, FIELD_CLASS } from "../styles";
+import {
+  BUTTON_PRIMARY_CLASS,
+  BUTTON_PRIMARY_COMPACT_CLASS,
+  BUTTON_SECONDARY_CLASS,
+  BUTTON_SECONDARY_COMPACT_CLASS,
+  FIELD_CLASS,
+  FIELD_COMPACT_CLASS,
+} from "../styles";
 
 type DomainSectionProps = {
   domainPrompt: string;
@@ -16,6 +23,7 @@ type DomainSectionProps = {
   onExportDomain: () => void;
   onTriggerImportDomain: () => void;
   onDomainFileInputChange: (event: ChangeEvent<HTMLInputElement>) => Promise<void>;
+  compact?: boolean;
 };
 
 export default function DomainSection({
@@ -33,98 +41,94 @@ export default function DomainSection({
   onExportDomain,
   onTriggerImportDomain,
   onDomainFileInputChange,
+  compact = false,
 }: DomainSectionProps) {
   function handleClearDomain() {
     if (!window.confirm("Clear the domain, prompt, JSON editor, and all generated outputs?")) return;
     onClearDomain();
   }
 
+  const field = compact ? FIELD_COMPACT_CLASS : FIELD_CLASS;
+  const btnPri = compact ? BUTTON_PRIMARY_COMPACT_CLASS : BUTTON_PRIMARY_CLASS;
+  const btnSec = compact ? BUTTON_SECONDARY_COMPACT_CLASS : BUTTON_SECONDARY_CLASS;
+  const shell = compact
+    ? "space-y-2 rounded border border-[var(--border)] bg-[var(--surface)] p-2.5"
+    : "space-y-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6";
+
   return (
-    <section className="space-y-5 border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">
-      <div className="border-b border-[var(--border)] pb-4">
-        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--fg-subtle)]">Step 1 · Domain</p>
-        <p className="mt-2 text-sm font-medium">Define the vocabulary of your graph.</p>
-        <p className="mt-1 text-sm leading-relaxed text-[var(--fg-muted)]">
-          A domain is a schema that lists every node type available, together with their ports and parameters. Think of
-          it as the &ldquo;alphabet&rdquo; the AI will use when building your graph. You have three ways to set one up:
-        </p>
-        <ul className="mt-2 space-y-1 text-sm leading-relaxed text-[var(--fg-muted)]">
-          <li>
-            <span className="text-[var(--fg)]">Describe it</span>: type a plain-English description below and click
-            &ldquo;Generate domain&rdquo;. The AI will invent suitable node types for you.
-          </li>
-          <li>
-            <span className="text-[var(--fg)]">Pick a preset</span>: use the workflow preset block above to load domain,
-            compose prompt, and sample outputs together.
-          </li>
-          <li>
-            <span className="text-[var(--fg)]">Import a file</span>: load a <code>.json</code> file you exported from a
-            previous session.
-          </li>
-        </ul>
-        <p className="mt-2 text-sm leading-relaxed text-[var(--fg-muted)]">
-          Once a domain is loaded the JSON editor below shows its contents. You can edit it directly; changes are
-          validated automatically.
-        </p>
+    <section className={shell}>
+      <div className={compact ? "border-b border-[var(--border)] pb-1.5" : "border-b border-[var(--border)] pb-4"}>
+        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--fg-subtle)]">Domain</p>
+        {!compact && (
+          <>
+            <p className="mt-2 text-sm font-medium">Define the available node types.</p>
+            <p className="mt-1 text-sm text-[var(--fg-muted)]">
+              Generate from a description, import JSON, or edit manually.
+            </p>
+          </>
+        )}
+        {compact && (
+          <p className="mt-0.5 font-mono text-[9px] text-[var(--fg-muted)]">describe · import · edit JSON</p>
+        )}
       </div>
 
       <div className="space-y-1">
-        <label htmlFor="studio-domain-prompt" className="text-xs text-[var(--fg-muted)]">
-          Domain description
+        <label htmlFor="studio-domain-prompt" className={`text-[var(--fg-muted)] ${compact ? "font-mono text-[9px] uppercase tracking-wide" : "text-xs"}`}>
+          Prompt
         </label>
-        <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+        <div className={`grid ${compact ? "gap-1.5" : "gap-3 md:grid-cols-[1fr_auto]"}`}>
           <textarea
             id="studio-domain-prompt"
             value={domainPrompt}
             onChange={(event) => onDomainPromptChange(event.target.value)}
-            rows={3}
-            placeholder="Describe the domain to generate (e.g. image processing pipeline, modular synth, text NLP chain)..."
-            className={`${FIELD_CLASS} resize-none`}
+            rows={compact ? 2 : 3}
+            placeholder="Describe domain to generate…"
+            className={`${field} resize-none`}
             onKeyDown={(event) => {
               if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) void onBootstrapDomain();
             }}
           />
-          <div className="flex gap-2 md:flex-col">
+          <div className={`flex ${compact ? "flex-wrap gap-1" : "gap-2 md:flex-col"}`}>
             <button
               type="button"
               onClick={() => void onBootstrapDomain()}
               disabled={domainLoading || !domainPrompt.trim()}
-              className={BUTTON_PRIMARY_CLASS}
+              className={btnPri}
             >
-              {domainLoading ? "Generating…" : "Generate domain"}
+              {domainLoading ? "…" : compact ? "Generate" : "Generate domain"}
             </button>
-            <button type="button" onClick={handleClearDomain} className={BUTTON_SECONDARY_CLASS}>
+            <button type="button" onClick={handleClearDomain} className={btnSec}>
               Clear
             </button>
           </div>
         </div>
       </div>
 
-      <div className="flex min-w-0 flex-wrap items-center gap-2">
+      <div className={`flex min-w-0 flex-wrap ${compact ? "gap-1" : "gap-2"}`}>
         <button
           type="button"
           onClick={onExportDomain}
           disabled={!hasDomain}
-          className={`${BUTTON_SECONDARY_CLASS} shrink-0`}
+          className={`${btnSec} shrink-0`}
         >
           Export
         </button>
-        <button type="button" onClick={onTriggerImportDomain} className={`${BUTTON_SECONDARY_CLASS} shrink-0`}>
+        <button type="button" onClick={onTriggerImportDomain} className={`${btnSec} shrink-0`}>
           Import
         </button>
       </div>
 
       <div className="space-y-1">
-        <label htmlFor="studio-domain-json" className="text-xs text-[var(--fg-muted)]">
-          Domain JSON
+        <label htmlFor="studio-domain-json" className={`text-[var(--fg-muted)] ${compact ? "font-mono text-[9px] uppercase tracking-wide" : "text-xs"}`}>
+          domain.json
         </label>
         <textarea
           id="studio-domain-json"
           value={domainRawJson}
           onChange={(event) => onDomainRawJsonChange(event.target.value)}
-          rows={10}
-          placeholder="Domain JSON editor"
-          className={`${FIELD_CLASS} resize-y bg-[var(--code)] font-mono text-xs leading-relaxed`}
+          rows={compact ? 6 : 10}
+          placeholder="{}"
+          className={`${field} resize-y bg-[var(--code)] font-mono ${compact ? "text-[10px] leading-snug" : "text-xs leading-relaxed"}`}
         />
       </div>
 
@@ -141,9 +145,9 @@ export default function DomainSection({
       {domainError && (
         <div
           role="alert"
-          className="border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error-fg)]"
+          className={`border border-[var(--error-border)] bg-[var(--error-bg)] text-[var(--error-fg)] ${compact ? "px-2 py-1.5 font-mono text-[10px]" : "px-4 py-3 text-sm"}`}
         >
-          <span className="font-medium">Domain error · </span>
+          <span className="font-medium">Domain · </span>
           {domainError}
         </div>
       )}
@@ -151,10 +155,10 @@ export default function DomainSection({
       {domainValidationErrors.length > 0 && (
         <div
           role="alert"
-          className="space-y-1 border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3"
+          className={`space-y-0.5 border border-[var(--error-border)] bg-[var(--error-bg)] ${compact ? "px-2 py-1.5" : "space-y-1 px-4 py-3"}`}
         >
           {domainValidationErrors.map((error, index) => (
-            <p key={`${error}-${index}`} className="font-mono text-sm text-[var(--error-fg)]">
+            <p key={`${error}-${index}`} className={`font-mono text-[var(--error-fg)] ${compact ? "text-[10px] leading-snug" : "text-sm"}`}>
               {error}
             </p>
           ))}

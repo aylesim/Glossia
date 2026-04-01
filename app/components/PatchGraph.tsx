@@ -109,7 +109,15 @@ function buildLayout(patch: Patch, domain: Domain): { nodes: Node[]; edges: Edge
   return { nodes: flowNodes, edges: flowEdges };
 }
 
-export default function PatchGraph({ patch, domain }: { patch: Patch; domain: Domain }) {
+export default function PatchGraph({
+  patch,
+  domain,
+  fillHeight = false,
+}: {
+  patch: Patch;
+  domain: Domain;
+  fillHeight?: boolean;
+}) {
   const { nodes, edges } = useMemo(() => buildLayout(patch, domain), [patch, domain]);
   const onInit = useCallback(() => {}, []);
 
@@ -117,7 +125,7 @@ export default function PatchGraph({ patch, domain }: { patch: Patch; domain: Do
     <div
       style={{
         width: "100%",
-        height: "min(520px, 70vh)",
+        height: fillHeight ? "100%" : "min(520px, 70vh)",
         minHeight: 280,
         background: "var(--graph-bg)",
         overflow: "hidden",
