@@ -37,6 +37,10 @@ export default function GlossiaIntro() {
       className="mb-6 border-b border-[var(--border)] pb-6"
       aria-labelledby="glossia-intro-heading"
     >
+      <p className="mb-4 font-mono text-[10px] leading-relaxed text-[var(--fg-subtle)]">
+        Built as an AI experimentation POC — feedback and collaboration welcome on GitHub.
+      </p>
+
       <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-xl">
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--fg-subtle)]">Overview</p>
@@ -48,7 +52,8 @@ export default function GlossiaIntro() {
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-[var(--fg-muted)]">
             First you agree on the node types your project allows. Then you describe the flow you want, and Glossia
-            builds a pipeline you can see and refine.
+            builds a pipeline you can see and refine. The studio orchestrates large language models end-to-end — this
+            demo exists to show how AI can power structured, validated workflows rather than one-off chat replies.
           </p>
         </div>
         <dl className="flex shrink-0 flex-wrap gap-x-5 gap-y-1 font-mono text-[10px] text-[var(--fg-subtle)]">

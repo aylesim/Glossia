@@ -22,9 +22,9 @@ const newsreader = Newsreader({
 });
 
 export const metadata: Metadata = {
-  title: "Glossia: semantic graph composer",
+  title: "Glossia: experimental AI graph composer (POC)",
   description:
-    "Describe a domain in plain language, get validated Domain JSON, then compose flows as pseudocode and patch graphs, explored interactively in the browser.",
+    "Experimental AI proof-of-concept by Alessandro Miracapillo (aylesim): describe a domain in plain language, get validated Domain JSON, then compose flows as pseudocode and patch graphs with LLM orchestration in the browser.",
 };
 
 export default async function RootLayout({
