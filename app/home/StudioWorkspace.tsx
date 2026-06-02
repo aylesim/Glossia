@@ -1,6 +1,7 @@
 "use client";
 
 import NodeCatalog from "@/app/components/NodeCatalog";
+import GlossiaIntro from "./components/GlossiaIntro";
 import ApiKeySection from "./components/ApiKeySection";
 import ComposeSection from "./components/ComposeSection";
 import DomainSection from "./components/DomainSection";
@@ -40,6 +41,8 @@ export default function StudioWorkspace() {
 
   return (
     <div className="space-y-3">
+      <GlossiaIntro />
+
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[var(--border)] pb-3">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--fg-subtle)]">Studio</p>
