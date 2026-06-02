@@ -1,4 +1,5 @@
 import HomeHeader from "./home/components/HomeHeader";
+import ProjectAboutSection from "./home/components/ProjectAboutSection";
 import StudioWorkspace from "./home/StudioWorkspace";
 
 export default function HomePage() {
@@ -7,6 +8,7 @@ export default function HomePage() {
       <HomeHeader />
 
       <main className="mx-auto w-full max-w-[90rem] px-5 pb-16 pt-8 sm:px-8">
+        <ProjectAboutSection />
         <StudioWorkspace />
       </main>
     </div>
