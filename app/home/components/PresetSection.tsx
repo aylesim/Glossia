@@ -14,7 +14,7 @@ const cardBaseCompact =
   "flex min-h-0 flex-col items-start gap-0.5 rounded border p-1.5 text-left transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--border-strong)] focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--surface)]";
 
 const cardBaseToolbar =
-  "flex min-h-[1.75rem] flex-col justify-center rounded border px-2 py-1 text-left transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--border-strong)] focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--surface)]";
+  "flex min-h-[1.75rem] items-center rounded border px-2 py-1 text-left transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--border-strong)] focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--surface)]";
 
 function cardClass(selected: boolean, compact: boolean, toolbar: boolean) {
   const base = toolbar ? cardBaseToolbar : compact ? cardBaseCompact : cardBaseLoose;
@@ -31,7 +31,7 @@ export default function PresetSection({
   toolbar = false,
 }: PresetSectionProps) {
   const shell = toolbar
-    ? "flex min-w-0 flex-1 flex-col gap-1.5 lg:flex-[3] lg:flex-row lg:items-center lg:gap-3"
+    ? "flex min-w-0 shrink-0 flex-wrap items-center gap-x-2 gap-y-1.5"
     : compact
       ? "space-y-2 rounded border border-[var(--border)] bg-[var(--surface)] p-2.5"
       : "space-y-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 sm:p-5";
@@ -72,7 +72,7 @@ export default function PresetSection({
       <div
         className={
           toolbar
-            ? "grid min-w-0 flex-1 grid-cols-2 gap-1 sm:grid-cols-4"
+            ? "flex min-w-0 flex-wrap gap-1"
             : compact
               ? "grid grid-cols-2 gap-1"
               : "grid gap-3 sm:grid-cols-2"
@@ -102,7 +102,7 @@ export default function PresetSection({
               <span
                 className={`font-medium leading-tight text-[var(--fg)] ${
                   toolbar
-                    ? "truncate font-mono text-[10px]"
+                    ? "whitespace-nowrap font-mono text-[10px]"
                     : compact
                       ? "line-clamp-2 font-mono text-[10px]"
                       : "line-clamp-2 text-base"

@@ -8,15 +8,18 @@ import {
 import { validatePatch, extractJsonFromModelOutput } from "@/lib/schema";
 import { validateDomain } from "@/lib/domain";
 import type { GenerateRequest, GenerateResponse } from "@/lib/api-types";
-import { createOpenAiClient, getOpenAiModel } from "@/lib/openai-server";
+import { createOpenAiClient, resolveLlmModel } from "@/lib/openai-server";
+import { resolveLlmProvider } from "@/lib/llm-provider";
+import type { LlmProvider } from "@/lib/llm-provider";
 
 async function callModel(
   client: OpenAI,
+  model: string,
   systemPrompt: string,
   userMessage: string,
 ): Promise<string> {
   const response = await client.chat.completions.create({
-    model: getOpenAiModel(),
+    model,
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userMessage },
@@ -37,7 +40,10 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { prompt, mode, pseudocode: existingPseudocode, openAiApiKey } = body;
+  const { prompt, mode, pseudocode: existingPseudocode, openAiApiKey, llmProvider, llmModel } =
+    body;
+  const provider = resolveLlmProvider(llmProvider);
+  const model = resolveLlmModel(provider, llmModel);
   const domainValidation = validateDomain(body.domain);
 
   if (!prompt?.trim()) {
@@ -55,7 +61,7 @@ export async function POST(req: NextRequest) {
 
   let client: OpenAI;
   try {
-    client = createOpenAiClient(openAiApiKey);
+    client = createOpenAiClient({ apiKey: openAiApiKey, provider });
   } catch (e) {
     return NextResponse.json(
       { error: (e as Error).message } satisfies GenerateResponse,
@@ -69,7 +75,7 @@ export async function POST(req: NextRequest) {
   try {
     if (mode === "pseudocode" || mode === "full") {
       const userMsg = buildPseudocodePrompt(prompt);
-      result.pseudocode = await callModel(client, systemPrompt, userMsg);
+      result.pseudocode = await callModel(client, model, systemPrompt, userMsg);
     }
 
     if (mode === "json" || mode === "full") {
@@ -79,7 +85,7 @@ export async function POST(req: NextRequest) {
           : existingPseudocode ?? "";
 
       const userMsg = buildJsonPrompt(prompt, pseudocode);
-      const rawOutput = await callModel(client, systemPrompt, userMsg);
+      const rawOutput = await callModel(client, model, systemPrompt, userMsg);
       result.rawJson = extractJsonFromModelOutput(rawOutput);
 
       let parsed: unknown;

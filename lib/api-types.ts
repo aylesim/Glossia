@@ -1,5 +1,6 @@
 import { Patch, ValidationResult } from "./schema";
 import { Domain, DomainValidationResult } from "./domain";
+import type { LlmProvider } from "./llm-provider";
 
 export type GenerateMode = "full" | "pseudocode" | "json";
 
@@ -9,6 +10,13 @@ export type GenerateRequest = {
   pseudocode?: string;
   domain: unknown;
   openAiApiKey?: string;
+  llmProvider?: LlmProvider;
+  llmModel?: string;
+};
+
+export type OpenRouterModelsResponse = {
+  models: { id: string; name: string }[];
+  error?: string;
 };
 
 export type GenerateResponse = {
@@ -22,6 +30,8 @@ export type GenerateResponse = {
 export type DomainBootstrapRequest = {
   description: string;
   openAiApiKey?: string;
+  llmProvider?: LlmProvider;
+  llmModel?: string;
 };
 
 export type DomainBootstrapResponse = {

@@ -10,7 +10,8 @@ import type {
   DomainBootstrapRequest,
   DomainBootstrapResponse,
 } from "@/lib/api-types";
-import { createOpenAiClient, getOpenAiModel } from "@/lib/openai-server";
+import { createOpenAiClient, resolveLlmModel } from "@/lib/openai-server";
+import { resolveLlmProvider } from "@/lib/llm-provider";
 
 export async function POST(req: NextRequest) {
   let body: DomainBootstrapRequest;
@@ -30,9 +31,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const provider = resolveLlmProvider(body.llmProvider);
+  const model = resolveLlmModel(provider, body.llmModel);
+
   let client: OpenAI;
   try {
-    client = createOpenAiClient(body.openAiApiKey);
+    client = createOpenAiClient({ apiKey: body.openAiApiKey, provider });
   } catch (error) {
     return NextResponse.json(
       { error: (error as Error).message } satisfies DomainBootstrapResponse,
@@ -42,7 +46,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const response = await client.chat.completions.create({
-      model: getOpenAiModel(),
+      model,
       temperature: 0.2,
       messages: [
         { role: "system", content: buildDomainBootstrapSystemPrompt() },

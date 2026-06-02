@@ -21,14 +21,19 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) and paste your OpenAI API key in the UI (it is stored in the browser only). For local development you can instead set `OPENAI_API_KEY` in `.env.local` and leave the field empty.
+Open [http://localhost:3000](http://localhost:3000), choose **OpenAI** or **OpenRouter** in the toolbar, pick a model (OpenRouter loads free text models automatically), and paste your API key (stored in the browser only). For local development you can set `OPENAI_API_KEY` or `OPENROUTER_API_KEY` in `.env.local` and leave the field empty.
 
 ## Environment Variables
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `OPENAI_API_KEY` | no | — | Optional server default when the UI field is empty (local/self-hosted) |
-| `OPENAI_MODEL` | no | `gpt-4o-mini` | Model to use (e.g. `gpt-4o`) |
+| `LLM_PROVIDER` | no | `openai` | Server default provider when the UI does not send one (`openai` or `openrouter`) |
+| `OPENAI_API_KEY` | no | — | OpenAI key when provider is OpenAI and the UI field is empty |
+| `OPENROUTER_API_KEY` | no | — | OpenRouter key when provider is OpenRouter and the UI field is empty |
+| `OPENAI_MODEL` | no | `gpt-4o-mini` | OpenAI model id |
+| `OPENROUTER_MODEL` | no | `openrouter/free` | OpenRouter default when UI model unset (falls back to `OPENAI_MODEL` if set) |
+| `OPENROUTER_HTTP_REFERER` | no | — | Optional OpenRouter attribution header |
+| `OPENROUTER_APP_TITLE` | no | — | Optional OpenRouter `X-Title` header |
 
 ## Project Structure
 

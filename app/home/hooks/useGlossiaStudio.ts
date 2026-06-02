@@ -10,11 +10,25 @@ import type {
   GenerateMode,
   GenerateRequest,
   GenerateResponse,
+  OpenRouterModelsResponse,
 } from "@/lib/api-types";
 import type { OutputTab } from "../types";
+import { LlmProvider, parseLlmProvider } from "@/lib/llm-provider";
+import {
+  DEFAULT_LLM_MODEL_BY_PROVIDER,
+  DEFAULT_LLM_MODEL_SOURCE,
+  OPENAI_MODEL_OPTIONS,
+  parseStoredLlmModelSources,
+  parseStoredLlmModels,
+  type LlmModelOption,
+  type LlmModelSource,
+} from "@/lib/llm-models";
 
 const LOCAL_STORAGE_DOMAIN_KEY = "glossia.current-domain.v1";
 const LOCAL_STORAGE_OPENAI_KEY = "glossia.openai-api-key.v1";
+const LOCAL_STORAGE_LLM_PROVIDER_KEY = "glossia.llm-provider.v1";
+const LOCAL_STORAGE_LLM_MODELS_KEY = "glossia.llm-models.v1";
+const LOCAL_STORAGE_LLM_MODEL_SOURCE_KEY = "glossia.llm-model-source.v1";
 
 type StudioState = {
   selectedPresetId: string;
@@ -35,6 +49,12 @@ type StudioState = {
   activeTab: OutputTab;
   openAiApiKey: string;
   showOpenAiApiKey: boolean;
+  llmProvider: LlmProvider;
+  llmModel: string;
+  llmModelSource: LlmModelSource;
+  modelOptions: LlmModelOption[];
+  modelsLoading: boolean;
+  modelsError: string;
   hasOutput: boolean;
   canCompose: boolean;
   showMidiExamples: boolean;
@@ -56,6 +76,10 @@ type StudioActions = {
   setActiveTab: (tab: OutputTab) => void;
   setPseudocode: (value: string) => void;
   setOpenAiApiKey: (value: string) => void;
+  setLlmProvider: (provider: LlmProvider) => void;
+  setLlmModel: (model: string) => void;
+  setLlmModelSource: (source: LlmModelSource) => void;
+  refreshOpenRouterModels: () => void;
   toggleOpenAiApiKeyVisibility: () => void;
   clearOpenAiApiKey: () => void;
 };
@@ -89,7 +113,25 @@ export function useGlossiaStudio(): GlossiaStudioModel {
   const [activeTab, setActiveTab] = useState<OutputTab>("pseudocode");
   const [openAiApiKey, setOpenAiApiKey] = useState("");
   const [showOpenAiApiKey, setShowOpenAiApiKey] = useState(false);
+  const [llmProvider, setLlmProvider] = useState<LlmProvider>("openai");
+  const [llmModelsByProvider, setLlmModelsByProvider] = useState<Record<LlmProvider, string>>(
+    DEFAULT_LLM_MODEL_BY_PROVIDER,
+  );
+  const [openRouterModelOptions, setOpenRouterModelOptions] = useState<LlmModelOption[]>([]);
+  const [openRouterModelsLoading, setOpenRouterModelsLoading] = useState(false);
+  const [openRouterModelsError, setOpenRouterModelsError] = useState("");
+  const [openRouterModelsRefreshToken, setOpenRouterModelsRefreshToken] = useState(0);
+  const [llmModelSourceByProvider, setLlmModelSourceByProvider] = useState<
+    Record<LlmProvider, LlmModelSource>
+  >(DEFAULT_LLM_MODEL_SOURCE);
   const importInputRef = useRef<HTMLInputElement>(null);
+  const llmModelSourceRef = useRef(llmModelSourceByProvider);
+  const llmModel = llmModelsByProvider[llmProvider];
+  const llmModelSource = llmModelSourceByProvider[llmProvider];
+  const modelOptions =
+    llmProvider === "openrouter" ? openRouterModelOptions : OPENAI_MODEL_OPTIONS;
+  const modelsLoading = llmProvider === "openrouter" && openRouterModelsLoading;
+  const modelsError = llmProvider === "openrouter" ? openRouterModelsError : "";
   const lastCommittedDomainJson = useRef<string | null>(null);
 
   useEffect(() => {
@@ -109,12 +151,96 @@ export function useGlossiaStudio(): GlossiaStudioModel {
   useEffect(() => {
     const raw = localStorage.getItem(LOCAL_STORAGE_OPENAI_KEY);
     if (raw) setOpenAiApiKey(raw);
+    const storedProvider = parseLlmProvider(localStorage.getItem(LOCAL_STORAGE_LLM_PROVIDER_KEY));
+    if (storedProvider) setLlmProvider(storedProvider);
+    const storedModels = parseStoredLlmModels(localStorage.getItem(LOCAL_STORAGE_LLM_MODELS_KEY));
+    if (Object.keys(storedModels).length > 0) {
+      setLlmModelsByProvider((prev) => ({ ...prev, ...storedModels }));
+    }
+    const storedSources = parseStoredLlmModelSources(
+      localStorage.getItem(LOCAL_STORAGE_LLM_MODEL_SOURCE_KEY),
+    );
+    if (Object.keys(storedSources).length > 0) {
+      setLlmModelSourceByProvider((prev) => ({ ...prev, ...storedSources }));
+    }
   }, []);
+
+  useEffect(() => {
+    llmModelSourceRef.current = llmModelSourceByProvider;
+  }, [llmModelSourceByProvider]);
 
   useEffect(() => {
     if (openAiApiKey) localStorage.setItem(LOCAL_STORAGE_OPENAI_KEY, openAiApiKey);
     else localStorage.removeItem(LOCAL_STORAGE_OPENAI_KEY);
   }, [openAiApiKey]);
+
+  useEffect(() => {
+    localStorage.setItem(LOCAL_STORAGE_LLM_PROVIDER_KEY, llmProvider);
+  }, [llmProvider]);
+
+  useEffect(() => {
+    localStorage.setItem(LOCAL_STORAGE_LLM_MODELS_KEY, JSON.stringify(llmModelsByProvider));
+  }, [llmModelsByProvider]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      LOCAL_STORAGE_LLM_MODEL_SOURCE_KEY,
+      JSON.stringify(llmModelSourceByProvider),
+    );
+  }, [llmModelSourceByProvider]);
+
+  useEffect(() => {
+    if (llmProvider !== "openrouter") return;
+
+    let cancelled = false;
+
+    async function loadOpenRouterModels() {
+      setOpenRouterModelsLoading(true);
+      setOpenRouterModelsError("");
+      try {
+        const res = await fetch("/api/openrouter/models");
+        const data = (await res.json()) as OpenRouterModelsResponse;
+        if (!res.ok) {
+          throw new Error(data.error ?? "Failed to load models");
+        }
+        if (cancelled) return;
+
+        setOpenRouterModelOptions(data.models);
+        if (llmModelSourceRef.current.openrouter === "custom") return;
+
+        setLlmModelsByProvider((prev) => {
+          const current = prev.openrouter;
+          if (data.models.some((model) => model.id === current)) return prev;
+          const fallback =
+            data.models.find((model) => model.id === "openrouter/free")?.id ?? data.models[0]?.id;
+          if (!fallback) return prev;
+          return { ...prev, openrouter: fallback };
+        });
+      } catch (error) {
+        if (!cancelled) setOpenRouterModelsError((error as Error).message);
+      } finally {
+        if (!cancelled) setOpenRouterModelsLoading(false);
+      }
+    }
+
+    void loadOpenRouterModels();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [llmProvider, openRouterModelsRefreshToken]);
+
+  function setLlmModel(model: string) {
+    setLlmModelsByProvider((prev) => ({ ...prev, [llmProvider]: model }));
+  }
+
+  function setLlmModelSource(source: LlmModelSource) {
+    setLlmModelSourceByProvider((prev) => ({ ...prev, [llmProvider]: source }));
+  }
+
+  function refreshOpenRouterModels() {
+    setOpenRouterModelsRefreshToken((token) => token + 1);
+  }
 
   function resetOutput() {
     setPseudocode("");
@@ -147,6 +273,8 @@ export function useGlossiaStudio(): GlossiaStudioModel {
     const body: DomainBootstrapRequest = {
       description: domainPrompt,
       openAiApiKey: openAiApiKey.trim() || undefined,
+      llmProvider,
+      llmModel: llmModel.trim() || undefined,
     };
 
     try {
@@ -315,6 +443,8 @@ export function useGlossiaStudio(): GlossiaStudioModel {
       pseudocode: effectiveMode === "json" ? pseudocode : undefined,
       domain,
       openAiApiKey: openAiApiKey.trim() || undefined,
+      llmProvider,
+      llmModel: llmModel.trim() || undefined,
     };
 
     try {
@@ -380,6 +510,12 @@ export function useGlossiaStudio(): GlossiaStudioModel {
       activeTab,
       openAiApiKey,
       showOpenAiApiKey,
+      llmProvider,
+      llmModel,
+      llmModelSource,
+      modelOptions,
+      modelsLoading,
+      modelsError,
       hasOutput: Boolean(pseudocode || rawJson || patch || serverError),
       canCompose: Boolean(domain),
       showMidiExamples: domain?.id === "midi-poc",
@@ -400,6 +536,10 @@ export function useGlossiaStudio(): GlossiaStudioModel {
       setActiveTab,
       setPseudocode,
       setOpenAiApiKey,
+      setLlmProvider,
+      setLlmModel,
+      setLlmModelSource,
+      refreshOpenRouterModels,
       toggleOpenAiApiKeyVisibility: () => setShowOpenAiApiKey((value) => !value),
       clearOpenAiApiKey: () => setOpenAiApiKey(""),
     },

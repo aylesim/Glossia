@@ -1,8 +1,7 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
-
-export type Theme = "light" | "dark";
+import { createContext, useCallback, useContext, useLayoutEffect, useMemo, useState } from "react";
+import { applyTheme, parseTheme, readSystemTheme, THEME_KEY, type Theme } from "@/lib/theme";
 
 type ThemeContextValue = {
   theme: Theme;
@@ -12,36 +11,48 @@ type ThemeContextValue = {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-function initialTheme(): Theme {
-  if (typeof document === "undefined") return "dark";
-  return document.documentElement.dataset.theme === "light" ? "light" : "dark";
-}
-
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
+export function ThemeProvider({
+  children,
+  initialTheme,
+}: {
+  children: React.ReactNode;
+  initialTheme: Theme;
+}) {
   const [theme, setThemeState] = useState<Theme>(initialTheme);
+
+  useLayoutEffect(() => {
+    let stored: string | null = null;
+    try {
+      stored = localStorage.getItem(THEME_KEY);
+    } catch {}
+
+    const resolved = parseTheme(stored) ?? readSystemTheme();
+    if (
+      resolved === initialTheme &&
+      document.documentElement.dataset.theme === initialTheme
+    ) {
+      return;
+    }
+    applyTheme(resolved);
+    setThemeState(resolved);
+  }, [initialTheme]);
 
   const setTheme = useCallback((t: Theme) => {
     setThemeState(t);
-    document.documentElement.dataset.theme = t;
-    try {
-      localStorage.setItem("glossia.theme", t);
-    } catch {}
+    applyTheme(t);
   }, []);
 
   const toggleTheme = useCallback(() => {
     setThemeState((prev) => {
       const next = prev === "dark" ? "light" : "dark";
-      document.documentElement.dataset.theme = next;
-      try {
-        localStorage.setItem("glossia.theme", next);
-      } catch {}
+      applyTheme(next);
       return next;
     });
   }, []);
 
   const value = useMemo(
     () => ({ theme, setTheme, toggleTheme }),
-    [theme, setTheme, toggleTheme]
+    [theme, setTheme, toggleTheme],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

@@ -61,16 +61,29 @@ export default function StudioWorkspace() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-2 rounded border border-[var(--border)] bg-[var(--surface)] p-2.5 lg:flex-row lg:items-center lg:gap-4">
+      <div className="flex flex-col gap-3 rounded border border-[var(--border)] bg-[var(--surface)] p-2.5 sm:flex-row sm:items-start sm:gap-4">
         <PresetSection
           selectedPresetId={studio.state.selectedPresetId}
           onSelectPreset={studio.actions.selectPreset}
           compact
           toolbar
         />
-        <div className="hidden h-px w-full bg-[var(--border)] lg:block lg:h-8 lg:w-px lg:shrink-0" aria-hidden />
+        <div
+          className="shrink-0 bg-[var(--border)] max-sm:h-px max-sm:w-full sm:w-px sm:self-stretch"
+          aria-hidden
+        />
         <ApiKeySection
           optionalCaption
+          llmProvider={studio.state.llmProvider}
+          onLlmProviderChange={studio.actions.setLlmProvider}
+          llmModel={studio.state.llmModel}
+          llmModelSource={studio.state.llmModelSource}
+          onLlmModelSourceChange={studio.actions.setLlmModelSource}
+          modelOptions={studio.state.modelOptions}
+          modelsLoading={studio.state.modelsLoading}
+          modelsError={studio.state.modelsError}
+          onLlmModelChange={studio.actions.setLlmModel}
+          onRefreshModels={studio.actions.refreshOpenRouterModels}
           openAiApiKey={studio.state.openAiApiKey}
           showOpenAiApiKey={studio.state.showOpenAiApiKey}
           onOpenAiApiKeyChange={studio.actions.setOpenAiApiKey}
