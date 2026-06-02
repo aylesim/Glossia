@@ -1,7 +1,7 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import NodeCatalog from "@/app/components/NodeCatalog";
-import GlossiaIntro from "./components/GlossiaIntro";
 import ApiKeySection from "./components/ApiKeySection";
 import ComposeSection from "./components/ComposeSection";
 import DomainSection from "./components/DomainSection";
@@ -9,6 +9,10 @@ import PresetSection from "./components/PresetSection";
 import ResultsSection from "./components/ResultsSection";
 import StudioGraphColumn from "./components/StudioGraphColumn";
 import { useGlossiaStudio } from "./hooks/useGlossiaStudio";
+
+const GlossiaIntro = dynamic(() => import("./components/GlossiaIntro"), {
+  ssr: false,
+});
 
 function PanelStatus({
   label,

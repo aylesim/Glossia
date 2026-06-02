@@ -16,17 +16,9 @@ export default function HomeHeader() {
               >
                 Alessandro Miracapillo
               </a>
-              <span className="text-[var(--fg-subtle)]"> · aylesim</span>
+              <span className="text-[var(--fg-subtle)]"> · Aylesim</span>
             </span>
-            <span className="rounded-sm border border-[var(--border-strong)] bg-[var(--surface-raised)] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-[var(--fg)]">
-              experimental AI POC
-            </span>
-            <span className="font-mono text-[10px] text-[var(--fg-subtle)]">schema-grounded graph generation</span>
           </div>
-          <p className="mt-1 max-w-2xl font-mono text-[10px] leading-relaxed text-[var(--fg-muted)]">
-            Proof-of-concept exploring LLM-assisted domain design, pipeline composition, and graph validation — not a
-            production product.
-          </p>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
             <a
               href="https://github.com/aylesim/Glossia"
