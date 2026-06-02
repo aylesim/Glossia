@@ -26,7 +26,7 @@ type StudioGraphColumnProps = {
 export default function StudioGraphColumn({ patch, domain, hasOutput }: StudioGraphColumnProps) {
   return (
     <aside className="min-h-0 w-full" aria-label="Patch graph">
-      <div className="flex h-[min(50vh,440px)] flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] lg:h-[min(78dvh,820px)]">
+      <div className="flex h-[min(50vh,440px)] flex-col overflow-hidden rounded border border-[var(--border)] bg-[var(--surface)] lg:h-[min(78dvh,820px)]">
         <div className="shrink-0 border-b border-[var(--border)] px-4 py-2.5">
           <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--fg-subtle)]">Graph</p>
         </div>
