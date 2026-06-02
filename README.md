@@ -1,108 +1,118 @@
-# ✨ Glossia
+# Glossia
 
-**Describe workflows in natural language. Get validated graphs back.**
+**LLM workflow composer with schema validation and graph rendering.**
 
-Glossia is a **proof of concept** by [Aylesim](https://github.com/aylesim) ([Alessandro Miracapillo](https://github.com/aylesim)) for using **large language models** to design **semantic graph pipelines**: you agree on a vocabulary of node types, write what you want in plain language, and the studio turns that into **schema-checked JSON** plus an **interactive diagram**.
+Glossia is a proof of concept by [Alessandro Miracapillo](https://github.com/aylesim) for turning natural-language workflow descriptions into validated graph structures.
 
-🔗 **Repository:** [github.com/aylesim/Glossia](https://github.com/aylesim/Glossia)
+The project is meant to show practical LLM integration beyond a chat interface: prompt design, structured outputs, runtime validation, provider abstraction, and an interactive UI built around the generated data.
 
-> ⚠️ **Experimental PoC** — nodes are semantic stubs (structure + intent), not a runtime engine. No production guarantees.
+Repository: [github.com/aylesim/Glossia](https://github.com/aylesim/Glossia)
 
----
+## What It Demonstrates
 
-## 🎯 What problem does it explore?
+Glossia takes a workflow idea written in plain language and turns it into a graph made of typed nodes and edges.
 
-Most LLM demos stop at chat. Glossia asks a different question:
-
-> Can we use natural language to **author structured workflows** that stay **valid**, **inspectable**, and **editable** as JSON?
-
-The hypothesis is a simple pipeline:
+The important part is not only generation. The app keeps the model output constrained by a domain schema, validates the result with Zod, and renders only validated JSON.
 
 ```text
-🗣️ natural language  →  📝 pseudocode  →  📦 patch JSON  →  🕸️ graph UI
+natural language -> pseudocode -> patch JSON -> validation -> graph UI
 ```
 
-Everything the UI renders comes from **validated artifacts**, not free-form model text.
+This makes the project closer to an LLM-powered product workflow than to a one-off prompt demo.
 
----
+## Why This Project Exists
 
-## 🧩 Core ideas
+LLMs are useful when they can translate intent into structured artifacts that software can trust. Glossia explores that pattern with a small but complete system:
 
-| Concept | What it means |
+- the user defines or selects a domain;
+- the domain describes allowed node types, ports, and parameters;
+- the user describes a workflow in natural language;
+- the LLM produces an intermediate pseudocode representation;
+- the app converts that into patch JSON;
+- the patch is validated against both a generic graph schema and the active domain;
+- the UI renders the final graph from JSON only.
+
+The result is a demo that shows how to combine language models with deterministic checks instead of treating model output as final truth.
+
+## Key Engineering Points
+
+### LLM Orchestration
+
+- Server-side API routes call OpenAI-compatible providers.
+- OpenAI and OpenRouter are supported.
+- The UI can pass a provider, model, and API key per request.
+- Environment variables provide local development defaults.
+- Prompt builders are separated from route logic so the generation flow stays inspectable.
+
+### Structured Generation
+
+Glossia uses a two-step generation path:
+
+1. produce readable pseudocode from the user prompt;
+2. produce graph JSON from that pseudocode and the active domain.
+
+This gives the user a reviewable intermediate artifact and makes the final JSON easier to debug.
+
+### Validation First
+
+The graph is never rendered directly from free-form model text.
+
+Validation checks include:
+
+- unique node ids;
+- edges pointing to existing nodes;
+- node types existing in the active domain;
+- params matching the domain definition;
+- schema-valid domain and patch JSON.
+
+### Product Surface
+
+The app includes the parts needed to try the idea end to end:
+
+- domain bootstrap from natural language;
+- domain presets;
+- import/export for domain JSON;
+- model/provider selection;
+- pseudocode, raw JSON, and validation views;
+- graph visualization with React Flow;
+- local persistence for current domain and workspace state.
+
+## Built-In Domains
+
+Glossia includes presets so the workflow can be tested without writing a domain from scratch.
+
+| Preset | What it models |
 |--------|----------------|
-| **Domain JSON** | Defines which node types exist, their ports, and params — your project vocabulary |
-| **Patch JSON** | A concrete graph: nodes, edges, and typed parameters |
-| **Two sources of truth** | Domain and patch are separate; the patch is always checked against the active domain |
-| **Zod validation** | Same schemas on server and client — invalid JSON never becomes the graph |
+| MIDI | Notes, transformations, and musical output |
+| Image processing | Input, filters, resize, and output |
+| Text / NLP | Normalization, embeddings, classification |
+| Modular synth | Oscillators, envelopes, filters, and audio routing |
 
----
+Custom domains can also be generated with the LLM or edited manually as JSON.
 
-## 🚀 What you can do in the studio
+## Tech Stack
 
-1. **🏗️ Domain** — Bootstrap a domain from a prompt, pick a preset, paste JSON, or import/export `.json`
-2. **📚 Catalog** — Browse node types allowed in the active domain
-3. **✍️ Compose** — Describe a flow in natural language; generate pseudocode and/or patch JSON
-4. **✅ Validate** — See schema and domain errors before trusting the output
-5. **🕸️ Graph** — Explore the pipeline in **React Flow** (pan, zoom, inspect connections)
-6. **🔁 Iterate** — Regenerate JSON, edit pseudocode, switch tabs between pseudocode / raw JSON / validation
+| Area | Stack |
+|------|-------|
+| Framework | Next.js 16, App Router |
+| Language | TypeScript |
+| UI | React 19, Tailwind CSS 4 |
+| Graph rendering | `@xyflow/react` |
+| Validation | Zod 4 |
+| LLM integration | OpenAI SDK, OpenRouter-compatible requests |
 
-### Generation modes
-
-- **Full pipeline** — prompt → pseudocode → patch JSON
-- **Pseudocode only** — intermediate step for review
-- **JSON from pseudocode** — refine structure when the prose is already right
-
-### LLM providers
-
-- **OpenAI** — API key in UI or `.env.local`
-- **OpenRouter** — free-text model list loaded from the API; optional attribution headers
-
-Keys typed in the browser are stored **locally only** (not sent to Glossia servers except your chosen provider).
-
----
-
-## 🎹 Built-in presets
-
-Load a preset to skip cold-start and see a full demo path:
-
-| Preset | Domain flavor | Example intent |
-|--------|---------------|----------------|
-| 🎵 **MIDI** | Note / transform / output nodes | Musical flow with validated ports |
-| 🖼️ **Image processing** | `image.in`, filter, resize, `image.out` | Camera → blur → HD → output |
-| 📄 **Text / NLP** | normalize → embed → classify | Document tagging pipeline |
-| 🎛️ **Modular synth** | osc, envelope, filter, audio out | CV routing and audio path |
-
-You can still **generate a custom domain** with the LLM or hand-edit domain JSON.
-
----
-
-## 🛠️ Tech stack
-
-| Layer | Choice |
-|-------|--------|
-| Framework | **Next.js 16** (App Router) |
-| UI | **React 19**, **Tailwind CSS 4** |
-| Graph | **@xyflow/react** |
-| Validation | **Zod 4** |
-| LLM | **OpenAI** SDK (OpenAI + OpenRouter routes) |
-| Language | **TypeScript** |
-
----
-
-## ⚡ Quick start
+## Local Setup
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open **[http://localhost:3000](http://localhost:3000)**.
+Open [http://localhost:3000](http://localhost:3000).
 
-1. Choose **OpenAI** or **OpenRouter** in the toolbar  
-2. Pick a model (OpenRouter fetches available models automatically)  
-3. Paste your API key (browser storage) **or** set env vars below and leave the field empty  
+In the toolbar, choose OpenAI or OpenRouter, select a model, and provide an API key. Keys typed into the UI are stored in the browser and sent only with generation requests.
 
-Optional `.env.local`:
+For local development, API keys can also be provided through `.env.local`:
 
 ```env
 LLM_PROVIDER=openai
@@ -115,97 +125,96 @@ OPENROUTER_API_KEY=...
 OPENROUTER_MODEL=openrouter/free
 ```
 
----
-
-## 🔐 Environment variables
+## Environment Variables
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `LLM_PROVIDER` | no | `openai` | Server default when UI does not send one (`openai` \| `openrouter`) |
-| `OPENAI_API_KEY` | no | — | Used when provider is OpenAI and UI key is empty |
-| `OPENROUTER_API_KEY` | no | — | Used when provider is OpenRouter and UI key is empty |
-| `OPENAI_MODEL` | no | `gpt-4o-mini` | OpenAI model id |
-| `OPENROUTER_MODEL` | no | `openrouter/free` | OpenRouter default when UI model unset |
-| `OPENROUTER_HTTP_REFERER` | no | — | Optional OpenRouter attribution |
-| `OPENROUTER_APP_TITLE` | no | — | Optional OpenRouter `X-Title` header |
+| `LLM_PROVIDER` | no | `openai` | Server default when the UI does not send one (`openai` or `openrouter`) |
+| `OPENAI_API_KEY` | no | none | OpenAI key used when the UI field is empty |
+| `OPENROUTER_API_KEY` | no | none | OpenRouter key used when the UI field is empty |
+| `OPENAI_MODEL` | no | `gpt-4o-mini` | Default OpenAI model |
+| `OPENROUTER_MODEL` | no | `openrouter/free` | Default OpenRouter model when the UI does not set one |
+| `OPENROUTER_HTTP_REFERER` | no | none | Optional OpenRouter attribution header |
+| `OPENROUTER_APP_TITLE` | no | none | Optional OpenRouter `X-Title` header |
 
----
+## Data Model
 
-## 📐 JSON contracts (short)
+Glossia keeps two separate JSON artifacts.
 
-### Domain
+### Domain JSON
 
-- Metadata: `id`, `name`, `description`, `semantics`
-- `nodeTypes[]`: each type lists inputs, outputs, and parameter specs
+The domain defines the vocabulary available to the workflow:
 
-### Patch
+- domain metadata;
+- node type definitions;
+- allowed inputs and outputs;
+- parameter names and types.
 
-- `version`, `nodes[]` (`id`, `type`, `params`), `edges[]` (`from`, `to`, optional ports)
-- Integrity: unique ids, edges reference real nodes, `type` must exist in domain, params match spec
+### Patch JSON
 
-See **`docs/PIANO-POC.md`** for the full PoC plan, success criteria, and design rationale.
+The patch defines one concrete graph:
 
----
+- `version`;
+- `nodes`;
+- `edges`;
+- optional port-level connections;
+- node params.
 
-## 📁 Project structure
+The patch must validate against the current domain before it becomes the rendered graph.
+
+## Project Structure
 
 ```text
 lib/
-  domain.ts              # Domain Zod schema + validation
-  domain-presets.ts      # MIDI, image, NLP, modular synth presets
-  schema.ts              # Patch schema + validation vs active domain
-  context.ts             # Prompt builders (bootstrap + compose)
-  api-types.ts           # Shared API types
-  openai-server.ts       # LLM client (request key or env)
-  examples.ts            # Example fixtures
+  domain.ts              # Domain Zod schema and validation
+  domain-presets.ts      # MIDI, image, NLP, and synth presets
+  schema.ts              # Patch schema and validation against active domain
+  context.ts             # Prompt builders for domain and graph generation
+  api-types.ts           # Shared API request/response types
+  openai-server.ts       # LLM client setup
+  examples.ts            # Demo fixtures
 
 app/
-  page.tsx               # Home → studio workspace
-  home/                  # Studio UI (domain, compose, results, graph)
+  page.tsx
+  home/                  # Studio workspace and feature sections
   components/
-    PatchGraph.tsx       # React Flow viewer
-    NodeCatalog.tsx      # Domain node listing
+    PatchGraph.tsx       # React Flow graph viewer
+    NodeCatalog.tsx      # Active-domain node catalog
   api/
-    domain/bootstrap/    # POST: description → Domain JSON
-    generate/            # POST: prompt + domain → pseudocode / patch
-    openrouter/models/   # GET: model list for OpenRouter
+    domain/bootstrap/    # Domain generation route
+    generate/            # Pseudocode and patch generation route
+    openrouter/models/   # OpenRouter model list route
 
 examples/
   sample-patch.json
 
 docs/
-  PIANO-POC.md           # Detailed PoC plan (Italian)
+  PIANO-POC.md           # Original PoC plan
 ```
 
----
+## Suggested Review Flow
 
-## 🧪 Suggested demo flow (~2 min)
+To understand the project quickly:
 
-1. Load the **MIDI** (or any) preset from the toolbar  
-2. Skim the **node catalog** — same vocabulary the composer must use  
-3. Edit the compose prompt or run **Generate**  
-4. Open **Graph** — confirm nodes/edges match the patch JSON  
-5. Break something on purpose (invalid `type`) and read **validation** feedback  
+1. start the app with `npm run dev`;
+2. load a preset domain;
+3. inspect the node catalog;
+4. run a generation from a natural-language prompt;
+5. compare pseudocode, JSON, validation output, and graph rendering;
+6. edit the JSON to trigger validation errors.
 
----
+This shows the main value of the project: the model can propose a workflow, but the application owns the contract.
 
-## 🚧 Limitations (by design)
+## Current Limits
 
-- No execution engine — graphs describe **intent**, not running code  
-- Quality depends on model + prompt; validation catches structure, not semantics  
-- Domain and patch live in **localStorage** in the browser for this PoC  
-- API routes call LLMs server-side; never commit real API keys  
+Glossia is not a workflow execution engine. Nodes describe intent and structure, but they do not run real tasks.
 
----
+Validation catches structural errors and domain mismatches. It does not prove that the generated workflow is semantically perfect.
 
-## 📜 License & author
+State is stored locally in the browser because the goal is to demonstrate the LLM-to-structured-output pipeline, not multi-user persistence.
 
-Built as an open experimentation project by **Aylesim**.
+## Author
 
-Questions, ideas, or PRs welcome on [GitHub](https://github.com/aylesim/Glossia).
+Built by [Alessandro Miracapillo](https://github.com/aylesim) as a focused LLM product engineering prototype.
 
----
-
-## 📚 Further reading
-
-- [`docs/PIANO-POC.md`](docs/PIANO-POC.md) — PoC goals, pipeline steps, deliverables checklist
+See [`docs/PIANO-POC.md`](docs/PIANO-POC.md) for the original implementation plan.
