@@ -16,7 +16,11 @@ import { buildDomainNodeTooltip, formatParamLineForPatch } from "@/lib/node-chro
 import { Patch } from "@/lib/schema";
 import { Domain, getDomainNodeById } from "@/lib/domain";
 
-function buildLayout(patch: Patch, domain: Domain): { nodes: Node[]; edges: Edge[] } {
+function buildLayout(
+  patch: Patch,
+  domain: Domain,
+  edgeStrokeWidth: number,
+): { nodes: Node[]; edges: Edge[] } {
   const SPACING_X = 320;
   const SPACING_Y = 160;
   const cols = Math.max(2, Math.ceil(Math.sqrt(patch.nodes.length) * 1.35));
@@ -102,8 +106,13 @@ function buildLayout(patch: Patch, domain: Domain): { nodes: Node[]; edges: Edge
     target: e.to,
     type: "smoothstep",
     animated: false,
-    style: { stroke: "var(--graph-edge)", strokeWidth: 2 },
-    markerEnd: { type: "arrowclosed" as const, color: "var(--graph-edge)" },
+    style: { stroke: "var(--graph-edge)", strokeWidth: edgeStrokeWidth },
+    markerEnd: {
+      type: "arrowclosed" as const,
+      color: "var(--graph-edge)",
+      width: edgeStrokeWidth <= 1 ? 14 : 16,
+      height: edgeStrokeWidth <= 1 ? 14 : 16,
+    },
   }));
 
   return { nodes: flowNodes, edges: flowEdges };
@@ -113,12 +122,21 @@ export default function PatchGraph({
   patch,
   domain,
   fillHeight = false,
+  edgeStrokeWidth = 2,
+  readOnly = false,
+  showControls = true,
 }: {
   patch: Patch;
   domain: Domain;
   fillHeight?: boolean;
+  edgeStrokeWidth?: number;
+  readOnly?: boolean;
+  showControls?: boolean;
 }) {
-  const { nodes, edges } = useMemo(() => buildLayout(patch, domain), [patch, domain]);
+  const { nodes, edges } = useMemo(
+    () => buildLayout(patch, domain, edgeStrokeWidth),
+    [patch, domain, edgeStrokeWidth],
+  );
   const onInit = useCallback(() => {}, []);
 
   return (
@@ -138,15 +156,24 @@ export default function PatchGraph({
         fitView
         fitViewOptions={{ padding: 0.12, maxZoom: 1 }}
         proOptions={{ hideAttribution: true }}
+        nodesDraggable={!readOnly}
+        nodesConnectable={false}
+        elementsSelectable={!readOnly}
+        panOnDrag={!readOnly}
+        panOnScroll={!readOnly}
+        zoomOnScroll={!readOnly}
+        zoomOnPinch={!readOnly}
       >
         <Background variant={BackgroundVariant.Dots} color="var(--graph-dots)" gap={20} size={1.1} />
-        <Controls
-          style={{
-            background: "var(--graph-control-bg)",
-            border: "1px solid var(--graph-control-border)",
-            borderRadius: 10,
-          }}
-        />
+        {showControls ? (
+          <Controls
+            style={{
+              background: "var(--graph-control-bg)",
+              border: "1px solid var(--graph-control-border)",
+              borderRadius: 10,
+            }}
+          />
+        ) : null}
       </ReactFlow>
     </div>
   );
