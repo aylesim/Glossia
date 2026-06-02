@@ -46,9 +46,7 @@ export default function StudioWorkspace() {
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[var(--border)] pb-3">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--fg-subtle)]">Studio</p>
-          <h2 className="mt-1 font-mono text-sm font-medium tracking-tight text-[var(--fg)]">
-            Domain → compose → validate
-          </h2>
+          <h2 className="mt-1 font-mono text-sm font-medium tracking-tight text-[var(--fg)]">Workspace</h2>
         </div>
         <div className="flex flex-wrap gap-x-4 gap-y-1">
           <PanelStatus
