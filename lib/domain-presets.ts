@@ -169,7 +169,7 @@ export type StudioPreset = {
   domain: Domain;
   prompt: string;
   mode: GenerateMode;
-  demo?: {
+  demo: {
     pseudocode: string;
     patch: Patch;
   };
@@ -196,6 +196,26 @@ export const STUDIO_PRESETS: StudioPreset[] = [
     prompt:
       "Load an image from source camera, apply a gaussian filter with strength 0.45, resize to 1280 by 720, then write to the image output.",
     mode: "full",
+    demo: {
+      pseudocode: `1. image.in (source=camera) - image input
+2. image.filter (kind=gaussian, strength=0.45) - gaussian blur
+3. image.resize (width=1280, height=720) - HD resize
+4. image.out - image output`,
+      patch: {
+        version: "1",
+        nodes: [
+          { id: "in1", type: "image.in", params: { source: "camera" } },
+          { id: "flt1", type: "image.filter", params: { kind: "gaussian", strength: 0.45 } },
+          { id: "rsz1", type: "image.resize", params: { width: 1280, height: 720 } },
+          { id: "out1", type: "image.out", params: {} },
+        ],
+        edges: [
+          { from: "in1", to: "flt1" },
+          { from: "flt1", to: "rsz1" },
+          { from: "rsz1", to: "out1" },
+        ],
+      },
+    },
   },
   {
     id: TEXT_NLP_PRESET.id,
@@ -204,6 +224,33 @@ export const STUDIO_PRESETS: StudioPreset[] = [
     prompt:
       "Normalize text with lowercase and punctuation removal, compute embeddings with model small, then classify with labels urgent,routine,spam.",
     mode: "full",
+    demo: {
+      pseudocode: `1. text.in - document input
+2. text.normalize (lowercase=true, removePunctuation=true) - text cleanup
+3. text.embed (model=small) - vector embedding
+4. text.classify (labels=urgent,routine,spam) - label assignment
+5. text.out - classification output`,
+      patch: {
+        version: "1",
+        nodes: [
+          { id: "in1", type: "text.in", params: {} },
+          {
+            id: "norm1",
+            type: "text.normalize",
+            params: { lowercase: true, removePunctuation: true },
+          },
+          { id: "emb1", type: "text.embed", params: { model: "small" } },
+          { id: "cls1", type: "text.classify", params: { labels: "urgent,routine,spam" } },
+          { id: "out1", type: "text.out", params: {} },
+        ],
+        edges: [
+          { from: "in1", to: "norm1" },
+          { from: "norm1", to: "emb1" },
+          { from: "emb1", to: "cls1" },
+          { from: "cls1", to: "out1" },
+        ],
+      },
+    },
   },
   {
     id: MODULAR_SYNTH_PRESET.id,
@@ -212,6 +259,30 @@ export const STUDIO_PRESETS: StudioPreset[] = [
     prompt:
       "Patch saw oscillator through lowpass filter with cutoff CV and resonance 0.45, shape with ADSR envelope on gate, into the audio output.",
     mode: "full",
+    demo: {
+      pseudocode: `1. synth.osc (waveform=saw) - saw oscillator
+2. synth.env (attack=0.01, decay=0.2, sustain=0.7, release=0.3) - ADSR envelope
+3. synth.filter (mode=lowpass, resonance=0.45) - lowpass with cutoff CV
+4. synth.out - audio output`,
+      patch: {
+        version: "1",
+        nodes: [
+          { id: "osc1", type: "synth.osc", params: { waveform: "saw", detune: 0 } },
+          {
+            id: "env1",
+            type: "synth.env",
+            params: { attack: 0.01, decay: 0.2, sustain: 0.7, release: 0.3 },
+          },
+          { id: "flt1", type: "synth.filter", params: { mode: "lowpass", resonance: 0.45 } },
+          { id: "out1", type: "synth.out", params: {} },
+        ],
+        edges: [
+          { from: "osc1", to: "flt1", toPort: "audio" },
+          { from: "env1", to: "flt1", fromPort: "cv", toPort: "cutoff_cv" },
+          { from: "flt1", to: "out1" },
+        ],
+      },
+    },
   },
 ];
 

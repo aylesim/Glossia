@@ -136,16 +136,46 @@ export function useGlossiaStudio(): GlossiaStudioModel {
 
   useEffect(() => {
     const raw = localStorage.getItem(LOCAL_STORAGE_DOMAIN_KEY);
-    if (!raw) return;
-    try {
-      const parsed = JSON.parse(raw) as unknown;
-      const validation = validateDomain(parsed);
-      if (validation.ok) {
-        setDomain(validation.domain);
-        setDomainRawJson(JSON.stringify(validation.domain, null, 2));
-        lastCommittedDomainJson.current = JSON.stringify(validation.domain);
+    let storedDomain: Domain | null = null;
+    if (raw) {
+      try {
+        const validation = validateDomain(JSON.parse(raw) as unknown);
+        if (validation.ok) storedDomain = validation.domain;
+      } catch {}
+    }
+
+    if (storedDomain) {
+      setDomain(storedDomain);
+      setDomainRawJson(JSON.stringify(storedDomain, null, 2));
+      lastCommittedDomainJson.current = JSON.stringify(storedDomain);
+      const matchingPreset = STUDIO_PRESETS.find((preset) => preset.domain.id === storedDomain!.id);
+      if (matchingPreset) {
+        setSelectedPresetId(matchingPreset.id);
+        setDomainPrompt(`Preset: ${matchingPreset.name}`);
+        setPrompt(matchingPreset.prompt);
+        setMode(matchingPreset.mode);
+        setPseudocode(matchingPreset.demo.pseudocode);
+        setRawJson(JSON.stringify(matchingPreset.demo.patch, null, 2));
+        setPatch(matchingPreset.demo.patch);
+        setActiveTab("graph");
       }
-    } catch {}
+      return;
+    }
+
+    const preset = STUDIO_PRESETS[0];
+    if (!preset) return;
+    setSelectedPresetId(preset.id);
+    setDomainPrompt(`Preset: ${preset.name}`);
+    setDomain(preset.domain);
+    setDomainRawJson(JSON.stringify(preset.domain, null, 2));
+    lastCommittedDomainJson.current = JSON.stringify(preset.domain);
+    localStorage.setItem(LOCAL_STORAGE_DOMAIN_KEY, JSON.stringify(preset.domain));
+    setPrompt(preset.prompt);
+    setMode(preset.mode);
+    setPseudocode(preset.demo.pseudocode);
+    setRawJson(JSON.stringify(preset.demo.patch, null, 2));
+    setPatch(preset.demo.patch);
+    setActiveTab("graph");
   }, []);
 
   useEffect(() => {
@@ -370,17 +400,10 @@ export function useGlossiaStudio(): GlossiaStudioModel {
     setMode(preset.mode);
     setValidationErrors([]);
     setServerError("");
-    if (preset.demo) {
-      setPseudocode(preset.demo.pseudocode);
-      setRawJson(JSON.stringify(preset.demo.patch, null, 2));
-      setPatch(preset.demo.patch);
-      setActiveTab("graph");
-    } else {
-      setPseudocode("");
-      setRawJson("");
-      setPatch(null);
-      setActiveTab("pseudocode");
-    }
+    setPseudocode(preset.demo.pseudocode);
+    setRawJson(JSON.stringify(preset.demo.patch, null, 2));
+    setPatch(preset.demo.patch);
+    setActiveTab("graph");
   }
 
   async function importDomainFromFile(file: File) {
