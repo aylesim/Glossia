@@ -8,6 +8,7 @@ type ApiKeySectionProps = {
   onClearOpenAiApiKey: () => void;
   optionalCaption?: boolean;
   compact?: boolean;
+  toolbar?: boolean;
 };
 
 export default function ApiKeySection({
@@ -18,23 +19,46 @@ export default function ApiKeySection({
   onClearOpenAiApiKey,
   optionalCaption = false,
   compact = false,
+  toolbar = false,
 }: ApiKeySectionProps) {
   const field = compact ? FIELD_COMPACT_CLASS : FIELD_CLASS;
   const btnSec = compact ? BUTTON_SECONDARY_COMPACT_CLASS : BUTTON_SECONDARY_CLASS;
-  const shell = compact
-    ? "space-y-2 rounded border border-[var(--border)] bg-[var(--surface)] p-2.5"
-    : "space-y-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6";
+  const shell = toolbar
+    ? "flex min-w-0 flex-col gap-1.5 lg:min-w-[14rem] lg:flex-[2] lg:flex-row lg:items-center lg:gap-2"
+    : compact
+      ? "space-y-2 rounded border border-[var(--border)] bg-[var(--surface)] p-2.5"
+      : "space-y-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6";
 
   return (
     <section className={shell}>
-      <div className={compact ? "space-y-1" : "border-b border-[var(--border)] pb-4"}>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--fg-subtle)]">OpenAI API key</p>
-          {compact && optionalCaption && (
-            <span className="font-mono text-[9px] text-[var(--fg-subtle)]">optional w/ preset</span>
-          )}
-        </div>
-        {!compact && (
+      <div
+        className={
+          toolbar
+            ? "flex shrink-0 flex-wrap items-center gap-x-2 gap-y-0"
+            : compact
+              ? "space-y-1"
+              : "border-b border-[var(--border)] pb-4"
+        }
+      >
+        {!toolbar && (
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--fg-subtle)]">OpenAI API key</p>
+            {compact && optionalCaption && (
+              <span className="font-mono text-[9px] text-[var(--fg-subtle)]">optional w/ preset</span>
+            )}
+          </div>
+        )}
+        {toolbar && (
+          <>
+            <p className="whitespace-nowrap font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--fg-subtle)]">
+              API key
+            </p>
+            {optionalCaption && (
+              <span className="font-mono text-[9px] text-[var(--fg-subtle)]">opt.</span>
+            )}
+          </>
+        )}
+        {!compact && !toolbar && (
           <>
             <p className="mt-2 text-sm font-medium">Needed only for model generation.</p>
             {optionalCaption && (
@@ -55,7 +79,7 @@ export default function ApiKeySection({
             </p>
           </>
         )}
-        {compact && (
+        {compact && !toolbar && (
           <p className="font-mono text-[9px] text-[var(--fg-muted)]">
             local only ·{" "}
             <a
@@ -68,8 +92,18 @@ export default function ApiKeySection({
             </a>
           </p>
         )}
+        {toolbar && (
+          <a
+            href="https://platform.openai.com/api-keys"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-mono text-[9px] text-[var(--fg-muted)] underline underline-offset-2 hover:text-[var(--fg)]"
+          >
+            openai
+          </a>
+        )}
       </div>
-      <div className={`flex flex-wrap ${compact ? "gap-1" : "gap-2"}`}>
+      <div className={`flex min-w-0 flex-1 flex-wrap ${compact || toolbar ? "gap-1" : "gap-2"}`}>
         <label htmlFor="studio-openai-key" className="sr-only">
           OpenAI API key
         </label>

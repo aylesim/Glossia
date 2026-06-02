@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Newsreader } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
+import { ThemeInitScript } from "./components/theme-init-script";
 import { ThemeProvider } from "./components/theme-provider";
 
 const geistSans = Geist({
@@ -39,10 +39,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
-        <Script
-          id="glossia-theme-init"
-          strategy="beforeInteractive"
-        >{`(function(){try{var t=localStorage.getItem("glossia.theme");if(t==="light"||t==="dark"){document.documentElement.setAttribute("data-theme",t);return;}document.documentElement.setAttribute("data-theme",window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();`}</Script>
+        <ThemeInitScript />
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>

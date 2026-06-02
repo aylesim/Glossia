@@ -61,22 +61,28 @@ export default function StudioWorkspace() {
         </div>
       </div>
 
+      <div className="flex flex-col gap-2 rounded border border-[var(--border)] bg-[var(--surface)] p-2.5 lg:flex-row lg:items-center lg:gap-4">
+        <PresetSection
+          selectedPresetId={studio.state.selectedPresetId}
+          onSelectPreset={studio.actions.selectPreset}
+          compact
+          toolbar
+        />
+        <div className="hidden h-px w-full bg-[var(--border)] lg:block lg:h-8 lg:w-px lg:shrink-0" aria-hidden />
+        <ApiKeySection
+          optionalCaption
+          openAiApiKey={studio.state.openAiApiKey}
+          showOpenAiApiKey={studio.state.showOpenAiApiKey}
+          onOpenAiApiKeyChange={studio.actions.setOpenAiApiKey}
+          onToggleOpenAiApiKeyVisibility={studio.actions.toggleOpenAiApiKeyVisibility}
+          onClearOpenAiApiKey={studio.actions.clearOpenAiApiKey}
+          compact
+          toolbar
+        />
+      </div>
+
       <div className="grid gap-3 xl:grid-cols-[minmax(0,20rem)_minmax(0,20rem)_minmax(0,1fr)] xl:items-start">
         <div className="space-y-2 xl:max-h-[calc(100dvh-7rem)] xl:overflow-y-auto xl:pr-1">
-          <PresetSection
-            selectedPresetId={studio.state.selectedPresetId}
-            onSelectPreset={studio.actions.selectPreset}
-            compact
-          />
-          <ApiKeySection
-            optionalCaption
-            openAiApiKey={studio.state.openAiApiKey}
-            showOpenAiApiKey={studio.state.showOpenAiApiKey}
-            onOpenAiApiKeyChange={studio.actions.setOpenAiApiKey}
-            onToggleOpenAiApiKeyVisibility={studio.actions.toggleOpenAiApiKeyVisibility}
-            onClearOpenAiApiKey={studio.actions.clearOpenAiApiKey}
-            compact
-          />
           <DomainSection
             domainPrompt={studio.state.domainPrompt}
             domainLoading={studio.state.domainLoading}
