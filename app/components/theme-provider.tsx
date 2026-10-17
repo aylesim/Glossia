@@ -1,7 +1,7 @@
 "use client";
 
-import { createContext, useCallback, useContext, useLayoutEffect, useMemo, useState } from "react";
-import { applyTheme, parseTheme, readSystemTheme, THEME_KEY, type Theme } from "@/lib/theme";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { applyTheme, type Theme } from "@/lib/theme";
 
 type ThemeContextValue = {
   theme: Theme;
@@ -20,23 +20,8 @@ export function ThemeProvider({
 }) {
   const [theme, setThemeState] = useState<Theme>(initialTheme);
 
-  useLayoutEffect(() => {
-    let stored: string | null = null;
-    try {
-      stored = localStorage.getItem(THEME_KEY);
-    } catch {}
-
-    const resolved = parseTheme(stored) ?? readSystemTheme();
-    if (
-      resolved === initialTheme &&
-      document.documentElement.dataset.theme === initialTheme
-    ) {
-      return;
-    }
-    applyTheme(resolved);
-    setThemeState(resolved);
-  }, [initialTheme]);
-
+  // The cookie is the source of truth on the server; the provider only needs
+  // to apply the user's explicit toggle and keep the cookie in sync.
   const setTheme = useCallback((t: Theme) => {
     setThemeState(t);
     applyTheme(t);

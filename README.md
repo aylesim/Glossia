@@ -1,107 +1,49 @@
 # Glossia
 
-**LLM workflow composer with schema validation and graph rendering.**
+**Compile intent into a runnable LLM workflow — then prove it works.**
 
-Glossia is a proof of concept by [Alessandro Miracapillo](https://github.com/aylesim) for turning natural-language workflow descriptions into validated graph structures.
+Glossia is a proof of concept by [Alessandro Miracapillo](https://github.com/aylesim) for treating an LLM workflow as a **typed program**, not a prompt chain: natural language becomes a schema-validated graph, the graph executes with real inputs and outputs, and every run leaves a trace, a cost and a verification report.
 
-The project is meant to show practical LLM integration beyond a chat interface: prompt design, structured outputs, runtime validation, provider abstraction, and an interactive UI built around the generated data.
+> LLMs propose. The system disposes.
 
-Repository: [github.com/aylesim/Glossia](https://github.com/aylesim/Glossia)
+![Glossia landing](public/screenshots/landing.png)
 
-## What It Demonstrates
+---
 
-Glossia takes a workflow idea written in plain language and turns it into a graph made of typed nodes and edges.
+## The three acts
 
-The important part is not only generation. The app keeps the model output constrained by a domain schema, validates the result with Zod, and renders only validated JSON.
+| Act | What happens | What it demonstrates |
+|-----|--------------|----------------------|
+| **Compile** | Intent → typed graph → deterministic analysis → repair | Structured generation, JSON Schema, graph validation |
+| **Run** | DAG scheduler, SSE events, retries, budget, cancellation, cache | Orchestration and failure handling |
+| **Prove** | Trace spans, token/cost accounting, citation verification, eval suite | Measurement instead of vibes |
+
+The app has three surfaces: a landing page, a studio (`/studio`), and an eval lab (`/eval`). A completed run is also a shareable read-only page (`/runs/[id]`).
+
+## The hero recipe
+
+The default domain is a **research brief with verifiable citations**:
 
 ```text
-natural language -> pseudocode -> patch JSON -> validation -> graph UI
+question → plan queries → search corpus → fetch → chunk → retrieve evidence
+        → extract claims → dedupe → outline → draft (draft + critique/revise)
+        → verify citations → brief
 ```
 
-This makes the project closer to an LLM-powered product workflow than to a one-off prompt demo.
+The graph is a DAG. Bounded loops (draft → critique → revise) live **inside a composite node**, so the scheduler stays simple and debuggable.
 
-## Why This Project Exists
+What makes the artifact different from a generic RAG demo:
 
-LLMs are useful when they can translate intent into structured artifacts that software can trust. Glossia explores that pattern with a small but complete system:
+- Every claim carries an **exact quote** from a source.
+- A deterministic verifier checks each quote against the source text after the model runs.
+- The report shows supported/unsupported claims, support rate and sources used.
+- Unsupported claims are visible, not silently smoothed over.
 
-- the user defines or selects a domain;
-- the domain describes allowed node types, ports, and parameters;
-- the user describes a workflow in natural language;
-- the LLM produces an intermediate pseudocode representation;
-- the app converts that into patch JSON;
-- the patch is validated against both a generic graph schema and the active domain;
-- the UI renders the final graph from JSON only.
+![Verified artifact](public/screenshots/artifact.png)
 
-The result is a demo that shows how to combine language models with deterministic checks instead of treating model output as final truth.
+The demo uses a **curated four-document corpus** so it is deterministic, cheap and offline-friendly. The LLM calls are real in live mode; only the corpus is local.
 
-## Key Engineering Points
-
-### LLM Orchestration
-
-- Server-side API routes call OpenAI-compatible providers.
-- OpenAI and OpenRouter are supported.
-- The UI can pass a provider, model, and API key per request.
-- Environment variables provide local development defaults.
-- Prompt builders are separated from route logic so the generation flow stays inspectable.
-
-### Structured Generation
-
-Glossia uses a two-step generation path:
-
-1. produce readable pseudocode from the user prompt;
-2. produce graph JSON from that pseudocode and the active domain.
-
-This gives the user a reviewable intermediate artifact and makes the final JSON easier to debug.
-
-### Validation First
-
-The graph is never rendered directly from free-form model text.
-
-Validation checks include:
-
-- unique node ids;
-- edges pointing to existing nodes;
-- node types existing in the active domain;
-- params matching the domain definition;
-- schema-valid domain and patch JSON.
-
-### Product Surface
-
-The app includes the parts needed to try the idea end to end:
-
-- domain bootstrap from natural language;
-- domain presets;
-- import/export for domain JSON;
-- model/provider selection;
-- pseudocode, raw JSON, and validation views;
-- graph visualization with React Flow;
-- local persistence for current domain and workspace state.
-
-## Built-In Domains
-
-Glossia includes presets so the workflow can be tested without writing a domain from scratch.
-
-| Preset | What it models |
-|--------|----------------|
-| MIDI | Notes, transformations, and musical output |
-| Image processing | Input, filters, resize, and output |
-| Text / NLP | Normalization, embeddings, classification |
-| Modular synth | Oscillators, envelopes, filters, and audio routing |
-
-Custom domains can also be generated with the LLM or edited manually as JSON.
-
-## Tech Stack
-
-| Area | Stack |
-|------|-------|
-| Framework | Next.js 16, App Router |
-| Language | TypeScript |
-| UI | React 19, Tailwind CSS 4 |
-| Graph rendering | `@xyflow/react` |
-| Validation | Zod 4 |
-| LLM integration | OpenAI SDK, OpenRouter-compatible requests |
-
-## Local Setup
+## Try it
 
 ```bash
 npm install
@@ -110,111 +52,195 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-In the toolbar, choose OpenAI or OpenRouter, select a model, and provide an API key. Keys typed into the UI are stored in the browser and sent only with generation requests.
+1. Click **Open the studio**.
+2. Keep **Demo** mode (no API key).
+3. Click **Compile graph** — the compiler returns a recorded candidate, the analyzer catches an invalid param, and the repair pass fixes the missing edge.
+4. Click **Run** — watch the nodes move, then inspect the artifact, the trace, the cost and the per-step outputs.
+5. Click **Run** again — the content-addressed cache returns the whole graph in milliseconds.
+6. Open `/eval` and run the 10-case structural suite.
 
-For local development, API keys can also be provided through `.env.local`:
+### Live mode
+
+Switch **Demo → Live** in the studio settings, choose a provider and model, and paste a key. The key stays in the tab's `sessionStorage` and is sent only with the generation request; it is never persisted or logged.
+
+You can also provide server-side defaults:
 
 ```env
 LLM_PROVIDER=openai
 OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-4o-mini
+OPENAI_MODEL=gpt-4.1-mini
 
 # or
 LLM_PROVIDER=openrouter
 OPENROUTER_API_KEY=...
-OPENROUTER_MODEL=openrouter/free
+OPENROUTER_MODEL=openai/gpt-4.1-mini
 ```
 
-## Environment Variables
+Any OpenAI-compatible endpoint works, including Ollama, vLLM or a local mock:
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `LLM_PROVIDER` | no | `openai` | Server default when the UI does not send one (`openai` or `openrouter`) |
-| `OPENAI_API_KEY` | no | none | OpenAI key used when the UI field is empty |
-| `OPENROUTER_API_KEY` | no | none | OpenRouter key used when the UI field is empty |
-| `OPENAI_MODEL` | no | `gpt-4o-mini` | Default OpenAI model |
-| `OPENROUTER_MODEL` | no | `openrouter/free` | Default OpenRouter model when the UI does not set one |
-| `OPENROUTER_HTTP_REFERER` | no | none | Optional OpenRouter attribution header |
-| `OPENROUTER_APP_TITLE` | no | none | Optional OpenRouter `X-Title` header |
+```env
+OPENAI_BASE_URL=http://127.0.0.1:4010/v1
+OPENAI_API_KEY=test
+OPENAI_MODEL=gpt-4.1-mini
+```
 
-## Data Model
+There is a local mock provider for exercising the live path without a key:
 
-Glossia keeps two separate JSON artifacts.
+```bash
+npm run mock:llm
+# in another shell:
+OPENAI_BASE_URL=http://127.0.0.1:4010/v1 OPENAI_API_KEY=test npm run dev
+```
 
-### Domain JSON
+The mock is a development fixture. It deliberately returns an invalid candidate on the first compile and a corrected one on repair, so the live repair loop is exercised too.
 
-The domain defines the vocabulary available to the workflow:
+## Architecture
 
-- domain metadata;
-- node type definitions;
-- allowed inputs and outputs;
-- parameter names and types.
-
-### Patch JSON
-
-The patch defines one concrete graph:
-
-- `version`;
-- `nodes`;
-- `edges`;
-- optional port-level connections;
-- node params.
-
-The patch must validate against the current domain before it becomes the rendered graph.
-
-## Project Structure
+```mermaid
+flowchart LR
+  I[Intent] --> C[Compiler]
+  D[Domain / type system] --> C
+  C --> A[Analyzer + repair]
+  A --> P[Patch IR v2]
+  P --> R[DAG runtime]
+  R --> E[SSE events + trace]
+  R --> AR[Artifact + verification]
+  E --> UI[Studio / run page]
+  AR --> UI
+  P --> EV[Eval suite]
+```
 
 ```text
 lib/
-  domain.ts              # Domain Zod schema and validation
-  domain-presets.ts      # MIDI, image, NLP, and synth presets
-  schema.ts              # Patch schema and validation against active domain
-  context.ts             # Prompt builders for domain and graph generation
-  api-types.ts           # Shared API request/response types
-  openai-server.ts       # LLM client setup
-  examples.ts            # Demo fixtures
-
+  ir/          types, Zod schemas, analyzer, layout, diff, domains
+  llm/         adapter, mock/demo adapter, prompts, repair, model registry
+  runtime/     budget, cache, DAG executor, node executors, event store
+  research/    corpus, retrieval, claim synthesis, deterministic verification
+  eval/        golden set, metrics, report runner
 app/
-  page.tsx
-  home/                  # Studio workspace and feature sections
-  components/
-    PatchGraph.tsx       # React Flow graph viewer
-    NodeCatalog.tsx      # Active-domain node catalog
-  api/
-    domain/bootstrap/    # Domain generation route
-    generate/            # Pseudocode and patch generation route
-    openrouter/models/   # OpenRouter model list route
-
-examples/
-  sample-patch.json
-
-docs/
-  PIANO-POC.md           # Original PoC plan
+  studio/      canvas, inspector, timeline, settings, artifact modal
+  eval/        eval lab
+  runs/[id]/   read-only run page
+  api/         compile, runs, SSE, cancel, eval, models, health
 ```
 
-## Suggested Review Flow
+### The IR
 
-To understand the project quickly:
+A domain is a small type system:
 
-1. start the app with `npm run dev`;
-2. load a preset domain;
-3. inspect the node catalog;
-4. run a generation from a natural-language prompt;
-5. compare pseudocode, JSON, validation output, and graph rendering;
-6. edit the JSON to trigger validation errors.
+```ts
+type Domain = {
+  id: string;
+  version: string;
+  nodeTypes: {
+    id: string;
+    category: "input" | "llm" | "tool" | "transform" | "control" | "output";
+    inputs: Port[];      // name, type, required, multi
+    outputs: Port[];
+    params: ParamSpec[]; // type, required, default, enum, min/max
+    executor: { kind: string; ref: string };
+  }[];
+};
+```
 
-This shows the main value of the project: the model can propose a workflow, but the application owns the contract.
+A patch is a program in that language: node instances with params and edges that name both ports. The analyzer checks identity, domain membership, param types/ranges, edge endpoints, port types, required inputs, multiple producers, cycles, reachability, dead ends, size limits and estimated cost. Invalid graphs never render and never run.
 
-## Current Limits
+The repair loop gets the exact issue list and the original output, and returns a full corrected patch. Every attempt is recorded. A deterministic autofix handles the cheap failures first: missing envelope fields, unknown params, numeric strings, duplicate edges.
 
-Glossia is not a workflow execution engine. Nodes describe intent and structure, but they do not run real tasks.
+### The runtime
 
-Validation catches structural errors and domain mismatches. It does not prove that the generated workflow is semantically perfect.
+- Topological scheduling with configurable concurrency.
+- Port-level values, fan-out and `multi` fan-in.
+- Per-node retries, timeouts and `AbortController` cancellation.
+- Budgets in dollars, tokens, wall time and steps; a violated budget stops the run and keeps the partial trace.
+- Content-addressed cache keyed by executor, params, resolved inputs, model and cache version. Editing one node re-runs only what changed.
+- Typed SSE events with sequence numbers and `Last-Event-ID` replay.
+- Traces as spans: node, LLM call, validation and repair. Cost comes from provider usage, not from a guess.
 
-State is stored locally in the browser because the goal is to demonstrate the LLM-to-structured-output pipeline, not multi-user persistence.
+### The evidence
+
+The verifier normalises both the claim quote and the source text, then checks containment. It records the method (`exact_quote`, `normalized_quote`, `missing`). The artifact's confidence statement is derived from that report.
+
+## Eval lab
+
+The suite is structural, not a leaderboard: it checks whether the compiler produced a valid graph with the expected steps and data-flow shape.
+
+| Metric | What it means | Latest demo suite |
+|--------|---------------|-------------------|
+| pass rate | valid graph and ≥ 60% node recall | **100%** (10/10) |
+| node recall | expected node types present | **1.00** |
+| node precision | generated types that were expected | **0.82** |
+| edge F1 | multiset of `(fromType, toType)` | **0.70** |
+| param accuracy | expected params match | **1.00** |
+| attempts | compile calls including repair | **2.00** |
+| p50 latency | per compile | **0.4s** |
+| cost | per suite | **$0.00** in demo |
+
+Demo mode uses recorded compiler fixtures, so these numbers prove the pipeline and the analyzer, not the model. Live mode runs the same cases against a real model and records the real cost and latency.
+
+![Eval lab](public/screenshots/eval.png)
+
+## Tests
+
+```bash
+npm run lint
+npm run typecheck
+npm run test:ci      # build + production server + API integration tests
+```
+
+`test:ci` starts the production server on port 3100 and runs `tests/api.test.mjs`. The tests cover compile + repair, a complete run with verification, cache hits, the 10-case eval suite, invalid graph rejection and cancellation. The local mock provider keeps the live adapter path testable without spending money.
+
+To include the live adapter path in the test run:
+
+```bash
+npm run mock:llm
+OPENAI_BASE_URL=http://127.0.0.1:4010/v1 OPENAI_API_KEY=test npm start -p 3101
+TEST_LIVE=1 TEST_BASE_URL=http://127.0.0.1:3101 npm run test:api
+```
+
+## Tradeoffs and limits
+
+This is a focused POC, not a production platform. The important boundaries are explicit:
+
+- **Run registry is in-process.** `globalThis` keeps the POST route and the SSE route on the same run map. A multi-instance deployment needs a real event bus (Redis Streams, Postgres `LISTEN/NOTIFY`, etc.). The store interface is the seam.
+- **Runs are files** under `.data/` (gitignored). Good for a single-node demo; replace with a database before sharing across instances.
+- **The corpus is curated.** The retrieval path is real (chunking, lexical ranking, top-K, source diversity), but it is not a live web search or PDF ingestion pipeline.
+- **The demo compiler is recorded.** It exercises the same analyzer and repair loop as live mode. The live compiler is the real path.
+- **No auth, tenancy or billing.** BYOK is deliberate for a POC.
+- **Eval is structural.** There is no calibrated LLM judge yet; the rubric and human calibration are in the roadmap (`docs/PIANO-V2.md`, F4).
+- **Graph editing is read-only.** You can compile and run, inspect every node and artifact, but not drag new nodes onto the canvas yet.
+
+## What is implemented vs planned
+
+Implemented in this slice:
+
+- IR v2 with typed ports, params, categories and executor refs.
+- Domain-aware JSON Schema generation; OpenAI-compatible adapter; recorded demo adapter.
+- Analyzer with actionable issues, deterministic autofix and a model repair loop.
+- DAG runtime, SSE, trace spans, usage/cost, budget, cancellation, cache.
+- Research recipe with retrieval, claim extraction, outline, draft, bounded critique/revise, deterministic citation verification and artifact.
+- Second domain (`quick-answer`) to prove the engine is not hard-wired to research.
+- Studio (canvas, inspector, timeline, settings, artifact modal), eval lab, run page, landing.
+- 8 API integration tests and a local live-path mock.
+
+Next, in the plan's F4–F6: database persistence, share links, graph editing, a calibrated judge, prompt version A/B, a provider beyond OpenAI-compatible, and deployment hardening.
+
+## Docs
+
+- [`docs/REVIEW.md`](docs/REVIEW.md) — the 5-minute review path and key files.
+- [`docs/architecture.md`](docs/architecture.md) — data flow, runtime, storage, deployment.
+- [`docs/PROMPTS.md`](docs/PROMPTS.md) — prompt contracts and versioning.
+- [`docs/PIANO-V2.md`](docs/PIANO-V2.md) — the full roadmap and tradeoffs.
+- [`docs/adr/`](docs/adr/) — the four decisions that shaped the implementation.
+
+## Screenshots
+
+| Studio | Run page |
+|---------|----------|
+| ![Studio](public/screenshots/studio.png) | ![Run](public/screenshots/run.png) |
 
 ## Author
 
 Built by [Alessandro Miracapillo](https://github.com/aylesim) as a focused LLM product engineering prototype.
 
-See [`docs/PIANO-POC.md`](docs/PIANO-POC.md) for the original implementation plan.
+Repository: [github.com/aylesim/Glossia](https://github.com/aylesim/Glossia)

@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test:api": "node --test tests/api.test.mjs",
+    "test:ci": "node scripts/test-ci.mjs",
+    "mock:llm": "node scripts/mock-openai.mjs"
   },
   "dependencies": {
     "@xyflow/react": "^12.10.1",
