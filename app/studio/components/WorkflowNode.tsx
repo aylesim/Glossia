@@ -115,8 +115,8 @@ export default function WorkflowNode({ data, selected }: NodeProps<WorkflowFlowN
         )}
 
         <div className="flex items-center justify-between border-t border-[var(--border)] pt-1.5 font-mono text-[7.5px] text-[var(--fg-subtle)]">
-          <span>{data.ms !== undefined ? `${Math.round(data.ms)}ms` : "—"}</span>
-          <span>{data.costUsd !== undefined ? `$${data.costUsd.toFixed(4)}` : "—"}</span>
+          <span>{data.ms !== undefined ? `${Math.round(data.ms)}ms` : "n/a"}</span>
+          <span>{data.costUsd !== undefined ? `$${data.costUsd.toFixed(4)}` : "n/a"}</span>
         </div>
       </div>
 

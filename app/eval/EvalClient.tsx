@@ -7,12 +7,12 @@ import { MODELS } from "@/lib/llm/registry";
 import { btnPrimary, btnSecondary, chip, field, monoLabel } from "@/app/styles";
 
 function pct(value: number | null | undefined): string {
-  if (value === null || value === undefined) return "—";
+  if (value === null || value === undefined) return "n/a";
   return `${Math.round(value * 100)}%`;
 }
 
 function score(value: number | null | undefined): string {
-  if (value === null || value === undefined) return "—";
+  if (value === null || value === undefined) return "n/a";
   return value.toFixed(2);
 }
 
@@ -94,22 +94,23 @@ export default function EvalClient() {
       <div className="flex flex-col justify-between gap-6 border-b border-[var(--border)] pb-8 md:flex-row md:items-end">
         <div className="max-w-[680px]">
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--fg-subtle)]">
-            Eval lab / structural suite
+            Evaluation / structural suite
           </p>
           <h1 className="mt-3 text-[34px] font-semibold leading-[1.04] tracking-[-0.04em] text-[var(--fg)] sm:text-[40px]">
-            Quality is a number,
+            Structural evaluation
             <br />
-            not a feeling.
+            of compiled graphs.
           </h1>
           <p className="mt-4 max-w-[560px] text-sm leading-7 text-[var(--fg-muted)]">
-            The same graph contract runs against a small golden set. Validity, node recall, edge F1, repair
-            attempts, latency and cost are recorded per case. Demo mode uses recorded compiler fixtures;
-            live mode runs the same suite against a real model.
+            The same graph contract runs against ten recorded cases. The suite records validity and node
+            overlap. It also keeps the number of repair attempts and the latency for each case, with cost.
+            These numbers describe the fixture set, not model quality. Live mode can run the same suite
+            against a provider.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Link href="/studio" className={btnSecondary}>
-            Open studio
+            Open prototype
           </Link>
           <button type="button" onClick={() => void runEval()} disabled={loading} className={btnPrimary}>
             {loading ? "Running…" : "Run eval suite"}
@@ -118,20 +119,20 @@ export default function EvalClient() {
       </div>
 
       <div className="mt-5 flex flex-wrap items-end gap-3">
-        <div className="flex rounded-full border border-[var(--border)] bg-[var(--surface)] p-0.5" role="group" aria-label="Eval mode">
+        <div className="flex rounded-md border border-[var(--border)] bg-[var(--surface)] p-0.5" role="group" aria-label="Eval mode">
           {(["demo", "live"] as const).map((value) => (
             <button
               key={value}
               type="button"
               onClick={() => setMode(value)}
               aria-pressed={mode === value}
-              className={`rounded-full px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.08em] transition-colors ${
+              className={`rounded px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.06em] transition-colors ${
                 mode === value
                   ? "bg-[var(--inverse)] text-[var(--inverse-fg)]"
                   : "text-[var(--fg-subtle)] hover:text-[var(--fg)]"
               }`}
             >
-              {value}
+              {value === "demo" ? "recorded" : value}
             </button>
           ))}
         </div>
@@ -180,7 +181,7 @@ export default function EvalClient() {
             </label>
           </>
         ) : (
-          <p className={`${chip} h-fit`}>recorded fixtures · free · deterministic</p>
+          <p className={`${chip} h-fit`}>recorded fixtures / no model calls</p>
         )}
       </div>
 
@@ -218,8 +219,8 @@ export default function EvalClient() {
           <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1 font-mono text-[9px] uppercase tracking-[0.1em] text-[var(--fg-subtle)]">
             <span>{report.id}</span>
             <span>{new Date(report.createdAt).toLocaleString()}</span>
-            <span className="text-[var(--fg-muted)]">{report.mode}</span>
-            <span>{report.model}</span>
+            <span className="text-[var(--fg-muted)]">{report.mode === "demo" ? "recorded" : report.mode}</span>
+            <span>{report.model === "demo/recorded" ? "fixture adapter" : report.model}</span>
             <span>avg attempts {report.summary.avgAttempts.toFixed(2)}</span>
           </div>
 
@@ -324,11 +325,11 @@ export default function EvalClient() {
         <div className="mt-10 flex min-h-[280px] flex-col items-center justify-center rounded-lg border border-dashed border-[var(--border-strong)] bg-[var(--bg-elevated)] px-6 text-center">
           <p className="text-[20px] font-semibold tracking-[-0.02em] text-[var(--fg)]">No report yet.</p>
           <p className="mt-2 max-w-[420px] text-sm leading-6 text-[var(--fg-muted)]">
-            Run the demo suite to exercise the compiler, analyzer and repair loop on ten structural cases.
-            It takes a few seconds and costs nothing.
+            Run the recorded suite to exercise the compiler, analyzer and repair loop on ten structural cases.
+            It does not call a model.
           </p>
           <button type="button" onClick={() => void runEval()} disabled={loading} className={`${btnPrimary} mt-5`}>
-            {loading ? "Running…" : "Run the demo suite"}
+            {loading ? "Running…" : "Run the recorded suite"}
           </button>
         </div>
       )}

@@ -504,7 +504,7 @@ export default function StudioClient() {
         <Wordmark />
         <span className="hidden h-4 w-px bg-[var(--border)] md:block" />
         <div className="hidden items-center gap-1.5 md:flex">
-          <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-[var(--fg-subtle)]">console</span>
+          <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-[var(--fg-subtle)]">prototype</span>
           <span className="font-mono text-[9px] text-[var(--border-strong)]">/</span>
           <span className="font-mono text-[9px] uppercase tracking-[0.08em] text-[var(--fg)]">{domain.name}</span>
           <span className="rounded border border-[var(--border)] bg-[var(--surface-raised)] px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.06em] text-[var(--fg-subtle)]">
@@ -533,7 +533,7 @@ export default function StudioClient() {
                     : "text-[var(--fg-subtle)] hover:text-[var(--fg)]"
                 }`}
               >
-                {value}
+                {value === "demo" ? "recorded" : value}
               </button>
             ))}
           </div>
@@ -790,8 +790,8 @@ export default function StudioClient() {
                 ) : null}
 
                 <p className="font-mono text-[8.5px] leading-4 text-[var(--fg-subtle)]">
-                  ⌘↵ compile · ⌘⇧↵ compile + run. In demo mode the compiler returns a recorded candidate and
-                  the same analyzer/repair loop runs on it.
+                  ⌘↵ compile · ⌘⇧↵ compile + run. In recorded mode the compiler returns a fixture and the
+                  same analyzer/repair loop runs on it.
                 </p>
 
                 <div className="overflow-hidden rounded-md border border-[var(--border)] bg-[var(--surface)]">
@@ -800,23 +800,23 @@ export default function StudioClient() {
                       runtime
                     </span>
                     <span className="font-mono text-[8px] uppercase tracking-[0.06em] text-[var(--fg-muted)]">
-                      {mode}
+                      {mode === "demo" ? "recorded" : mode}
                     </span>
                   </div>
                   <dl className="divide-y divide-[var(--border)] font-mono text-[9px]">
                     {[
-                      ["provider", mode === "demo" ? "demo / recorded" : model],
+                      ["provider", mode === "demo" ? "recorded fixture" : model],
                       ["budget", `$${budget.toFixed(2)}`],
                       ["patch", patch ? `${patch.nodes.length}n / ${patch.edges.length}e` : "none"],
                       [
                         "last run",
-                        run ? `${run.status} · ${((run.durationMs ?? 0) / 1000).toFixed(1)}s` : "—",
+                        run ? `${run.status} · ${((run.durationMs ?? 0) / 1000).toFixed(1)}s` : "n/a",
                       ],
                       [
                         "verified",
                         run?.artifact
                           ? `${Math.round(run.artifact.verification.supportRate * 100)}%`
-                          : "—",
+                          : "n/a",
                       ],
                     ].map(([label, value]) => (
                       <div key={label} className="flex items-center justify-between gap-3 px-2.5 py-1.5">

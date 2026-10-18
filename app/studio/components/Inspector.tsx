@@ -6,7 +6,7 @@ import Markdown from "@/app/components/Markdown";
 import type { InspectorTab, StepView } from "../types";
 
 function fmtDuration(ms: number | undefined): string {
-  if (ms === undefined) return "—";
+  if (ms === undefined) return "n/a";
   if (ms < 1000) return `${Math.round(ms)}ms`;
   return `${(ms / 1000).toFixed(2)}s`;
 }
@@ -211,8 +211,8 @@ export default function Inspector({
               <div className="grid grid-cols-3 gap-2">
                 {[
                   ["ms", fmtDuration(step?.ms)],
-                  ["cost", step?.usage ? `$${step.usage.costUsd.toFixed(4)}` : "—"],
-                  ["tokens", step?.usage ? `${step.usage.inputTokens + step.usage.outputTokens}` : "—"],
+                  ["cost", step?.usage ? `$${step.usage.costUsd.toFixed(4)}` : "n/a"],
+                  ["tokens", step?.usage ? `${step.usage.inputTokens + step.usage.outputTokens}` : "n/a"],
                 ].map(([label, value]) => (
                   <div key={label} className="rounded-md border border-[var(--border)] px-2.5 py-2">
                     <p className="font-mono text-[8px] uppercase tracking-[0.1em] text-[var(--fg-subtle)]">{label}</p>
@@ -262,12 +262,12 @@ export default function Inspector({
               <h2 className="mt-1 font-mono text-[12px] text-[var(--fg)]">{run?.id ?? "no run yet"}</h2>
               <div className="mt-3 grid grid-cols-2 gap-2">
                 {[
-                  ["status", run?.status ?? "—"],
-                  ["model", run?.model ?? "—"],
-                  ["cost", run ? `$${run.costUsd.toFixed(4)}` : "—"],
-                  ["duration", run ? fmtDuration(run.durationMs) : "—"],
-                  ["tokens", run ? `${run.usage.inputTokens + run.usage.outputTokens}` : "—"],
-                  ["steps", run ? `${run.steps.filter((step) => step.status === "completed").length}/${run.steps.length}` : "—"],
+                  ["status", run?.status ?? "n/a"],
+                  ["model", run?.model ?? "n/a"],
+                  ["cost", run ? `$${run.costUsd.toFixed(4)}` : "n/a"],
+                  ["duration", run ? fmtDuration(run.durationMs) : "n/a"],
+                  ["tokens", run ? `${run.usage.inputTokens + run.usage.outputTokens}` : "n/a"],
+                  ["steps", run ? `${run.steps.filter((step) => step.status === "completed").length}/${run.steps.length}` : "n/a"],
                 ].map(([label, value]) => (
                   <div key={label} className="rounded-md border border-[var(--border)] px-2.5 py-2">
                     <p className="font-mono text-[8px] uppercase tracking-[0.1em] text-[var(--fg-subtle)]">{label}</p>

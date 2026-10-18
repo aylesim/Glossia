@@ -113,7 +113,7 @@ export function demoDraft(
   lines.push(`# ${outline.title || question}`);
   lines.push("");
   lines.push(
-    "**Short answer:** measure the workflow before deploying it, make every run observable, and keep autonomy bounded by approval gates and least-privilege tools. The evidence below supports each part of that answer. [S1] [S2] [S3] [S4]",
+    "**Short answer:** measure the workflow before deploying it. Make every run observable. Keep autonomy bounded by approval gates and least-privilege tools. The rest of this brief gives the supporting evidence. [S1] [S2] [S3] [S4]",
   );
   lines.push("");
   if (tone === "executive") {
@@ -123,7 +123,7 @@ export function demoDraft(
     lines.push("");
   }
   lines.push(
-    `This brief is assembled from ${new Set(claims.map((claim) => claim.sourceId)).size} sources and ${claims.length} claims. Every claim carries a source marker so the reasoning can be checked instead of trusted.`,
+    `This brief is assembled from ${new Set(claims.map((claim) => claim.sourceId)).size} sources and ${claims.length} claims. Each claim carries a source marker and a quoted passage.`,
   );
   lines.push("");
 
@@ -159,7 +159,7 @@ export function demoDraft(
   lines.push("## Scope and caveats");
   lines.push("");
   lines.push(
-    "This is a demo brief over a curated four-document corpus, not a live web search. The important part is the pipeline: retrieval, extraction, synthesis and deterministic citation verification are separate, inspectable steps.",
+    "This is a recorded brief over four hand-written sources, not a live web search. Retrieval, extraction, synthesis and citation verification are separate steps, and each one is visible in the trace.",
   );
   return { draft: lines.join("\n"), revised: false };
 }
@@ -241,7 +241,7 @@ export function verifyClaims(
     `- Supported by an exact or normalised source quote: **${report.supportedClaims}/${report.totalClaims}** (${Math.round(report.supportRate * 100)}%)`,
     `- Sources used: **${report.sourcesUsed}**`,
     report.unsupportedClaims > 0
-      ? `- Unsupported claims: **${report.unsupportedClaims}** — listed in the run trace and excluded from the confidence claim.`
+      ? `- Unsupported claims: **${report.unsupportedClaims}**. Listed in the run trace and excluded from the confidence claim.`
       : "- Unsupported claims: **0**",
     "",
     "The verifier is deterministic and runs after the model. It does not ask the model whether it is right.",

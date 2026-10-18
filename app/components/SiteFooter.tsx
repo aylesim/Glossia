@@ -8,7 +8,7 @@ export default function SiteFooter() {
         <div className="max-w-md space-y-2">
           <Wordmark />
           <p className="text-[12px] leading-5 text-[var(--fg-muted)]">
-            A proof of concept by{" "}
+            A research prototype by{" "}
             <a
               href="https://github.com/aylesim"
               target="_blank"
@@ -17,15 +17,15 @@ export default function SiteFooter() {
             >
               Alessandro Miracapillo
             </a>
-            . Typed graphs, real execution, traces and evals.
+            . Typed graphs with execution traces and structural evaluation. Not a product.
           </p>
         </div>
         <div className="flex flex-wrap gap-x-5 gap-y-1.5 font-mono text-[9px] uppercase tracking-[0.1em] text-[var(--fg-subtle)]">
           <Link href="/studio" className="hover:text-[var(--fg)]">
-            Console
+            Prototype
           </Link>
           <Link href="/eval" className="hover:text-[var(--fg)]">
-            Evals
+            Evaluation
           </Link>
           <a href="/api/health" className="hover:text-[var(--fg)]">
             Health

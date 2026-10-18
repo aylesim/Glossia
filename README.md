@@ -1,26 +1,26 @@
 # Glossia
 
-**Compile intent into a runnable LLM workflow — then prove it works.**
+**A research prototype for typed LLM workflows.**
 
-Glossia is a proof of concept by [Alessandro Miracapillo](https://github.com/aylesim) for treating an LLM workflow as a **typed program**, not a prompt chain: natural language becomes a schema-validated graph, the graph executes with real inputs and outputs, and every run leaves a trace, a cost and a verification report.
+Glossia is a proof of concept by [Alessandro Miracapillo](https://github.com/aylesim). It treats an LLM workflow as a **typed program**, not a prompt chain. Natural language becomes a schema-validated graph, the graph executes with real inputs and outputs, and every run leaves a trace, a token count, a cost and a verification report.
 
-> LLMs propose. The system disposes.
+This is not a product. The current study asks whether deterministic checks and a bounded repair loop can catch model errors before they reach execution.
 
 ![Glossia landing](public/screenshots/landing.png)
 
 ---
 
-## The three acts
+## What the prototype does
 
-| Act | What happens | What it demonstrates |
-|-----|--------------|----------------------|
-| **Compile** | Intent → typed graph → deterministic analysis → repair | Structured generation, JSON Schema, graph validation |
+| Stage | What happens | What it tests |
+|-------|--------------|---------------|
+| **Compile** | Intent to typed graph, deterministic analysis, bounded repair | Structured generation, JSON Schema, graph validation |
 | **Run** | DAG scheduler, SSE events, retries, budget, cancellation, cache | Orchestration and failure handling |
-| **Prove** | Trace spans, token/cost accounting, citation verification, eval suite | Measurement instead of vibes |
+| **Evaluate** | Trace spans, token and cost accounting, citation verification, structural suite | Whether a run can be compared and checked |
 
-The app has three surfaces: a landing page, a studio (`/studio`), and an eval lab (`/eval`). A completed run is also a shareable read-only page (`/runs/[id]`).
+The app has three surfaces: a landing page, the prototype (`/studio`), and an evaluation page (`/eval`). A completed run is also a read-only page (`/runs/[id]`).
 
-## The hero recipe
+## Research case
 
 The default domain is a **research brief with verifiable citations**:
 
@@ -32,7 +32,7 @@ question → plan queries → search corpus → fetch → chunk → retrieve evi
 
 The graph is a DAG. Bounded loops (draft → critique → revise) live **inside a composite node**, so the scheduler stays simple and debuggable.
 
-What makes the artifact different from a generic RAG demo:
+The artifact is auditable:
 
 - Every claim carries an **exact quote** from a source.
 - A deterministic verifier checks each quote against the source text after the model runs.
@@ -41,9 +41,9 @@ What makes the artifact different from a generic RAG demo:
 
 ![Verified artifact](public/screenshots/artifact.png)
 
-The demo uses a **curated four-document corpus** so it is deterministic, cheap and offline-friendly. The LLM calls are real in live mode; only the corpus is local.
+The default corpus has four hand-written sources. The recorded path is deterministic and makes no model calls. Live mode uses the same compiler and runtime with a provider.
 
-## Try it
+## Running the prototype
 
 ```bash
 npm install
@@ -52,16 +52,16 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-1. Click **Open the studio**.
-2. Keep **Demo** mode (no API key).
-3. Click **Compile graph** — the compiler returns a recorded candidate, the analyzer catches an invalid param, and the repair pass fixes the missing edge.
-4. Click **Run** — watch the nodes move, then inspect the artifact, the trace, the cost and the per-step outputs.
-5. Click **Run** again — the content-addressed cache returns the whole graph in milliseconds.
+1. Click **Open the prototype**.
+2. Keep **Recorded** mode. No API key is needed.
+3. Click **Compile graph**. The compiler returns a fixture, the analyzer catches an invalid param, and the repair pass fixes the missing edge.
+4. Click **Run**. Inspect the artifact and the per-step trace, cost and output.
+5. Click **Run** again. The content-addressed cache returns the whole graph in milliseconds.
 6. Open `/eval` and run the 10-case structural suite.
 
 ### Live mode
 
-Switch **Demo → Live** in the studio settings, choose a provider and model, and paste a key. The key stays in the tab's `sessionStorage` and is sent only with the generation request; it is never persisted or logged.
+Switch **Recorded** to **Live** in the prototype settings, choose a provider and model, and paste a key. The key stays in the tab's `sessionStorage` and is sent only with the generation request; it is never persisted or logged.
 
 You can also provide server-side defaults:
 
@@ -113,7 +113,7 @@ flowchart LR
 ```text
 lib/
   ir/          types, Zod schemas, analyzer, layout, diff, domains
-  llm/         adapter, mock/demo adapter, prompts, repair, model registry
+  llm/         adapter, recorded adapter, prompts, repair, model registry
   runtime/     budget, cache, DAG executor, node executors, event store
   research/    corpus, retrieval, claim synthesis, deterministic verification
   eval/        golden set, metrics, report runner
@@ -165,7 +165,7 @@ The verifier normalises both the claim quote and the source text, then checks co
 
 The suite is structural, not a leaderboard: it checks whether the compiler produced a valid graph with the expected steps and data-flow shape.
 
-| Metric | What it means | Latest demo suite |
+| Metric | What it means | Latest recorded suite |
 |--------|---------------|-------------------|
 | pass rate | valid graph and ≥ 60% node recall | **100%** (10/10) |
 | node recall | expected node types present | **1.00** |
@@ -173,10 +173,10 @@ The suite is structural, not a leaderboard: it checks whether the compiler produ
 | edge F1 | multiset of `(fromType, toType)` | **0.70** |
 | param accuracy | expected params match | **1.00** |
 | attempts | compile calls including repair | **2.00** |
-| p50 latency | per compile | **0.4s** |
-| cost | per suite | **$0.00** in demo |
+| p50 latency | per compile | **0.5s** |
+| cost | per suite | **$0.00** in recorded mode |
 
-Demo mode uses recorded compiler fixtures, so these numbers prove the pipeline and the analyzer, not the model. Live mode runs the same cases against a real model and records the real cost and latency.
+Recorded mode uses fixture patches, so these numbers describe the pipeline and the analyzer, not the model. Live mode runs the same cases against a real model and records the real cost and latency.
 
 ![Eval lab](public/screenshots/eval.png)
 
@@ -203,9 +203,9 @@ TEST_LIVE=1 TEST_BASE_URL=http://127.0.0.1:3101 npm run test:api
 This is a focused POC, not a production platform. The important boundaries are explicit:
 
 - **Run registry is in-process.** `globalThis` keeps the POST route and the SSE route on the same run map. A multi-instance deployment needs a real event bus (Redis Streams, Postgres `LISTEN/NOTIFY`, etc.). The store interface is the seam.
-- **Runs are files** under `.data/` (gitignored). Good for a single-node demo; replace with a database before sharing across instances.
-- **The corpus is curated.** The retrieval path is real (chunking, lexical ranking, top-K, source diversity), but it is not a live web search or PDF ingestion pipeline.
-- **The demo compiler is recorded.** It exercises the same analyzer and repair loop as live mode. The live compiler is the real path.
+- **Runs are files** under `.data/` (gitignored). Good for a single-node prototype; replace with a database before sharing across instances.
+- **The corpus is hand-written.** The retrieval path is real (chunking, lexical ranking, top-K, source diversity), but it is not a live web search or PDF ingestion pipeline.
+- **The recorded compiler returns fixture patches.** It exercises the same analyzer and repair loop as live mode. The live compiler is the real path.
 - **No auth, tenancy or billing.** BYOK is deliberate for a POC.
 - **Eval is structural.** There is no calibrated LLM judge yet; the rubric and human calibration are in the roadmap (`docs/PIANO-V2.md`, F4).
 - **Graph editing is read-only.** You can compile and run, inspect every node and artifact, but not drag new nodes onto the canvas yet.
@@ -215,7 +215,7 @@ This is a focused POC, not a production platform. The important boundaries are e
 Implemented in this slice:
 
 - IR v2 with typed ports, params, categories and executor refs.
-- Domain-aware JSON Schema generation; OpenAI-compatible adapter; recorded demo adapter.
+- Domain-aware JSON Schema generation; OpenAI-compatible adapter; recorded adapter.
 - Analyzer with actionable issues, deterministic autofix and a model repair loop.
 - DAG runtime, SSE, trace spans, usage/cost, budget, cancellation, cache.
 - Research recipe with retrieval, claim extraction, outline, draft, bounded critique/revise, deterministic citation verification and artifact.
@@ -227,11 +227,11 @@ Next, in the plan's F4–F6: database persistence, share links, graph editing, a
 
 ## Docs
 
-- [`docs/REVIEW.md`](docs/REVIEW.md) — the 5-minute review path and key files.
-- [`docs/architecture.md`](docs/architecture.md) — data flow, runtime, storage, deployment.
-- [`docs/PROMPTS.md`](docs/PROMPTS.md) — prompt contracts and versioning.
-- [`docs/PIANO-V2.md`](docs/PIANO-V2.md) — the full roadmap and tradeoffs.
-- [`docs/adr/`](docs/adr/) — the four decisions that shaped the implementation.
+- [`docs/REVIEW.md`](docs/REVIEW.md): the 5-minute review path and key files.
+- [`docs/architecture.md`](docs/architecture.md): data flow, runtime, storage, deployment.
+- [`docs/PROMPTS.md`](docs/PROMPTS.md): prompt contracts and versioning.
+- [`docs/PIANO-V2.md`](docs/PIANO-V2.md): the full roadmap and tradeoffs.
+- [`docs/adr/`](docs/adr/): the four decisions that shaped the implementation.
 
 ## Screenshots
 

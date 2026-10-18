@@ -47,7 +47,7 @@ const TRACE = [
   ["extract", "llm", "180ms", "2.8k tok", "ok"],
   ["outline", "llm", "183ms", "1.1k tok", "ok"],
   ["draft", "llm", "364ms", "3.4k tok", "ok"],
-  ["verify", "tool", "15ms", "—", "ok"],
+  ["verify", "tool", "15ms", "n/a", "ok"],
 ] as const;
 
 export default function HeroGraph() {
@@ -56,13 +56,13 @@ export default function HeroGraph() {
       <div className="flex h-9 items-center justify-between border-b border-[var(--border)] px-3">
         <div className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-[0.06em] text-[var(--fg-muted)]">
           <span className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
-          run_8f2c
+          recorded run
           <span className="text-[var(--border-strong)]">/</span>
           <span>research-brief</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="rounded border border-[var(--border)] px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.06em] text-[var(--success)]">
-            completed
+          <span className="rounded border border-[var(--border)] px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.06em] text-[var(--fg-muted)]">
+            recorded
           </span>
           <span className="font-mono text-[8px] text-[var(--fg-subtle)]">1.0s</span>
         </div>
@@ -149,7 +149,7 @@ export default function HeroGraph() {
             <rect x="412" y="170" width="184" height="26" rx="5" fill="var(--surface)" stroke="var(--border)" />
             <circle cx="424" cy="183" r="2.4" fill="var(--success)" />
             <text x="432" y="186" fill="var(--fg-muted)" fontSize="7.2" fontFamily="var(--font-geist-mono), monospace">
-              10/10 claims supported · 4 sources
+              10/10 claims supported, 4 sources
             </text>
           </g>
         </svg>
@@ -157,7 +157,7 @@ export default function HeroGraph() {
 
       <div className="border-t border-[var(--border)]">
         <div className="flex items-center justify-between px-3 py-1.5">
-          <span className="font-mono text-[8px] uppercase tracking-[0.12em] text-[var(--fg-subtle)]">trace</span>
+          <span className="font-mono text-[8px] uppercase tracking-[0.12em] text-[var(--fg-subtle)]">recorded trace</span>
           <span className="font-mono text-[8px] text-[var(--fg-subtle)]">last 5 spans</span>
         </div>
         <table className="w-full border-collapse font-mono text-[8.5px]">

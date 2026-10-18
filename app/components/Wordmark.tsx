@@ -10,7 +10,7 @@ export default function Wordmark({ href = "/" }: { href?: string }) {
       </span>
       <span className="text-[14px] font-semibold tracking-[-0.02em] text-[var(--fg)]">glossia</span>
       <span className="hidden font-mono text-[8px] uppercase tracking-[0.16em] text-[var(--fg-subtle)] sm:inline">
-        workflow os
+        research prototype
       </span>
     </Link>
   );

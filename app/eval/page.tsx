@@ -4,7 +4,7 @@ import SiteHeader from "@/app/components/SiteHeader";
 import EvalClient from "./EvalClient";
 
 export const metadata: Metadata = {
-  title: "Eval lab — Glossia",
+  title: "Evaluation · Glossia",
   description:
     "Structural evaluation for LLM workflow compilation: validity, node recall, edge F1, repair attempts, latency and cost.",
 };

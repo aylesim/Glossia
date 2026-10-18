@@ -8,13 +8,13 @@ import { parseTheme, THEME_KEY } from "@/lib/theme";
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 export const metadata: Metadata = {
-  title: "Glossia — compile, run and prove LLM workflows",
+  title: "Glossia · typed graphs for LLM workflows",
   description:
-    "A typed IR for LLM workflows. Describe intent, get a schema-validated graph, run it with traces, cost and deterministic citation verification, then measure it with evals.",
+    "A research prototype that compiles natural-language requests into typed workflow graphs, checks them before execution, and records per-node traces and costs.",
   openGraph: {
-    title: "Glossia — compile, run and prove LLM workflows",
+    title: "Glossia · typed graphs for LLM workflows",
     description:
-      "Natural language → typed graph → real execution → traces, costs and evals. LLMs propose, the system disposes.",
+      "A research prototype for typed LLM workflows, with a deterministic analyzer, a DAG runtime and a ten-case structural evaluation.",
     type: "website",
   },
 };

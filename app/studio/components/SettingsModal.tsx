@@ -85,7 +85,7 @@ export default function SettingsModal({
             </legend>
             <div className="mt-2 grid grid-cols-2 gap-2">
               {[
-                { id: "demo" as const, title: "Demo", detail: "recorded fixtures · free · no key" },
+                { id: "demo" as const, title: "Recorded", detail: "fixtures, no model calls" },
                 { id: "live" as const, title: "Live", detail: "real model · your key · real cost" },
               ].map((option) => (
                 <button
@@ -141,7 +141,7 @@ export default function SettingsModal({
 
           <label className="block">
             <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--fg-subtle)]">
-              API key {mode === "demo" ? "(not needed in demo)" : ""}
+              API key {mode === "demo" ? "(not needed for recorded fixtures)" : ""}
             </span>
             <div className="mt-1.5 flex gap-2">
               <input
@@ -190,7 +190,7 @@ export default function SettingsModal({
 
         <div className="flex items-center justify-between border-t border-[var(--border)] px-5 py-3">
           <p className="font-mono text-[8.5px] uppercase tracking-[0.1em] text-[var(--fg-subtle)]">
-            {mode === "demo" ? "deterministic · offline-friendly" : "live calls are billed by the provider"}
+            {mode === "demo" ? "deterministic · no model calls" : "live calls are billed by the provider"}
           </p>
           <button
             type="button"

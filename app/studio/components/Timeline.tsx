@@ -40,7 +40,7 @@ export default function Timeline({
         <div className="flex items-center gap-4 font-mono text-[8.5px] text-[var(--fg-subtle)]">
           <span>{items.length} steps</span>
           <span>${totalCost.toFixed(4)}</span>
-          <span>{durationMs > 0 ? `${(durationMs / 1000).toFixed(1)}s` : "—"}</span>
+          <span>{durationMs > 0 ? `${(durationMs / 1000).toFixed(1)}s` : "n/a"}</span>
         </div>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-2 py-1.5">
@@ -78,7 +78,7 @@ export default function Timeline({
                     />
                   </span>
                   <span className="w-[42px] shrink-0 text-right font-mono text-[8.5px] text-[var(--fg-subtle)]">
-                    {item.ms > 0 ? `${Math.round(item.ms)}ms` : item.status === "cached" ? "cache" : "—"}
+                    {item.ms > 0 ? `${Math.round(item.ms)}ms` : item.status === "cached" ? "cache" : "n/a"}
                   </span>
                   <span className="w-[46px] shrink-0 text-right font-mono text-[8.5px] text-[var(--fg-subtle)]">
                     ${item.costUsd.toFixed(4)}

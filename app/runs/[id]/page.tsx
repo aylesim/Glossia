@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export const metadata: Metadata = {
-  title: "Run — Glossia",
+  title: "Run · Glossia",
   description: "A saved Glossia run: typed graph, trace, cost and the verified artifact.",
 };
 
@@ -70,7 +70,7 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
             href="/studio"
             className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--fg-subtle)] hover:text-[var(--fg)]"
           >
-            ← studio
+            ← prototype
           </Link>
           <a
             href={`/api/runs/${run.id}`}
@@ -93,7 +93,7 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
                 {run.status}
               </span>
               <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-[var(--fg-subtle)]">
-                {run.mode} · {run.model}
+                {run.mode === "demo" ? "recorded" : run.mode} · {run.model === "demo/recorded" ? "fixture adapter" : run.model}
               </span>
             </div>
             <h1 className="mt-2 max-w-[760px] text-[28px] font-semibold leading-tight tracking-[-0.03em] text-[var(--fg)] sm:text-[32px]">

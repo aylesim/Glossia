@@ -52,7 +52,7 @@ const researchNodes: NodeType[] = [
   {
     id: "tool.search",
     name: "Search corpus",
-    description: "Searches the curated source corpus for the planned queries.",
+    description: "Searches the hand-written source corpus for the planned queries.",
     category: "tool",
     inputs: [port("queries", "json", "Queries from the planner")],
     outputs: [port("sources", "json", "Matched source documents")],
@@ -285,7 +285,7 @@ export const RESEARCH_DOMAIN: Domain = {
   id: "research-brief",
   version: "2.0.0",
   name: "Research brief",
-  description: "A cited brief built from a curated source corpus.",
+  description: "A cited brief built from a hand-written source corpus.",
   semantics:
     "Nodes are executable. LLM nodes are probabilistic; verification and analysis are deterministic. Loops are bounded inside composite nodes, so the graph stays a DAG.",
   nodeTypes: researchNodes,
@@ -372,7 +372,7 @@ export function formatDomainContext(domain: Domain): string {
     "Node types:",
   ];
   for (const node of domain.nodeTypes) {
-    lines.push(`- ${node.id} — ${node.name}: ${node.description}`);
+    lines.push(`- ${node.id}: ${node.name}. ${node.description}`);
     lines.push(
       `  inputs: ${node.inputs.length === 0 ? "none" : node.inputs.map((input) => `${input.name}:${input.type}${input.required === false ? "?" : ""}${input.multi ? "[]" : ""}`).join(", ")}`,
     );
@@ -398,7 +398,7 @@ export function patchToPseudocode(patch: Patch, domain: Domain): string {
     const params = Object.entries(node.params)
       .map(([key, value]) => `${key}=${JSON.stringify(value)}`)
       .join(", ");
-    return `${String(index + 1).padStart(2, "0")}. ${node.id} — ${type?.name ?? node.type}${params ? ` (${params})` : ""}`;
+    return `${String(index + 1).padStart(2, "0")}. ${node.id}: ${type?.name ?? node.type}${params ? ` (${params})` : ""}`;
   });
   const edgeLines = patch.edges.map(
     (edge) => `    ${edge.from}.${edge.fromPort} → ${edge.to}.${edge.toPort}`,

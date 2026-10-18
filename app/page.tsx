@@ -3,65 +3,85 @@ import HeroGraph from "./components/HeroGraph";
 import SiteFooter from "./components/SiteFooter";
 import SiteHeader from "./components/SiteHeader";
 
-const ACTS = [
+const HYPOTHESES = [
   {
-    index: "01",
-    title: "Compile",
-    tag: "intent → typed graph",
-    body: "A domain is a type system: node types, typed ports and declared params. The model writes a program in that language. A deterministic analyzer checks the result, and a repair loop fixes what the model got wrong.",
-    spec: ["JSON Schema structured output", "20+ deterministic checks", "repair with a visible diff"],
+    id: "H1",
+    title: "Type check before runtime",
+    body: "A domain declares node types and ports, with params for each node. A patch that uses a type outside that domain is rejected before the scheduler starts.",
+    observed: "Invalid patches are rejected before execution.",
     tone: "var(--chart-1)",
   },
   {
-    index: "02",
-    title: "Run",
-    tag: "graph → execution",
-    body: "The patch is not a diagram. A DAG scheduler executes nodes with real inputs and outputs, streams events, retries transient failures, enforces a budget and can be cancelled mid-flight.",
-    spec: ["parallel branches", "SSE + trace spans", "content-addressed cache"],
+    id: "H2",
+    title: "Repair with deterministic diagnostics",
+    body: "The analyzer returns a machine-readable issue with a node or edge. A bounded repair pass can use that report without a second model deciding whether the graph is valid.",
+    observed: "10/10 cases valid after at most two repairs.",
     tone: "var(--chart-2)",
   },
   {
-    index: "03",
-    title: "Prove",
-    tag: "run → evidence",
-    body: "Every run leaves a trace: prompt version, model, tokens, cost, attempts and outputs. The golden set runs the same graph contract again and again, so a regression is a number before it is an incident.",
-    spec: ["cost per step", "10-case golden set", "repair-rate metrics"],
+    id: "H3",
+    title: "Trace as the unit of comparison",
+    body: "Each run records the prompt version and model. It also keeps token use and cost per node, with latency and output in the same step record.",
+    observed: "12 step records in the recorded run.",
     tone: "var(--chart-4)",
   },
-];
-
-const BREAKS = [
   {
-    failure: "unknown param",
-    detected: "deterministic analyzer",
-    action: "autofix + repair pass",
-    code: "UNKNOWN_PARAM",
-  },
-  {
-    failure: "text output → JSON port",
-    detected: "port type check",
-    action: "reject before runtime",
-    code: "PORT_TYPE_MISMATCH",
-  },
-  {
-    failure: "token / cost budget",
-    detected: "budget tracker",
-    action: "stop, keep partial trace",
-    code: "BUDGET_EXCEEDED",
-  },
-  {
-    failure: "claim without a source",
-    detected: "citation verifier",
-    action: "mark unsupported",
-    code: "MISSING_QUOTE",
+    id: "H4",
+    title: "Citation check after generation",
+    body: "A claim is supported only when its quoted text appears in the cited source. The check is deterministic and runs after the model.",
+    observed: "10/10 claims supported in the recorded brief.",
+    tone: "var(--chart-5)",
   },
 ];
 
-const STATS = [
-  { value: "12", label: "nodes in the hero graph" },
-  { value: "10", label: "structural eval cases" },
-  { value: "2", label: "repair attempts, max" },
-  { value: "$0.00", label: "demo run, no key" },
+const SCOPE = [
+  {
+    inside: "A typed graph compiled from a prompt",
+    outside: "Model reliability in general",
+  },
+  {
+    inside: "Execution with per-node traces and cost",
+    outside: "Production readiness",
+  },
+  {
+    inside: "Citation checks against a four-source corpus",
+    outside: "Open-web or PDF ingestion",
+  },
+];
+
+const RESULTS = [
+  ["Valid graphs", "10/10", "recorded fixtures"],
+  ["Node recall", "1.00", "recorded fixtures"],
+  ["Node precision", "0.82", "recorded fixtures"],
+  ["Edge F1", "0.70", "recorded fixtures"],
+  ["Parameter accuracy", "1.00", "recorded fixtures"],
+  ["Mean repair attempts", "2.00", "the fixture adapter returns an invalid first patch"],
+  ["p50 latency", "0.5s", "recorded fixtures"],
+  ["Recorded cost", "$0.00", "recorded fixtures"],
+];
+
+const LIMITS = [
+  "Ten hand-written cases and one research domain. The suite does not establish how the analyzer behaves on other workflows.",
+  "Four hand-written sources in the default corpus. There is no live web or PDF ingestion.",
+  "The fixture adapter returns recorded patches. The live path was exercised against a local OpenAI-compatible mock, not a real provider in this environment.",
+  "Structural scoring only. There is no calibrated LLM judge for brief quality.",
+  "In-process run registry and file persistence. A multi-instance deployment needs an event bus and a database.",
+  "Read-only graph. There is no editor, authentication or share link.",
+];
+
+const INSPECT = [
+  ["/studio", "Open the prototype", "Run the recorded case and inspect the trace."],
+  ["/eval", "Read the evaluation", "See every case and every metric."],
+  [
+    "https://github.com/aylesim/Glossia/blob/main/docs/architecture.md",
+    "Architecture",
+    "Compiler and runtime boundaries.",
+  ],
+  [
+    "https://github.com/aylesim/Glossia/blob/main/docs/REVIEW.md",
+    "Review notes",
+    "Current gaps and the order I would close them.",
+  ],
 ];
 
 export default function HomePage() {
@@ -85,59 +105,75 @@ export default function HomePage() {
             <div className="max-w-[610px] animate-fade-up">
               <div className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-[0.16em] text-[var(--fg-subtle)]">
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
-                workflow runtime / proof of concept
+                typed LLM workflows
               </div>
-              <h1 className="mt-5 text-[clamp(2.4rem,4.6vw,3.9rem)] font-semibold leading-[1.03] tracking-[-0.045em] text-[var(--fg)]">
-                Compile, run, and
+              <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[8.5px] uppercase tracking-[0.1em] text-[var(--fg-subtle)]">
+                <span>working note 01</span>
+                <span className="text-[var(--border-strong)]">/</span>
+                <span>October 2026</span>
+                <span className="text-[var(--border-strong)]">/</span>
+                <span>status: prototype</span>
+              </div>
+              <h1 className="mt-3 text-[clamp(2.2rem,4vw,3.35rem)] font-semibold leading-[1.04] tracking-[-0.045em] text-[var(--fg)]">
+                Typed graphs for
                 <br />
-                verify LLM workflows.
+                LLM workflows.
               </h1>
-              <p className="mt-5 max-w-[540px] text-[15px] leading-7 text-[var(--fg-muted)]">
-                A typed IR for LLM workflows: natural language becomes a schema-validated graph, executes
-                with traces and cost, and is checked by deterministic verification. Not a chat UI — the
-                runtime after the prompt.
+              <p className="mt-5 max-w-[560px] text-[15px] leading-7 text-[var(--fg-muted)]">
+                Glossia is a research prototype, not a product. It compiles a natural-language request
+                into a typed graph, checks the graph before execution, runs it as a DAG, and records the
+                result. The current study asks whether deterministic checks and a bounded repair loop can
+                catch model errors before they reach execution.
               </p>
-              <div className="mt-7 flex flex-wrap items-center gap-2">
+              <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-[var(--border)] pt-4 font-mono text-[9px] uppercase tracking-[0.1em]">
                 <Link
                   href="/studio"
-                  className="inline-flex items-center gap-2 rounded-md border border-[var(--inverse)] bg-[var(--inverse)] px-4 py-2.5 text-[13px] font-medium text-[var(--inverse-fg)] transition-opacity hover:opacity-90"
+                  className="inline-flex items-center gap-1.5 text-[var(--fg)] transition-colors hover:text-[var(--accent)]"
                 >
-                  Open console <span aria-hidden>→</span>
+                  Open the prototype <span aria-hidden>→</span>
                 </Link>
                 <Link
-                  href="/studio?demo=1"
-                  className="inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] px-4 py-2.5 text-[13px] font-medium text-[var(--fg)] transition-colors hover:border-[var(--border-strong)]"
+                  href="/eval"
+                  className="inline-flex items-center gap-1.5 text-[var(--fg-muted)] transition-colors hover:text-[var(--fg)]"
                 >
-                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
-                  Run the recorded demo
+                  Read the evaluation <span aria-hidden>→</span>
                 </Link>
+                <a
+                  href="https://github.com/aylesim/Glossia"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-[var(--fg-muted)] transition-colors hover:text-[var(--fg)]"
+                >
+                  Source <span aria-hidden>↗</span>
+                </a>
               </div>
-              <div className="mt-6 flex flex-wrap gap-x-5 gap-y-1.5 font-mono text-[9px] uppercase tracking-[0.08em] text-[var(--fg-subtle)]">
-                <span>no API key in demo</span>
-                <span className="text-[var(--border-strong)]">/</span>
-                <span>BYOK for live models</span>
-                <span className="text-[var(--border-strong)]">/</span>
-                <span>OpenAI-compatible</span>
-              </div>
+              <p className="mt-6 max-w-[520px] font-mono text-[9px] uppercase leading-relaxed tracking-[0.08em] text-[var(--fg-subtle)]">
+                The default path uses recorded fixtures. A live adapter can call OpenAI-compatible models
+                for comparison.
+              </p>
             </div>
 
             <div className="animate-fade-up [animation-delay:120ms]">
               <HeroGraph />
-              <div className="mt-2 flex flex-wrap items-center justify-between gap-2 font-mono text-[8.5px] uppercase tracking-[0.1em] text-[var(--fg-subtle)]">
-                <span>one graph · four sources · one verifier</span>
-                <span className="text-[var(--fg-muted)]">fan-out → verify → brief</span>
-              </div>
+              <p className="mt-2 font-mono text-[8.5px] uppercase leading-relaxed tracking-[0.1em] text-[var(--fg-subtle)]">
+                Instrumented example run. Eight of twelve nodes shown.
+              </p>
             </div>
           </div>
         </section>
 
         <section className="border-b border-[var(--border)] bg-[var(--surface)]">
           <div className="mx-auto grid w-full max-w-[1240px] grid-cols-2 divide-x divide-[var(--border)] px-4 sm:px-6 md:grid-cols-4">
-            {STATS.map((stat) => (
-              <div key={stat.label} className="px-4 py-5 first:pl-0 last:pr-0 sm:px-6">
-                <p className="font-mono text-[22px] tracking-[-0.02em] text-[var(--fg)]">{stat.value}</p>
+            {[
+              ["10", "structural cases"],
+              ["1.00", "node recall"],
+              ["0.70", "edge F1"],
+              ["$0.00", "recorded run cost"],
+            ].map(([value, label]) => (
+              <div key={label} className="px-4 py-5 first:pl-0 last:pr-0 sm:px-6">
+                <p className="font-mono text-[22px] tracking-[-0.02em] text-[var(--fg)]">{value}</p>
                 <p className="mt-1 max-w-[150px] font-mono text-[8.5px] uppercase leading-relaxed tracking-[0.08em] text-[var(--fg-subtle)]">
-                  {stat.label}
+                  {label}
                 </p>
               </div>
             ))}
@@ -145,48 +181,78 @@ export default function HomePage() {
         </section>
 
         <section className="mx-auto w-full max-w-[1240px] px-4 py-14 sm:px-6 lg:py-18">
-          <div className="flex flex-col justify-between gap-4 border-b border-[var(--border)] pb-6 md:flex-row md:items-end">
+          <div className="grid gap-8 border-b border-[var(--border)] pb-8 lg:grid-cols-[0.9fr_1.1fr]">
             <div>
               <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-[var(--fg-subtle)]">
-                system / three stages
+                scope
               </p>
-              <h2 className="mt-2 max-w-[620px] text-[30px] font-semibold leading-[1.1] tracking-[-0.03em] text-[var(--fg)] sm:text-[36px]">
-                The interesting part starts after the model returns.
+              <h2 className="mt-2 max-w-[500px] text-[30px] font-semibold leading-[1.1] tracking-[-0.03em] text-[var(--fg)] sm:text-[36px]">
+                A narrow test, with the limits in view.
               </h2>
             </div>
-            <p className="max-w-[330px] text-[12.5px] leading-6 text-[var(--fg-muted)]">
-              Most demos stop at generation. Glossia treats the generated graph as a program to validate,
-              execute and measure.
+            <div>
+              <p className="max-w-[620px] text-[13px] leading-6 text-[var(--fg-muted)]">
+                The claim is narrow. If a domain encodes the legal node types, ports and parameters, then a
+                deterministic analyzer should catch many model errors before execution. If the analyzer can
+                explain an error precisely enough, a bounded repair pass should recover a valid graph
+                without a second model deciding validity.
+              </p>
+              <div className="mt-5 overflow-hidden rounded-lg border border-[var(--border)]">
+                <div className="grid grid-cols-2 border-b border-[var(--border)] bg-[var(--surface-raised)]">
+                  <span className="px-3 py-2 font-mono text-[8px] uppercase tracking-[0.1em] text-[var(--fg-subtle)]">
+                    in this prototype
+                  </span>
+                  <span className="border-l border-[var(--border)] px-3 py-2 font-mono text-[8px] uppercase tracking-[0.1em] text-[var(--fg-subtle)]">
+                    not claimed here
+                  </span>
+                </div>
+                {SCOPE.map((row) => (
+                  <div key={row.inside} className="grid grid-cols-2 border-b border-[var(--border)] last:border-b-0">
+                    <span className="px-3 py-2 text-[11.5px] leading-5 text-[var(--fg)]">{row.inside}</span>
+                    <span className="border-l border-[var(--border)] px-3 py-2 text-[11.5px] leading-5 text-[var(--fg-muted)]">
+                      {row.outside}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+            <div>
+              <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-[var(--fg-subtle)]">
+                hypotheses
+              </p>
+              <h2 className="mt-2 text-[28px] font-semibold leading-[1.1] tracking-[-0.03em] text-[var(--fg)] sm:text-[32px]">
+                What the prototype tests.
+              </h2>
+            </div>
+            <p className="max-w-[360px] text-[12px] leading-6 text-[var(--fg-muted)]">
+              Each hypothesis has a corresponding implementation and a result from the recorded fixture
+              set. None of them is a claim about model behavior in general.
             </p>
           </div>
 
-          <div className="mt-6 grid gap-3 md:grid-cols-3">
-            {ACTS.map((act) => (
+          <div className="mt-6 grid gap-3 md:grid-cols-2">
+            {HYPOTHESES.map((entry) => (
               <article
-                key={act.title}
-                className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4 transition-colors hover:border-[var(--border-strong)]"
+                key={entry.id}
+                className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-[9px] tracking-[0.1em] text-[var(--fg-subtle)]">
-                    {act.index}
+                  <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-[var(--fg-subtle)]">
+                    {entry.id}
                   </span>
-                  <span className="h-1.5 w-1.5 rounded-full" style={{ background: act.tone }} />
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ background: entry.tone }} />
                 </div>
-                <h3 className="mt-3 text-[18px] font-semibold tracking-[-0.02em] text-[var(--fg)]">
-                  {act.title}
+                <h3 className="mt-3 text-[17px] font-semibold tracking-[-0.02em] text-[var(--fg)]">
+                  {entry.title}
                 </h3>
-                <p className="mt-0.5 font-mono text-[8.5px] uppercase tracking-[0.1em] text-[var(--fg-subtle)]">
-                  {act.tag}
+                <p className="mt-2 text-[12px] leading-5 text-[var(--fg-muted)]">{entry.body}</p>
+                <p className="mt-4 border-t border-[var(--border)] pt-3 font-mono text-[9px] leading-5 text-[var(--fg)]">
+                  <span className="uppercase tracking-[0.08em] text-[var(--fg-subtle)]">observed </span>
+                  {entry.observed}
                 </p>
-                <p className="mt-3 text-[12px] leading-5 text-[var(--fg-muted)]">{act.body}</p>
-                <ul className="mt-4 space-y-1.5 border-t border-[var(--border)] pt-3">
-                  {act.spec.map((item) => (
-                    <li key={item} className="flex items-start gap-2 font-mono text-[10px] text-[var(--fg)]">
-                      <span className="mt-[5px] h-1 w-1 shrink-0 rounded-full" style={{ background: act.tone }} />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
               </article>
             ))}
           </div>
@@ -196,31 +262,31 @@ export default function HomePage() {
           <div className="mx-auto grid w-full max-w-[1240px] gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[0.92fr_1.08fr] lg:py-18">
             <div>
               <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-[var(--fg-subtle)]">
-                the contract
+                method
               </p>
               <h2 className="mt-2 text-[30px] font-semibold leading-[1.1] tracking-[-0.03em] text-[var(--fg)] sm:text-[36px]">
-                JSON is not the artifact.
-                <br />
-                The program is.
+                How the prototype works.
               </h2>
-              <p className="mt-4 max-w-[460px] text-[12.5px] leading-6 text-[var(--fg-muted)]">
-                Every node is typed, every edge names its ports, and every param is declared by the domain.
-                That is what makes the model output checkable, runnable and diffable.
-              </p>
-              <ul className="mt-5 space-y-2.5 text-[12px] leading-5 text-[var(--fg-muted)]">
-                <li className="flex gap-2.5">
-                  <span className="font-mono text-[9px] text-[var(--accent)]">01</span>
-                  Domain = the type system. A patch that uses a type outside it cannot run.
-                </li>
-                <li className="flex gap-2.5">
-                  <span className="font-mono text-[9px] text-[var(--accent)]">02</span>
-                  Ports carry types. A text output cannot silently feed a JSON input.
-                </li>
-                <li className="flex gap-2.5">
-                  <span className="font-mono text-[9px] text-[var(--accent)]">03</span>
-                  Every error points at a node or an edge, with a suggested fix where one is safe.
-                </li>
-              </ul>
+              <div className="mt-4 space-y-3 text-[12.5px] leading-6 text-[var(--fg-muted)]">
+                <p>
+                  The compiler receives a JSON Schema generated from the domain. It parses the model
+                  output, fills in the research question and passes the patch to the analyzer. The analyzer
+                  checks each node type and its declared params, then follows the port connections and
+                  required inputs. It rejects cycles and unreachable nodes. If it finds an error, the
+                  compiler sends the issue list back for a repair pass. The limit is two repairs.
+                </p>
+                <p>
+                  A valid patch runs on a DAG scheduler. Nodes receive typed inputs from upstream ports and
+                  run in parallel where the graph allows it. Each step writes a record with its status and token use, then keeps latency and cost fields. A content-addressed cache stores completed steps, so a repeated run
+                  can return the same result without model calls.
+                </p>
+                <p>
+                  The evaluation suite runs the same contract against ten structural cases. It scores
+                  whether the graph is valid and how closely its nodes and edges match the expected patch.
+                  It also records parameter accuracy and the number of repair attempts. Latency and cost
+                  are kept per case.
+                </p>
+              </div>
             </div>
 
             <div className="overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--code)]">
@@ -242,7 +308,7 @@ export default function HomePage() {
     { "id": "plan",   "type": "llm.plan",
       "params": { "maxQueries": 3 } },
     { "id": "search", "type": "tool.search",
-      "params": { "maxSources": 4, "corpus": "demo" } },
+      "params": { "maxSources": 4 } },
     { "id": "verify", "type": "verify.citations",
       "params": { "strict": true } }
   ],
@@ -264,15 +330,15 @@ export default function HomePage() {
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
               <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-[var(--fg-subtle)]">
-                failure modes
+                results
               </p>
               <h2 className="mt-2 text-[30px] font-semibold leading-[1.1] tracking-[-0.03em] text-[var(--fg)] sm:text-[36px]">
-                The demo is the failure path.
+                Recorded results.
               </h2>
             </div>
-            <p className="max-w-[330px] text-[12.5px] leading-6 text-[var(--fg-muted)]">
-              A system that only works on the happy path is a slide deck. These are the four failures the
-              runtime is built to make cheap.
+            <p className="max-w-[360px] text-[12px] leading-6 text-[var(--fg-muted)]">
+              These numbers describe the ten-case fixture set and one recorded run. They are not a
+              benchmark of model quality.
             </p>
           </div>
 
@@ -280,7 +346,7 @@ export default function HomePage() {
             <table className="w-full border-collapse text-left">
               <thead>
                 <tr className="border-b border-[var(--border)] bg-[var(--surface-raised)]">
-                  {["failure", "detected by", "action", "code"].map((label) => (
+                  {["metric", "value", "condition"].map((label) => (
                     <th
                       key={label}
                       className="px-3 py-2 font-mono text-[8.5px] uppercase tracking-[0.1em] text-[var(--fg-subtle)]"
@@ -291,82 +357,100 @@ export default function HomePage() {
                 </tr>
               </thead>
               <tbody>
-                {BREAKS.map((row) => (
-                  <tr key={row.failure} className="border-b border-[var(--border)] last:border-b-0">
-                    <td className="px-3 py-2.5 text-[12px] text-[var(--fg)]">{row.failure}</td>
-                    <td className="px-3 py-2.5 text-[12px] text-[var(--fg-muted)]">{row.detected}</td>
-                    <td className="px-3 py-2.5 text-[12px] text-[var(--fg-muted)]">{row.action}</td>
-                    <td className="px-3 py-2.5 font-mono text-[9px] text-[var(--accent)]">{row.code}</td>
+                {RESULTS.map((row) => (
+                  <tr key={row[0]} className="border-b border-[var(--border)] last:border-b-0">
+                    <td className="px-3 py-2.5 text-[12px] text-[var(--fg)]">{row[0]}</td>
+                    <td className="px-3 py-2.5 font-mono text-[11px] text-[var(--fg)]">{row[1]}</td>
+                    <td className="px-3 py-2.5 text-[12px] text-[var(--fg-muted)]">{row[2]}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+          <p className="mt-3 max-w-[760px] font-mono text-[9px] leading-5 text-[var(--fg-subtle)]">
+            Mean repair attempts is a property of the fixture adapter. It deliberately returns an invalid
+            first patch so the repair path is exercised.
+          </p>
         </section>
 
-        <section className="border-y border-[var(--border)] bg-[var(--inverse)] text-[var(--inverse-fg)]">
-          <div className="mx-auto grid w-full max-w-[1240px] gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[1fr_0.9fr] lg:py-18">
-            <div>
-              <p className="font-mono text-[9px] uppercase tracking-[0.16em] opacity-50">evidence / eval lab</p>
-              <h2 className="mt-2 text-[30px] font-semibold leading-[1.1] tracking-[-0.03em] sm:text-[36px]">
-                Quality becomes a number.
-              </h2>
-              <p className="mt-4 max-w-[470px] text-[12.5px] leading-6 opacity-65">
-                The same graph contract runs against a small golden set. Validity, node recall, edge F1,
-                repair rate, latency and cost are recorded per case, so a prompt change can be compared
-                instead of argued about.
-              </p>
-              <div className="mt-6 flex flex-wrap gap-2">
-                <Link
-                  href="/eval"
-                  className="inline-flex items-center gap-2 rounded-md bg-[var(--inverse-fg)] px-4 py-2.5 text-[12px] font-medium text-[var(--inverse)] transition-opacity hover:opacity-90"
-                >
-                  Open eval lab <span aria-hidden>→</span>
-                </Link>
-                <Link
-                  href="/studio"
-                  className="inline-flex items-center gap-2 rounded-md border border-[color-mix(in_srgb,var(--inverse-fg)_25%,transparent)] px-4 py-2.5 text-[12px] font-medium opacity-80 transition-opacity hover:opacity-100"
-                >
-                  Run the graph
-                </Link>
+        <section className="border-y border-[var(--border)] bg-[var(--surface)]">
+          <div className="mx-auto w-full max-w-[1240px] px-4 py-14 sm:px-6 lg:py-18">
+            <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+              <div>
+                <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-[var(--fg-subtle)]">
+                  limits
+                </p>
+                <h2 className="mt-2 text-[30px] font-semibold leading-[1.1] tracking-[-0.03em] text-[var(--fg)] sm:text-[36px]">
+                  What this does not show.
+                </h2>
               </div>
+              <p className="max-w-[360px] text-[12px] leading-6 text-[var(--fg-muted)]">
+                The prototype is intentionally small. These gaps matter more than the passing numbers.
+              </p>
             </div>
-            <div className="grid grid-cols-2 gap-x-5 gap-y-4 self-end">
-              {[
-                ["100%", "pass rate", "10/10 demo cases"],
-                ["1.00", "node recall", "precision 0.82"],
-                ["0.70", "edge F1", "param accuracy 1.00"],
-                ["0.4s", "p50 latency", "p95 0.5s · $0.00"],
-              ].map(([value, label, detail]) => (
-                <div key={label} className="border-t border-[color-mix(in_srgb,var(--inverse-fg)_18%,transparent)] pt-3">
-                  <p className="font-mono text-[20px] tracking-[-0.02em]">{value}</p>
-                  <p className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.08em] opacity-70">{label}</p>
-                  <p className="mt-0.5 text-[10px] leading-4 opacity-45">{detail}</p>
-                </div>
+            <ul className="mt-6 grid gap-x-8 gap-y-3 md:grid-cols-2">
+              {LIMITS.map((limit, index) => (
+                <li key={limit} className="flex gap-3 border-t border-[var(--border)] pt-3">
+                  <span className="font-mono text-[9px] text-[var(--accent)]">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span className="text-[12px] leading-5 text-[var(--fg-muted)]">{limit}</span>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         </section>
 
-        <section className="mx-auto flex w-full max-w-[1240px] flex-col items-start justify-between gap-5 px-4 py-12 sm:px-6 md:flex-row md:items-center">
-          <div>
-            <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-[var(--fg-subtle)]">
-              ten minutes / no key
-            </p>
-            <h2 className="mt-2 text-[28px] font-semibold leading-[1.1] tracking-[-0.03em] text-[var(--fg)]">
-              Open the console. Break the graph.
-            </h2>
-            <p className="mt-2 max-w-[540px] text-[12.5px] leading-6 text-[var(--fg-muted)]">
-              The demo runs on recorded fixtures, so it is deterministic and free. Switch to live when you
-              want a real model and your own key.
-            </p>
+        <section className="mx-auto w-full max-w-[1240px] px-4 py-14 sm:px-6 lg:py-18">
+          <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+            <div>
+              <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-[var(--fg-subtle)]">
+                inspect
+              </p>
+              <h2 className="mt-2 text-[30px] font-semibold leading-[1.1] tracking-[-0.03em] text-[var(--fg)] sm:text-[36px]">
+                The code and the numbers are public.
+              </h2>
+              <p className="mt-4 max-w-[460px] text-[12.5px] leading-6 text-[var(--fg-muted)]">
+                The prototype is intentionally small. The question is whether the type and trace layers
+                carry enough information to make the behavior of the model debuggable.
+              </p>
+              <Link
+                href="/studio"
+                className="mt-6 inline-flex items-center gap-2 rounded-md border border-[var(--inverse)] bg-[var(--inverse)] px-4 py-2.5 text-[12px] font-medium text-[var(--inverse-fg)] transition-opacity hover:opacity-90"
+              >
+                Open the prototype <span aria-hidden>→</span>
+              </Link>
+            </div>
+            <div className="overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface)]">
+              {INSPECT.map(([href, title, detail]) => {
+                const external = href.startsWith("http");
+                const className =
+                  "flex items-start justify-between gap-4 border-b border-[var(--border)] px-4 py-3 transition-colors last:border-b-0 hover:bg-[var(--surface-raised)]";
+                const content = (
+                  <>
+                    <span>
+                      <span className="block text-[12px] font-medium text-[var(--fg)]">{title}</span>
+                      <span className="mt-0.5 block text-[11px] leading-5 text-[var(--fg-muted)]">
+                        {detail}
+                      </span>
+                    </span>
+                    <span className="font-mono text-[9px] text-[var(--fg-subtle)]">
+                      {external ? "↗" : "→"}
+                    </span>
+                  </>
+                );
+                return external ? (
+                  <a key={href} href={href} target="_blank" rel="noreferrer" className={className}>
+                    {content}
+                  </a>
+                ) : (
+                  <Link key={href} href={href} className={className}>
+                    {content}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
-          <Link
-            href="/studio?demo=1"
-            className="inline-flex shrink-0 items-center gap-2 rounded-md border border-[var(--inverse)] bg-[var(--inverse)] px-4 py-2.5 text-[12px] font-medium text-[var(--inverse-fg)] transition-opacity hover:opacity-90"
-          >
-            Open the demo console <span aria-hidden>→</span>
-          </Link>
         </section>
       </main>
 

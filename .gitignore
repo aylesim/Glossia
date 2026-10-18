@@ -44,3 +44,8 @@ node_modules
 
 # local run and eval records
 /.data/
+
+# local agent skills
+/.agents/
+/.claude/
+/skills-lock.json
