@@ -32,17 +32,7 @@ export default function SiteHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          <span className="hidden items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.08em] text-[var(--fg-subtle)] lg:inline-flex">
-            <span className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
-            recorded fixtures
-          </span>
           <ThemeToggle />
-          <Link
-            href="/studio"
-            className="hidden rounded-md border border-[var(--border-strong)] bg-[var(--surface)] px-3 py-1.5 text-[12px] font-medium text-[var(--fg)] transition-colors hover:border-[var(--fg)] sm:inline-flex"
-          >
-            Open prototype
-          </Link>
         </div>
       </div>
     </header>

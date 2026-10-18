@@ -8,7 +8,7 @@ export default function SiteFooter() {
         <div className="max-w-md space-y-2">
           <Wordmark />
           <p className="text-[12px] leading-5 text-[var(--fg-muted)]">
-            A research prototype by{" "}
+            By{" "}
             <a
               href="https://github.com/aylesim"
               target="_blank"
@@ -17,7 +17,7 @@ export default function SiteFooter() {
             >
               Alessandro Miracapillo
             </a>
-            . Typed graphs with execution traces and structural evaluation. Not a product.
+            . Typed graphs, execution traces, structural evaluation.
           </p>
         </div>
         <div className="flex flex-wrap gap-x-5 gap-y-1.5 font-mono text-[9px] uppercase tracking-[0.1em] text-[var(--fg-subtle)]">
