@@ -644,17 +644,17 @@ Legenda: **P0** = senza questo il POC non è credibile; **P1** = il "wow"; **P2*
 
 ### 6.2 Direzione visiva
 
-**"Editorial instrument"**: la precisione di uno strumento tecnico, la leggibilità di una rivista.
+**"Technical console"**: un strumento operativo, non una pagina editoriale. Riferimento: dashboard di automazione industriale, pannelli bianchi, dati densi, un solo accento freddo.
 
-- **Tipografia**: Newsreader (display, già presente) + Geist (UI) + Geist Mono (dati). Scala minima 12px per il body, 13–14px per i contenuti, 10–11px solo per label mono.
-- **Palette**: carta/inchiostro con **un accento caldo** (vermilion `#FF4D00`) e 5 colori categoriali per i nodi (input, llm, tool, transform, output). Niente arcobaleno casuale.
-- **Superfici**: bordi 1px, elevazione minima, grain solo nell'hero. Niente glassmorphism.
-- **Layout**: landing max 1280; studio full-bleed con pannelli ridimensionabili.
-- **Motion**: 150–250ms, spring sobrio; il movimento comunica stato (nodo attivo, edge che porta dati), non decora.
+- **Tipografia**: Geist per la UI, Geist Mono per dati e label. Niente serif, niente display editoriale. Scala 11–13px per i dati, 14–16px per i titoli di pannello, 30–40px solo per l'hero.
+- **Palette**: grigi freddi (`#f4f5f7` / `#ffffff`), inchiostro `#0c0f14`, **accento blu tecnico** `#2f5bff`, verde `#0b8a5c` per gli stati ok, ambra e rosso per warning/error. Un colore categoriale per tipo di nodo, non hue casuali.
+- **Superfici**: 8px radius, bordi 1px, ombre quasi assenti. Niente grain, niente gradienti decorativi.
+- **Layout**: studio full-bleed a tre pannelli (rail operativo, canvas, inspector); landing max 1240 con griglia tecnica e un preview del console.
+- **Motion**: 150–250ms; il movimento comunica stato (nodo attivo, edge che porta dati), non decora.
 
 ### 6.3 Struttura della landing
 
-1. **Hero**: headline serif grande + canvas a destra che compila un esempio in loop (registrato, 6s). CTA: *Try the recorded demo* / *Read the architecture*.
+1. **Hero**: headline sans compatta + preview del console a destra (run, metriche, pipeline, trace). CTA: *Open console* / *Run the recorded demo*.
 2. **Proof strip**: numeri veri dall'eval (validità, pass rate, p50, costo/run).
 3. **"Not a chatbot"**: 3 frame — Intent → IR → Run.
 4. **"What breaks"**: JSON malformato riparato, nodo in retry, budget stop. È la sezione che differenzia.
@@ -664,8 +664,8 @@ Legenda: **P0** = senza questo il POC non è credibile; **P1** = il "wow"; **P2*
 
 Copy proposta:
 
-> **Describe the workflow. Glossia compiles it, runs it, and proves it.**
-> A typed IR for LLM workflows: schema-validated graphs, streaming execution, traces and evals. Built to show what happens after the prompt.
+> **Compile, run, and verify LLM workflows.**
+> A typed IR for LLM workflows: schema-validated graphs, real execution, traces and evals. Not a chat UI — the runtime after the prompt.
 
 ### 6.4 Studio layout
 

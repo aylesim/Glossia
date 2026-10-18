@@ -1,67 +1,80 @@
 @import "tailwindcss";
 
+/*
+ * Glossia UI — technical console.
+ *
+ * The interface is an instrument, not an editorial page: cool neutrals, one
+ * blue accent, mono for data, sans for labels, 8px surfaces and thin borders.
+ * No warm paper, no serif, no decorative gradient.
+ */
 html[data-theme="light"] {
   color-scheme: light;
-  --bg: #f6f3ec;
-  --bg-elevated: #fbf9f4;
+  --bg: #f4f5f7;
+  --bg-elevated: #f9fafb;
   --surface: #ffffff;
-  --surface-raised: #f1ece2;
-  --fg: #181410;
-  --fg-muted: #5c5348;
-  --fg-subtle: #8a7f70;
-  --border: #ded5c7;
-  --border-strong: #b9ac9a;
-  --accent: #d9481f;
-  --accent-fg: #fff8f2;
-  --accent-soft: #fbe9e2;
-  --success: #2f6d4f;
-  --success-soft: #e6f1ea;
-  --warning: #a56a00;
-  --warning-soft: #f8eeda;
-  --danger: #b3261e;
-  --danger-soft: #f9e5e2;
-  --code: #f0ebe1;
-  --inverse: #181410;
-  --inverse-fg: #fbf9f4;
-  --chart-1: #3b6ea8;
-  --chart-2: #2f7d5b;
-  --chart-3: #b0701a;
-  --chart-4: #7b5ea7;
-  --chart-5: #b23a48;
-  --chart-6: #5a6b7a;
-  --shadow-card: 0 1px 2px rgba(24, 20, 16, 0.04), 0 8px 24px rgba(24, 20, 16, 0.04);
+  --surface-raised: #f7f8fa;
+  --fg: #0c0f14;
+  --fg-muted: #5a6472;
+  --fg-subtle: #8a93a3;
+  --border: #e4e7ec;
+  --border-strong: #cbd1da;
+  --accent: #2f5bff;
+  --accent-fg: #ffffff;
+  --accent-soft: #eef2ff;
+  --success: #0b8a5c;
+  --success-soft: #e8f7f0;
+  --warning: #a86400;
+  --warning-soft: #fff5e5;
+  --danger: #d92d20;
+  --danger-soft: #fef0ef;
+  --code: #f6f7f9;
+  --inverse: #0c0f14;
+  --inverse-fg: #ffffff;
+  --chart-1: #2f5bff;
+  --chart-2: #0b8a5c;
+  --chart-3: #a86400;
+  --chart-4: #6b4eff;
+  --chart-5: #d92d20;
+  --chart-6: #667085;
+  --grid-dot: #dfe3e8;
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow-pop: 0 16px 40px rgba(16, 24, 40, 0.14);
+  --radius: 8px;
 }
 
 html[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #0d0b09;
-  --bg-elevated: #12100d;
-  --surface: #17130f;
-  --surface-raised: #1e1914;
-  --fg: #f3eee5;
-  --fg-muted: #b3a897;
-  --fg-subtle: #7d7263;
-  --border: #352d24;
-  --border-strong: #5c4f3f;
-  --accent: #ff6a3d;
-  --accent-fg: #1a0d08;
-  --accent-soft: #2a1710;
-  --success: #6fbf95;
-  --success-soft: #13251c;
-  --warning: #e0a43a;
-  --warning-soft: #2a2010;
-  --danger: #ff7b72;
-  --danger-soft: #2d1413;
-  --code: #14100c;
-  --inverse: #f3eee5;
-  --inverse-fg: #0d0b09;
-  --chart-1: #74a9e8;
-  --chart-2: #6fcf9d;
-  --chart-3: #e3ad52;
-  --chart-4: #b79be8;
-  --chart-5: #ef8a86;
-  --chart-6: #9aabba;
-  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.02), 0 18px 40px rgba(0, 0, 0, 0.28);
+  --bg: #0a0c10;
+  --bg-elevated: #0f1218;
+  --surface: #121620;
+  --surface-raised: #171c26;
+  --fg: #eef1f6;
+  --fg-muted: #98a2b3;
+  --fg-subtle: #667085;
+  --border: #222834;
+  --border-strong: #384152;
+  --accent: #7c9cff;
+  --accent-fg: #0a0c10;
+  --accent-soft: #141b30;
+  --success: #3ddc97;
+  --success-soft: #0d241b;
+  --warning: #f5b544;
+  --warning-soft: #2a1f0c;
+  --danger: #ff6b6b;
+  --danger-soft: #2b1212;
+  --code: #0f1218;
+  --inverse: #eef1f6;
+  --inverse-fg: #0a0c10;
+  --chart-1: #7c9cff;
+  --chart-2: #3ddc97;
+  --chart-3: #f5b544;
+  --chart-4: #a78bfa;
+  --chart-5: #ff6b6b;
+  --chart-6: #98a2b3;
+  --grid-dot: #202632;
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.02);
+  --shadow-pop: 0 20px 50px rgba(0, 0, 0, 0.5);
+  --radius: 8px;
 }
 
 html {
@@ -75,6 +88,7 @@ body {
   color: var(--fg);
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
 }
 
 ::selection {
@@ -85,7 +99,8 @@ body {
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-serif: var(--font-newsreader), ui-serif, Georgia, serif;
+  /* Existing `font-serif` call sites render as sans: the console has one voice. */
+  --font-serif: var(--font-geist-sans);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -101,24 +116,24 @@ body {
 
 @keyframes glossia-dash {
   to {
-    stroke-dashoffset: -32;
+    stroke-dashoffset: -24;
   }
 }
 
 @keyframes glossia-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 35%, transparent);
   }
   50% {
-    box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 0%, transparent);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 0%, transparent);
   }
 }
 
 @keyframes glossia-fade-up {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -142,13 +157,13 @@ body {
   }
   50%,
   100% {
-    opacity: 0.2;
+    opacity: 0.25;
   }
 }
 
 .animate-dash {
-  stroke-dasharray: 5 7;
-  animation: glossia-dash 1.4s linear infinite;
+  stroke-dasharray: 4 6;
+  animation: glossia-dash 1.2s linear infinite;
 }
 
 .animate-node-pulse {
@@ -156,7 +171,7 @@ body {
 }
 
 .animate-fade-up {
-  animation: glossia-fade-up 0.5s ease-out both;
+  animation: glossia-fade-up 0.35s ease-out both;
 }
 
 .animate-blink {
@@ -169,7 +184,6 @@ body {
   animation: glossia-shimmer 1.6s linear infinite;
 }
 
-/* Thin, theme-aware scrollbars for the studio panels. */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--border-strong) transparent;
@@ -189,17 +203,16 @@ body {
   background: transparent;
 }
 
-/* React Flow ships a light control surface by default. Make it follow the
-   product theme instead of flashing a white pill in dark mode. */
+/* React Flow: follow the console theme instead of its light defaults. */
 .react-flow__controls {
-  border-radius: 12px !important;
+  border-radius: 6px !important;
   overflow: hidden;
   box-shadow: var(--shadow-card) !important;
 }
 
 .react-flow__controls-button {
-  width: 28px !important;
-  height: 28px !important;
+  width: 26px !important;
+  height: 26px !important;
   background: var(--surface) !important;
   border-bottom: 1px solid var(--border) !important;
   color: var(--fg) !important;
@@ -215,10 +228,18 @@ body {
 
 .react-flow__controls-button svg {
   fill: currentColor !important;
-  max-width: 12px;
-  max-height: 12px;
+  max-width: 11px;
+  max-height: 11px;
 }
 
 .react-flow__edge-path {
-  transition: stroke 180ms ease, stroke-width 180ms ease;
+  transition: stroke 160ms ease, stroke-width 160ms ease;
+}
+
+.react-flow__node {
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+.react-flow__attribution {
+  display: none;
 }

@@ -60,12 +60,12 @@ export default function SettingsModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="settings-title"
-        className="max-h-[92dvh] w-full max-w-[520px] overflow-y-auto rounded-t-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl sm:rounded-2xl"
+        className="max-h-[92dvh] w-full max-w-[520px] overflow-y-auto rounded-t-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl sm:rounded-md"
       >
         <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4">
           <div>
             <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-[var(--fg-subtle)]">Workspace</p>
-            <h2 id="settings-title" className="mt-1 font-serif text-xl text-[var(--fg)]">
+            <h2 id="settings-title" className="mt-1 text-[16px] font-semibold tracking-[-0.01em] text-[var(--fg)]">
               Model &amp; budget
             </h2>
           </div>
@@ -92,7 +92,7 @@ export default function SettingsModal({
                   key={option.id}
                   type="button"
                   onClick={() => onModeChange(option.id)}
-                  className={`rounded-xl border px-3 py-2.5 text-left transition-colors ${
+                  className={`rounded-md border px-3 py-2.5 text-left transition-colors ${
                     mode === option.id
                       ? "border-[var(--accent)] bg-[var(--accent-soft)]"
                       : "border-[var(--border)] hover:border-[var(--border-strong)]"
@@ -115,7 +115,7 @@ export default function SettingsModal({
               <select
                 value={provider}
                 onChange={(event) => onProviderChange(event.target.value as "openai" | "openrouter")}
-                className="mt-1.5 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] px-2.5 py-2 text-[12px] text-[var(--fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40"
+                className="mt-1.5 w-full rounded-md border border-[var(--border)] bg-[var(--bg-elevated)] px-2.5 py-2 text-[12px] text-[var(--fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40"
               >
                 <option value="openai">OpenAI</option>
                 <option value="openrouter">OpenRouter</option>
@@ -128,7 +128,7 @@ export default function SettingsModal({
               <select
                 value={model}
                 onChange={(event) => onModelChange(event.target.value)}
-                className="mt-1.5 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] px-2.5 py-2 text-[12px] text-[var(--fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40"
+                className="mt-1.5 w-full rounded-md border border-[var(--border)] bg-[var(--bg-elevated)] px-2.5 py-2 text-[12px] text-[var(--fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40"
               >
                 {providerModels.map((entry) => (
                   <option key={entry.id} value={entry.id}>
@@ -151,12 +151,12 @@ export default function SettingsModal({
                 placeholder={mode === "demo" ? "switch to live to use a key" : "sk-…"}
                 disabled={mode === "demo"}
                 autoComplete="off"
-                className="min-w-0 flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] px-2.5 py-2 font-mono text-[11px] text-[var(--fg)] placeholder:text-[var(--fg-subtle)] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40"
+                className="min-w-0 flex-1 rounded-md border border-[var(--border)] bg-[var(--bg-elevated)] px-2.5 py-2 font-mono text-[11px] text-[var(--fg)] placeholder:text-[var(--fg-subtle)] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40"
               />
               <button
                 type="button"
                 onClick={() => setShowKey((value) => !value)}
-                className="shrink-0 rounded-lg border border-[var(--border)] px-2.5 py-2 font-mono text-[9px] uppercase tracking-[0.08em] text-[var(--fg-muted)] hover:border-[var(--border-strong)]"
+                className="shrink-0 rounded-md border border-[var(--border)] px-2.5 py-2 font-mono text-[9px] uppercase tracking-[0.08em] text-[var(--fg-muted)] hover:border-[var(--border-strong)]"
               >
                 {showKey ? "hide" : "show"}
               </button>
@@ -195,7 +195,7 @@ export default function SettingsModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full bg-[var(--accent)] px-4 py-2 text-[12px] font-medium text-[var(--accent-fg)] hover:brightness-110"
+            className="rounded-full bg-[var(--inverse)] px-4 py-2 text-[12px] font-medium text-[var(--inverse-fg)] hover:opacity-90"
           >
             Done
           </button>

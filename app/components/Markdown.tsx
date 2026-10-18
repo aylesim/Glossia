@@ -85,7 +85,7 @@ function renderBlocks(markdown: string): React.ReactNode[] {
       blocks.push(
         <pre
           key={`code-${index}`}
-          className="my-4 overflow-auto rounded-xl border border-[var(--border)] bg-[var(--code)] p-4 font-mono text-[11px] leading-relaxed text-[var(--fg)]"
+          className="my-3 overflow-auto rounded-md border border-[var(--border)] bg-[var(--code)] p-3 font-mono text-[10px] leading-5 text-[var(--fg)]"
         >
           <code>{code.join("\n")}</code>
         </pre>,
@@ -99,19 +99,19 @@ function renderBlocks(markdown: string): React.ReactNode[] {
       const content = inline(heading[2]!, `h-${index}`);
       if (level === 1) {
         blocks.push(
-          <h1 key={`h-${index}`} className="mb-4 font-serif text-3xl leading-tight tracking-[-0.02em] text-[var(--fg)]">
+          <h1 key={`h-${index}`} className="mb-4 text-[22px] font-semibold leading-tight tracking-[-0.03em] text-[var(--fg)]">
             {content}
           </h1>,
         );
       } else if (level === 2) {
         blocks.push(
-          <h2 key={`h-${index}`} className="mb-3 mt-8 font-serif text-[22px] leading-snug tracking-[-0.01em] text-[var(--fg)]">
+          <h2 key={`h-${index}`} className="mb-2.5 mt-7 text-[16px] font-semibold leading-snug tracking-[-0.02em] text-[var(--fg)]">
             {content}
           </h2>,
         );
       } else {
         blocks.push(
-          <h3 key={`h-${index}`} className="mb-2 mt-6 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--fg-subtle)]">
+          <h3 key={`h-${index}`} className="mb-2 mt-5 font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--fg-subtle)]">
             {content}
           </h3>,
         );
@@ -135,7 +135,7 @@ function renderBlocks(markdown: string): React.ReactNode[] {
       blocks.push(
         <blockquote
           key={`quote-${index}`}
-          className="my-4 border-l-2 border-[var(--accent)] pl-4 text-sm italic leading-relaxed text-[var(--fg-muted)]"
+          className="my-3 border-l-2 border-[var(--border-strong)] pl-3 text-[12.5px] leading-6 text-[var(--fg-muted)]"
         >
           {inline(quote.join(" "), `q-${index}`)}
         </blockquote>,
@@ -150,7 +150,7 @@ function renderBlocks(markdown: string): React.ReactNode[] {
         index += 1;
       }
       blocks.push(
-        <ul key={`ul-${index}`} className="my-3 list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-[var(--fg-muted)] marker:text-[var(--accent)]">
+        <ul key={`ul-${index}`} className="my-2.5 list-disc space-y-1.5 pl-5 text-[12.5px] leading-6 text-[var(--fg-muted)] marker:text-[var(--border-strong)]">
           {items.map((item, itemIndex) => (
             <li key={`li-${index}-${itemIndex}`}>{inline(item, `li-${index}-${itemIndex}`)}</li>
           ))}
@@ -166,7 +166,7 @@ function renderBlocks(markdown: string): React.ReactNode[] {
         index += 1;
       }
       blocks.push(
-        <ol key={`ol-${index}`} className="my-3 list-decimal space-y-1.5 pl-5 text-sm leading-relaxed text-[var(--fg-muted)] marker:font-mono marker:text-[var(--fg-subtle)]">
+        <ol key={`ol-${index}`} className="my-2.5 list-decimal space-y-1.5 pl-5 text-[12.5px] leading-6 text-[var(--fg-muted)] marker:font-mono marker:text-[var(--fg-subtle)]">
           {items.map((item, itemIndex) => (
             <li key={`oli-${index}-${itemIndex}`}>{inline(item, `oli-${index}-${itemIndex}`)}</li>
           ))}
@@ -181,7 +181,7 @@ function renderBlocks(markdown: string): React.ReactNode[] {
       index += 1;
     }
     blocks.push(
-      <p key={`p-${index}`} className="my-3 text-sm leading-7 text-[var(--fg-muted)]">
+      <p key={`p-${index}`} className="my-2.5 text-[12.5px] leading-6 text-[var(--fg-muted)]">
         {inline(paragraph.join(" "), `p-${index}`)}
       </p>,
     );

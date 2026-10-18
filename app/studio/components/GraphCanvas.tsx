@@ -73,7 +73,7 @@ export default function GraphCanvas({
           background: "transparent",
           border: "none",
           boxShadow: "none",
-          width: 240,
+          width: 216,
           color: "var(--fg)",
         },
       };
@@ -83,13 +83,15 @@ export default function GraphCanvas({
       const targetStatus: StepStatus = steps[edge.to]?.status ?? "queued";
       const sourceStatus: StepStatus = steps[edge.from]?.status ?? "queued";
       const failed = targetStatus === "failed" || sourceStatus === "failed";
-      const active = sourceStatus === "completed" || sourceStatus === "cached" || sourceStatus === "running";
+      const running = sourceStatus === "running" || targetStatus === "running";
       const done = targetStatus === "completed" || targetStatus === "cached";
       const color = failed
         ? "var(--danger)"
-        : active
+        : running
           ? "var(--accent)"
-          : "var(--border-strong)";
+          : done
+            ? "var(--success)"
+            : "var(--border-strong)";
       return {
         id: edge.id,
         source: edge.from,
@@ -100,8 +102,8 @@ export default function GraphCanvas({
         animated: sourceStatus === "running" || targetStatus === "running",
         style: {
           stroke: color,
-          strokeWidth: active || failed ? 1.6 : 1.1,
-          strokeOpacity: done ? 0.9 : 0.55,
+          strokeWidth: running || failed ? 1.5 : 1,
+          strokeOpacity: done ? 0.85 : 0.55,
         },
         markerEnd: {
           type: "arrowclosed" as const,
@@ -130,19 +132,19 @@ export default function GraphCanvas({
   if (!patch) {
     return (
       <div className="flex h-full min-h-[360px] flex-col items-center justify-center gap-3 bg-[var(--bg)] px-6 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-dashed border-[var(--border-strong)]">
-          <span className="h-2 w-2 rounded-full bg-[var(--accent)]" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-md border border-dashed border-[var(--border-strong)]">
+          <span className="h-1.5 w-1.5 rounded-full bg-[var(--fg-subtle)]" />
         </div>
-        <p className="font-serif text-xl text-[var(--fg)]">No graph yet</p>
-        <p className="max-w-[300px] text-sm leading-6 text-[var(--fg-muted)]">
-          Compile the intent on the left. The patch will appear here only if it passes the analyzer.
+        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--fg-subtle)]">no_patch</p>
+        <p className="max-w-[300px] text-[12px] leading-5 text-[var(--fg-muted)]">
+          Compile the intent on the left. The canvas renders only a patch that passes the analyzer.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="h-full w-full bg-[var(--bg)]">
+    <div className="h-full w-full bg-[var(--bg)]" aria-label="Workflow graph canvas">
       <ReactFlow
         nodes={flows.nodes}
         edges={flows.edges}
@@ -164,7 +166,7 @@ export default function GraphCanvas({
         onPaneClick={() => onSelectNode(null)}
         defaultEdgeOptions={{ type: "smoothstep" }}
       >
-        <Background variant={BackgroundVariant.Dots} color="var(--border)" gap={22} size={1.1} />
+        <Background variant={BackgroundVariant.Dots} color="var(--grid-dot)" gap={18} size={1} />
         <Controls
           showInteractive={false}
           style={{

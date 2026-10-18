@@ -18,9 +18,9 @@ function score(value: number | null | undefined): string {
 
 function Stat({ label, value, detail }: { label: string; value: string; detail?: string }) {
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
+    <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
       <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--fg-subtle)]">{label}</p>
-      <p className="mt-2 font-serif text-3xl tracking-[-0.02em] text-[var(--fg)]">{value}</p>
+      <p className="mt-2 font-mono text-[24px] tracking-[-0.02em] text-[var(--fg)]">{value}</p>
       {detail ? <p className="mt-1 text-[10.5px] leading-4 text-[var(--fg-muted)]">{detail}</p> : null}
     </div>
   );
@@ -96,7 +96,7 @@ export default function EvalClient() {
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--fg-subtle)]">
             Eval lab / structural suite
           </p>
-          <h1 className="mt-3 font-serif text-4xl leading-[1.02] tracking-[-0.025em] text-[var(--fg)] sm:text-5xl">
+          <h1 className="mt-3 text-[34px] font-semibold leading-[1.04] tracking-[-0.04em] text-[var(--fg)] sm:text-[40px]">
             Quality is a number,
             <br />
             not a feeling.
@@ -185,7 +185,7 @@ export default function EvalClient() {
       </div>
 
       {error ? (
-        <div role="alert" className="mt-4 rounded-xl border border-[var(--danger)]/30 bg-[var(--danger-soft)] px-3 py-2.5 font-mono text-[10.5px] leading-5 text-[var(--danger)]">
+        <div role="alert" className="mt-4 rounded-md border border-[var(--danger)]/30 bg-[var(--danger-soft)] px-3 py-2.5 font-mono text-[10.5px] leading-5 text-[var(--danger)]">
           {error}
         </div>
       ) : null}
@@ -223,7 +223,7 @@ export default function EvalClient() {
             <span>avg attempts {report.summary.avgAttempts.toFixed(2)}</span>
           </div>
 
-          <div className="mt-6 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
+          <div className="mt-6 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface)]">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[840px] border-collapse text-left">
                 <thead>
@@ -278,7 +278,7 @@ export default function EvalClient() {
           </div>
 
           {expanded ? (
-            <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] p-4">
+            <div className="mt-3 rounded-md border border-[var(--border)] bg-[var(--bg-elevated)] p-4">
               {(() => {
                 const entry = cases.find((candidate) => candidate.id === expanded);
                 if (!entry) return null;
@@ -321,8 +321,8 @@ export default function EvalClient() {
           ) : null}
         </>
       ) : (
-        <div className="mt-10 flex min-h-[280px] flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--border-strong)] bg-[var(--bg-elevated)] px-6 text-center">
-          <p className="font-serif text-2xl text-[var(--fg)]">No report yet.</p>
+        <div className="mt-10 flex min-h-[280px] flex-col items-center justify-center rounded-lg border border-dashed border-[var(--border-strong)] bg-[var(--bg-elevated)] px-6 text-center">
+          <p className="text-[20px] font-semibold tracking-[-0.02em] text-[var(--fg)]">No report yet.</p>
           <p className="mt-2 max-w-[420px] text-sm leading-6 text-[var(--fg-muted)]">
             Run the demo suite to exercise the compiler, analyzer and repair loop on ten structural cases.
             It takes a few seconds and costs nothing.

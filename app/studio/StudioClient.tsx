@@ -8,7 +8,7 @@ import { getNodeType } from "@/lib/ir/query";
 import { MODELS, type ModelInfo } from "@/lib/llm/registry";
 import ThemeToggle from "@/app/components/theme-toggle";
 import Wordmark from "@/app/components/Wordmark";
-import { btnPrimary, btnSecondary, btnSmall, chip, field, monoLabel } from "@/app/styles";
+import { btnSecondary, btnSmall, field, monoLabel } from "@/app/styles";
 import ArtifactModal from "./components/ArtifactModal";
 import GraphCanvas from "./components/GraphCanvas";
 import Inspector from "./components/Inspector";
@@ -500,25 +500,34 @@ export default function StudioClient() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-[var(--bg)] lg:h-dvh lg:overflow-hidden">
-      <header className="sticky top-0 z-30 flex min-h-14 shrink-0 flex-wrap items-center gap-2 border-b border-[var(--border)] bg-[color-mix(in_srgb,var(--bg)_92%,transparent)] px-3 py-2 backdrop-blur-md sm:px-4">
+      <header className="sticky top-0 z-30 flex h-12 shrink-0 items-center gap-2 border-b border-[var(--border)] bg-[var(--surface)] px-3 sm:px-4">
         <Wordmark />
         <span className="hidden h-4 w-px bg-[var(--border)] md:block" />
         <div className="hidden items-center gap-1.5 md:flex">
-          <span className={chip}>{domain.name}</span>
-          <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-[var(--fg-subtle)]">
-            {domain.nodeTypes.length} types
+          <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-[var(--fg-subtle)]">console</span>
+          <span className="font-mono text-[9px] text-[var(--border-strong)]">/</span>
+          <span className="font-mono text-[9px] uppercase tracking-[0.08em] text-[var(--fg)]">{domain.name}</span>
+          <span className="rounded border border-[var(--border)] bg-[var(--surface-raised)] px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.06em] text-[var(--fg-subtle)]">
+            v{domain.version}
+          </span>
+        </div>
+
+        <div className="hidden min-w-0 flex-1 items-center justify-center lg:flex">
+          <span className="inline-flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.06em] text-[var(--fg-subtle)]">
+            <span className={`h-1.5 w-1.5 rounded-full ${running ? "animate-blink bg-[var(--accent)]" : run ? "bg-[var(--success)]" : "bg-[var(--border-strong)]"}`} />
+            <span className="max-w-[260px] truncate">{running ? "run in progress" : run ? `${run.id} · ${run.status}` : "no active run"}</span>
           </span>
         </div>
 
         <div className="ml-auto flex items-center gap-1.5">
-          <div className="flex rounded-full border border-[var(--border)] bg-[var(--surface)] p-0.5" role="group" aria-label="Execution mode">
+          <div className="flex rounded-md border border-[var(--border)] bg-[var(--surface)] p-0.5" role="group" aria-label="Execution mode">
             {(["demo", "live"] as const).map((value) => (
               <button
                 key={value}
                 type="button"
                 onClick={() => handleModeChange(value)}
                 aria-pressed={mode === value}
-                className={`rounded-full px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.08em] transition-colors ${
+                className={`rounded px-2 py-1 font-mono text-[8.5px] uppercase tracking-[0.06em] transition-colors ${
                   mode === value
                     ? "bg-[var(--inverse)] text-[var(--inverse-fg)]"
                     : "text-[var(--fg-subtle)] hover:text-[var(--fg)]"
@@ -529,12 +538,12 @@ export default function StudioClient() {
             ))}
           </div>
 
-          <div className="hidden w-[112px] xl:block">
-            <div className="flex items-center justify-between font-mono text-[8px] uppercase tracking-[0.08em] text-[var(--fg-subtle)]">
+          <div className="hidden w-[126px] xl:block">
+            <div className="flex items-center justify-between font-mono text-[8px] uppercase tracking-[0.06em] text-[var(--fg-subtle)]">
               <span>budget</span>
-              <span>${totalCost.toFixed(2)}/${budget.toFixed(2)}</span>
+              <span>${totalCost.toFixed(2)} / ${budget.toFixed(2)}</span>
             </div>
-            <div className="mt-1 h-1 overflow-hidden rounded-full bg-[var(--surface-raised)]">
+            <div className="mt-1 h-[3px] overflow-hidden rounded-full bg-[var(--surface-raised)]">
               <div
                 className="h-full rounded-full transition-[width]"
                 style={{
@@ -549,7 +558,7 @@ export default function StudioClient() {
             <button
               type="button"
               onClick={() => setArtifactOpen(true)}
-              className="hidden rounded-full border border-[var(--border)] px-2.5 py-1.5 font-mono text-[9px] uppercase tracking-[0.08em] text-[var(--fg-muted)] hover:border-[var(--border-strong)] hover:text-[var(--fg)] sm:inline-flex"
+              className="hidden rounded-md border border-[var(--border)] px-2.5 py-1.5 font-mono text-[8.5px] uppercase tracking-[0.06em] text-[var(--fg-muted)] hover:border-[var(--border-strong)] hover:text-[var(--fg)] sm:inline-flex"
             >
               artifact
             </button>
@@ -559,7 +568,7 @@ export default function StudioClient() {
             type="button"
             onClick={() => setSettingsOpen(true)}
             aria-label="Open settings"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-[var(--fg-muted)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--fg)]"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--fg-muted)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--fg)]"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
               <path
@@ -580,7 +589,7 @@ export default function StudioClient() {
             <button
               type="button"
               onClick={() => void handleCancel()}
-              className="inline-flex items-center gap-1.5 rounded-full border border-[var(--danger)] bg-[var(--danger)] px-4 py-2 text-[12px] font-medium text-white transition-opacity hover:opacity-90"
+              className="inline-flex items-center gap-1.5 rounded-md border border-[var(--danger)] bg-[var(--danger)] px-3 py-1.5 text-[11px] font-medium text-white transition-opacity hover:opacity-90"
             >
               <span className="h-1.5 w-1.5 rounded-full bg-white animate-blink" />
               Stop
@@ -590,7 +599,7 @@ export default function StudioClient() {
               type="button"
               onClick={() => void handleRun()}
               disabled={!patch || compiling}
-              className={btnPrimary}
+              className="inline-flex items-center gap-1.5 rounded-md border border-[var(--inverse)] bg-[var(--inverse)] px-3 py-1.5 text-[11px] font-medium text-[var(--inverse-fg)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]"
             >
               <span aria-hidden>▶</span> Run
             </button>
@@ -598,7 +607,7 @@ export default function StudioClient() {
         </div>
       </header>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)_380px]">
+      <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[304px_minmax(0,1fr)_368px]">
         <aside className="flex min-h-0 flex-col border-b border-[var(--border)] bg-[var(--surface)] lg:border-b-0 lg:border-r">
           <div className="flex shrink-0 border-b border-[var(--border)] px-2">
             {(
@@ -666,21 +675,21 @@ export default function StudioClient() {
                   type="button"
                   onClick={() => void handleCompile()}
                   disabled={compiling || !intent.trim()}
-                  className={`${btnSecondary} w-full`}
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-[var(--inverse)] bg-[var(--inverse)] px-3 py-2 text-[11px] font-medium text-[var(--inverse-fg)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]"
                 >
-                  {compiling ? "Compiling…" : "Compile graph"}
-                  <span className="font-mono text-[9px] opacity-50">⌘↵</span>
+                  {compiling ? "compiling…" : "Compile graph"}
+                  <span className="font-mono text-[8px] opacity-50">⌘↵</span>
                 </button>
 
                 {compileError ? (
-                  <div role="alert" className="rounded-xl border border-[var(--danger)]/30 bg-[var(--danger-soft)] px-3 py-2.5">
+                  <div role="alert" className="rounded-md border border-[var(--danger)]/30 bg-[var(--danger-soft)] px-3 py-2.5">
                     <p className="font-mono text-[9px] uppercase tracking-[0.1em] text-[var(--danger)]">Compile error</p>
                     <p className="mt-1 font-mono text-[10px] leading-5 text-[var(--danger)]">{compileError}</p>
                   </div>
                 ) : null}
 
                 {compiling ? (
-                  <div className="space-y-2 rounded-xl border border-[var(--border)] p-3">
+                  <div className="space-y-2 rounded-md border border-[var(--border)] p-3">
                     <div className="h-2 w-2/3 rounded-full shimmer" />
                     <div className="h-2 w-full rounded-full shimmer" />
                     <div className="h-2 w-1/2 rounded-full shimmer" />
@@ -688,7 +697,7 @@ export default function StudioClient() {
                 ) : null}
 
                 {compile ? (
-                  <div className="space-y-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] p-3">
+                  <div className="space-y-2.5 rounded-md border border-[var(--border)] bg-[var(--bg-elevated)] p-3">
                     <div className="flex items-center justify-between">
                       <span
                         className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.08em] ${
@@ -711,14 +720,14 @@ export default function StudioClient() {
                         ["depth", compile.stats.depth],
                         ["cost", `$${compile.usage.costUsd.toFixed(3)}`],
                       ].map(([label, value]) => (
-                        <div key={label} className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2 py-1.5">
+                        <div key={label} className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 py-1.5">
                           <p className="font-mono text-[7.5px] uppercase tracking-[0.08em] text-[var(--fg-subtle)]">{label}</p>
                           <p className="mt-0.5 font-mono text-[10px] text-[var(--fg)]">{value}</p>
                         </div>
                       ))}
                     </div>
                     {diffLines.length > 0 ? (
-                      <details className="group rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2">
+                      <details className="group rounded-md border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2">
                         <summary className="cursor-pointer font-mono text-[9px] uppercase tracking-[0.08em] text-[var(--accent)]">
                           repair diff · {diffLines.length}
                         </summary>
@@ -728,7 +737,7 @@ export default function StudioClient() {
                       </details>
                     ) : null}
                     {compile.pseudocode ? (
-                      <details className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2">
+                      <details className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2">
                         <summary className="cursor-pointer font-mono text-[9px] uppercase tracking-[0.08em] text-[var(--fg-subtle)]">
                           pseudocode
                         </summary>
@@ -752,7 +761,7 @@ export default function StudioClient() {
                             setInspectorTab("configure");
                           }
                         }}
-                        className={`block w-full rounded-lg border px-2.5 py-1.5 text-left ${
+                        className={`block w-full rounded-md border px-2.5 py-1.5 text-left ${
                           issue.severity === "error"
                             ? "border-[var(--danger)]/25 bg-[var(--danger-soft)]"
                             : "border-[var(--warning)]/25 bg-[var(--warning-soft)]"
@@ -774,7 +783,7 @@ export default function StudioClient() {
                 ) : null}
 
                 {runError ? (
-                  <div role="alert" className="rounded-xl border border-[var(--danger)]/30 bg-[var(--danger-soft)] px-3 py-2.5">
+                  <div role="alert" className="rounded-md border border-[var(--danger)]/30 bg-[var(--danger-soft)] px-3 py-2.5">
                     <p className="font-mono text-[9px] uppercase tracking-[0.1em] text-[var(--danger)]">Run error</p>
                     <p className="mt-1 font-mono text-[10px] leading-5 text-[var(--danger)]">{runError}</p>
                   </div>
@@ -784,6 +793,39 @@ export default function StudioClient() {
                   ⌘↵ compile · ⌘⇧↵ compile + run. In demo mode the compiler returns a recorded candidate and
                   the same analyzer/repair loop runs on it.
                 </p>
+
+                <div className="overflow-hidden rounded-md border border-[var(--border)] bg-[var(--surface)]">
+                  <div className="flex h-8 items-center justify-between border-b border-[var(--border)] px-2.5">
+                    <span className="font-mono text-[8px] uppercase tracking-[0.12em] text-[var(--fg-subtle)]">
+                      runtime
+                    </span>
+                    <span className="font-mono text-[8px] uppercase tracking-[0.06em] text-[var(--fg-muted)]">
+                      {mode}
+                    </span>
+                  </div>
+                  <dl className="divide-y divide-[var(--border)] font-mono text-[9px]">
+                    {[
+                      ["provider", mode === "demo" ? "demo / recorded" : model],
+                      ["budget", `$${budget.toFixed(2)}`],
+                      ["patch", patch ? `${patch.nodes.length}n / ${patch.edges.length}e` : "none"],
+                      [
+                        "last run",
+                        run ? `${run.status} · ${((run.durationMs ?? 0) / 1000).toFixed(1)}s` : "—",
+                      ],
+                      [
+                        "verified",
+                        run?.artifact
+                          ? `${Math.round(run.artifact.verification.supportRate * 100)}%`
+                          : "—",
+                      ],
+                    ].map(([label, value]) => (
+                      <div key={label} className="flex items-center justify-between gap-3 px-2.5 py-1.5">
+                        <dt className="uppercase tracking-[0.06em] text-[var(--fg-subtle)]">{label}</dt>
+                        <dd className="truncate text-right text-[var(--fg-muted)]">{value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
               </div>
             ) : null}
 
@@ -810,7 +852,7 @@ export default function StudioClient() {
                   </select>
                 </div>
 
-                <div className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] px-2.5 py-2">
+                <div className="flex items-center justify-between rounded-md border border-[var(--border)] bg-[var(--bg-elevated)] px-2.5 py-2">
                   <div>
                     <p className="text-[11px] text-[var(--fg)]">{domain.name}</p>
                     <p className="mt-0.5 font-mono text-[8.5px] text-[var(--fg-subtle)]">
@@ -854,7 +896,7 @@ export default function StudioClient() {
                   </button>
                 </div>
                 {domainError ? (
-                  <p role="alert" className="rounded-lg border border-[var(--danger)]/30 bg-[var(--danger-soft)] px-2.5 py-2 font-mono text-[9.5px] leading-5 text-[var(--danger)]">
+                  <p role="alert" className="rounded-md border border-[var(--danger)]/30 bg-[var(--danger-soft)] px-2.5 py-2 font-mono text-[9.5px] leading-5 text-[var(--danger)]">
                     {domainError}
                   </p>
                 ) : null}
@@ -888,7 +930,7 @@ export default function StudioClient() {
                                   setInspectorTab("configure");
                                 }
                               }}
-                              className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] px-2.5 py-2 text-left transition-colors hover:border-[var(--border-strong)]"
+                              className="w-full rounded-md border border-[var(--border)] bg-[var(--bg-elevated)] px-2.5 py-2 text-left transition-colors hover:border-[var(--border-strong)]"
                             >
                               <span className="flex items-center justify-between gap-2">
                                 <span className="truncate text-[11px] text-[var(--fg)]">{node.name}</span>
@@ -924,9 +966,9 @@ export default function StudioClient() {
               }}
             />
             {running ? (
-              <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 shadow-[var(--shadow-card)]">
+              <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-2 rounded-md border border-[var(--accent)]/40 bg-[var(--surface)] px-2.5 py-1.5 shadow-[var(--shadow-card)]">
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] animate-blink" />
-                <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-[var(--fg-muted)]">
+                <span className="font-mono text-[8.5px] uppercase tracking-[0.08em] text-[var(--fg-muted)]">
                   running · {(elapsedMs / 1000).toFixed(1)}s · ${totalCost.toFixed(3)}
                 </span>
               </div>
@@ -988,7 +1030,7 @@ export default function StudioClient() {
       <ArtifactModal artifact={run?.artifact ?? null} open={artifactOpen} onClose={() => setArtifactOpen(false)} />
 
       {notice ? (
-        <div className="fixed bottom-4 right-4 z-40 rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-2 font-mono text-[10px] text-[var(--fg-muted)] shadow-[var(--shadow-card)]">
+        <div className="fixed bottom-4 right-4 z-40 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 font-mono text-[9px] uppercase tracking-[0.06em] text-[var(--fg-muted)] shadow-[var(--shadow-card)]">
           {notice}
         </div>
       ) : null}

@@ -1,173 +1,178 @@
 const NODES = [
-  { id: "q", label: "question", x: 8, y: 127, color: "var(--chart-1)" },
-  { id: "plan", label: "plan", x: 112, y: 127, color: "var(--chart-2)" },
-  { id: "search", label: "search", x: 216, y: 53, color: "var(--chart-3)" },
-  { id: "fetch", label: "fetch", x: 320, y: 53, color: "var(--chart-3)" },
-  { id: "retrieve", label: "retrieve", x: 216, y: 201, color: "var(--chart-4)" },
-  { id: "extract", label: "extract", x: 320, y: 201, color: "var(--chart-4)" },
-  { id: "verify", label: "verify", x: 424, y: 127, color: "var(--chart-5)" },
-  { id: "brief", label: "brief", x: 528, y: 127, color: "var(--accent)" },
+  { id: "q", label: "question", type: "input.question", x: 12, y: 82, color: "var(--chart-1)" },
+  { id: "plan", label: "plan", type: "llm.plan", x: 112, y: 82, color: "var(--chart-2)" },
+  { id: "search", label: "search", type: "tool.search", x: 212, y: 32, color: "var(--chart-3)" },
+  { id: "retrieve", label: "retrieve", type: "transform.retrieve", x: 212, y: 132, color: "var(--chart-4)" },
+  { id: "extract", label: "extract", type: "llm.extract", x: 312, y: 32, color: "var(--chart-2)" },
+  { id: "draft", label: "draft", type: "llm.draft", x: 312, y: 132, color: "var(--chart-2)" },
+  { id: "verify", label: "verify", type: "verify.citations", x: 412, y: 82, color: "var(--chart-5)" },
+  { id: "brief", label: "brief", type: "output.brief", x: 512, y: 82, color: "var(--chart-6)" },
 ] as const;
 
 const EDGES = [
   { from: "q", to: "plan", active: false },
   { from: "plan", to: "search", active: false },
   { from: "plan", to: "retrieve", active: true },
-  { from: "search", to: "fetch", active: false },
-  { from: "retrieve", to: "extract", active: true },
-  { from: "fetch", to: "verify", active: true },
+  { from: "search", to: "extract", active: false },
+  { from: "retrieve", to: "draft", active: true },
   { from: "extract", to: "verify", active: true },
-  { from: "verify", to: "brief", active: false },
+  { from: "draft", to: "verify", active: true },
+  { from: "verify", to: "brief", active: true },
 ] as const;
 
-const W = 92;
-const H = 46;
+const W = 84;
+const H = 38;
 
-function center(id: string) {
+function anchor(id: string) {
   const node = NODES.find((entry) => entry.id === id)!;
-  return { x: node.x + W / 2, y: node.y + H / 2, left: node.x, right: node.x + W, top: node.y, bottom: node.y + H };
+  return {
+    left: node.x,
+    right: node.x + W,
+    centerY: node.y + H / 2,
+  };
 }
 
-function edgePath(from: string, to: string): string {
-  const a = center(from);
-  const b = center(to);
-  if (Math.abs(a.y - b.y) < 4) {
-    return `M ${a.right} ${a.y} C ${a.right + 24} ${a.y}, ${b.left - 24} ${b.y}, ${b.left} ${b.y}`;
+function edgePath(from: string, to: string) {
+  const a = anchor(from);
+  const b = anchor(to);
+  if (Math.abs(a.centerY - b.centerY) < 3) {
+    return `M ${a.right} ${a.centerY} L ${b.left} ${b.centerY}`;
   }
-  return `M ${a.right} ${a.y} C ${a.right + 26} ${a.y}, ${b.left - 26} ${b.y}, ${b.left} ${b.y}`;
+  const mid = (a.right + b.left) / 2;
+  return `M ${a.right} ${a.centerY} C ${mid} ${a.centerY}, ${mid} ${b.centerY}, ${b.left} ${b.centerY}`;
 }
+
+const TRACE = [
+  ["plan", "llm", "182ms", "1.2k tok", "ok"],
+  ["extract", "llm", "180ms", "2.8k tok", "ok"],
+  ["outline", "llm", "183ms", "1.1k tok", "ok"],
+  ["draft", "llm", "364ms", "3.4k tok", "ok"],
+  ["verify", "tool", "15ms", "—", "ok"],
+] as const;
 
 export default function HeroGraph() {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-card)]">
-      <div className="flex items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-3">
-        <div className="flex items-center gap-2">
+    <div className="overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-card)]">
+      <div className="flex h-9 items-center justify-between border-b border-[var(--border)] px-3">
+        <div className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-[0.06em] text-[var(--fg-muted)]">
           <span className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
-          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--fg-muted)]">
-            run_8f2c · demo
-          </span>
+          run_8f2c
+          <span className="text-[var(--border-strong)]">/</span>
+          <span>research-brief</span>
         </div>
-        <div className="flex items-center gap-3 font-mono text-[10px] text-[var(--fg-subtle)]">
-          <span>12 nodes</span>
-          <span className="text-[var(--fg-subtle)]">·</span>
-          <span>18 edges</span>
-          <span className="rounded-full border border-[var(--border)] px-2 py-0.5 text-[var(--fg-muted)]">
-            $0.00
+        <div className="flex items-center gap-1.5">
+          <span className="rounded border border-[var(--border)] px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.06em] text-[var(--success)]">
+            completed
           </span>
+          <span className="font-mono text-[8px] text-[var(--fg-subtle)]">1.0s</span>
         </div>
       </div>
 
-      <div className="px-3 pt-2">
-        <svg viewBox="0 0 620 300" className="w-full" role="img" aria-label="A compiled research workflow with a fan-out over sources and a verification step">
+      <div className="grid grid-cols-4 divide-x divide-[var(--border)] border-b border-[var(--border)]">
+        {[
+          ["nodes", "12"],
+          ["edges", "18"],
+          ["cost", "$0.0000"],
+          ["verified", "100%"],
+        ].map(([label, value]) => (
+          <div key={label} className="px-3 py-2">
+            <p className="font-mono text-[8px] uppercase tracking-[0.1em] text-[var(--fg-subtle)]">{label}</p>
+            <p className="mt-0.5 font-mono text-[12px] text-[var(--fg)]">{value}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-[var(--bg)] px-2 py-3">
+        <svg viewBox="0 0 608 210" className="w-full" role="img" aria-label="A compiled research workflow with a verification step">
           <defs>
-            <marker id="hero-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <marker id="hero-arrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
               <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--border-strong)" />
             </marker>
-            <marker id="hero-arrow-accent" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <marker id="hero-arrow-active" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
               <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)" />
             </marker>
           </defs>
 
           {EDGES.map((edge) => {
-            const a = center(edge.from);
-            const b = center(edge.to);
-            const d = edgePath(edge.from, edge.to);
+            const color = edge.active ? "var(--accent)" : "var(--border-strong)";
             return (
-              <g key={`${edge.from}-${edge.to}`}>
-                <path
-                  d={d}
-                  fill="none"
-                  stroke={edge.active ? "var(--accent)" : "var(--border-strong)"}
-                  strokeWidth={edge.active ? 1.4 : 1}
-                  strokeOpacity={edge.active ? 0.9 : 0.55}
-                  markerEnd={edge.active ? "url(#hero-arrow-accent)" : "url(#hero-arrow)"}
-                  className={edge.active ? "animate-dash" : undefined}
-                  style={edge.active ? { strokeDasharray: "4 6" } : undefined}
-                />
-                <circle cx={a.right} cy={a.y} r="1.6" fill={edge.active ? "var(--accent)" : "var(--border-strong)"} />
-                <circle cx={b.left} cy={b.y} r="1.6" fill={edge.active ? "var(--accent)" : "var(--border-strong)"} />
-              </g>
+              <path
+                key={`${edge.from}-${edge.to}`}
+                d={edgePath(edge.from, edge.to)}
+                fill="none"
+                stroke={color}
+                strokeWidth={edge.active ? 1.3 : 1}
+                strokeOpacity={edge.active ? 0.9 : 0.6}
+                markerEnd={edge.active ? "url(#hero-arrow-active)" : "url(#hero-arrow)"}
+                className={edge.active ? "animate-dash" : undefined}
+              />
             );
           })}
 
-          {NODES.map((node) => {
-            const isVerify = node.id === "verify";
-            const isBrief = node.id === "brief";
-            return (
-              <g key={node.id}>
-                <rect
-                  x={node.x}
-                  y={node.y}
-                  width={W}
-                  height={H}
-                  rx="9"
-                  fill={isBrief ? "var(--accent)" : "var(--surface-raised)"}
-                  stroke={isBrief ? "var(--accent)" : isVerify ? "var(--accent)" : "var(--border)"}
-                  strokeWidth={isVerify ? 1.4 : 1}
-                />
-                <rect
-                  x={node.x + 10}
-                  y={node.y + 11}
-                  width="5"
-                  height="5"
-                  rx="2.5"
-                  fill={isBrief ? "var(--accent-fg)" : node.color}
-                />
-                <text
-                  x={node.x + 21}
-                  y={node.y + 16}
-                  fill={isBrief ? "var(--accent-fg)" : "var(--fg)"}
-                  fontSize="9.5"
-                  fontFamily="var(--font-mono), monospace"
-                  letterSpacing="0.02em"
-                >
-                  {node.label}
-                </text>
-                <text
-                  x={node.x + 10}
-                  y={node.y + 33}
-                  fill={isBrief ? "var(--accent-fg)" : "var(--fg-subtle)"}
-                  fontSize="7.5"
-                  fontFamily="var(--font-mono), monospace"
-                  opacity={isBrief ? 0.7 : 1}
-                >
-                  {node.id === "q" ? "input.question" : isBrief ? "verified" : `node.${node.id}`}
-                </text>
-                {isVerify ? (
-                  <circle cx={node.x + W - 12} cy={node.y + 13} r="3" fill="var(--accent)">
-                    <animate attributeName="opacity" values="1;0.2;1" dur="1.6s" repeatCount="indefinite" />
-                  </circle>
-                ) : null}
-              </g>
-            );
-          })}
+          {NODES.map((node) => (
+            <g key={node.id}>
+              <rect
+                x={node.x}
+                y={node.y}
+                width={W}
+                height={H}
+                rx="5"
+                fill="var(--surface)"
+                stroke={node.id === "verify" ? "var(--accent)" : "var(--border)"}
+                strokeWidth={node.id === "verify" ? 1.2 : 1}
+              />
+              <rect x={node.x + 8} y={node.y + 9} width="5" height="5" rx="1" fill={node.color} />
+              <text
+                x={node.x + 17}
+                y={node.y + 15}
+                fill="var(--fg)"
+                fontSize="8.5"
+                fontFamily="var(--font-geist-sans), sans-serif"
+                fontWeight="500"
+              >
+                {node.label}
+              </text>
+              <text
+                x={node.x + 8}
+                y={node.y + 29}
+                fill="var(--fg-subtle)"
+                fontSize="6.8"
+                fontFamily="var(--font-geist-mono), monospace"
+              >
+                {node.type}
+              </text>
+              <circle cx={node.x + W - 8} cy={node.y + 9} r="1.8" fill="var(--success)" />
+            </g>
+          ))}
 
           <g>
-            <rect x="424" y="238" width="188" height="34" rx="8" fill="var(--bg-elevated)" stroke="var(--border)" />
-            <circle cx="440" cy="255" r="3" fill="var(--success)" />
-            <text x="450" y="258" fill="var(--fg-muted)" fontSize="8.5" fontFamily="var(--font-mono), monospace">
-              100% claims supported · 4 sources
+            <rect x="412" y="170" width="184" height="26" rx="5" fill="var(--surface)" stroke="var(--border)" />
+            <circle cx="424" cy="183" r="2.4" fill="var(--success)" />
+            <text x="432" y="186" fill="var(--fg-muted)" fontSize="7.2" fontFamily="var(--font-geist-mono), monospace">
+              10/10 claims supported · 4 sources
             </text>
           </g>
         </svg>
       </div>
 
-      <div className="grid grid-cols-4 gap-2 border-t border-[var(--border)] px-4 py-3">
-        {[
-          { label: "compile", width: "w-[38%]", tone: "var(--chart-1)" },
-          { label: "retrieve", width: "w-[54%]", tone: "var(--chart-4)" },
-          { label: "extract", width: "w-[78%]", tone: "var(--chart-2)" },
-          { label: "verify", width: "w-[30%]", tone: "var(--chart-5)" },
-        ].map((step) => (
-          <div key={step.label} className="space-y-1.5">
-            <div className="flex items-center justify-between font-mono text-[8px] uppercase tracking-[0.08em] text-[var(--fg-subtle)]">
-              <span>{step.label}</span>
-            </div>
-            <div className="h-1 overflow-hidden rounded-full bg-[var(--surface-raised)]">
-              <div className={`h-full rounded-full ${step.width}`} style={{ background: step.tone }} />
-            </div>
-          </div>
-        ))}
+      <div className="border-t border-[var(--border)]">
+        <div className="flex items-center justify-between px-3 py-1.5">
+          <span className="font-mono text-[8px] uppercase tracking-[0.12em] text-[var(--fg-subtle)]">trace</span>
+          <span className="font-mono text-[8px] text-[var(--fg-subtle)]">last 5 spans</span>
+        </div>
+        <table className="w-full border-collapse font-mono text-[8.5px]">
+          <tbody>
+            {TRACE.map((row) => (
+              <tr key={row[0]} className="border-t border-[var(--border)]">
+                <td className="px-3 py-1.5 text-[var(--fg)]">{row[0]}</td>
+                <td className="px-2 py-1.5 text-[var(--fg-subtle)]">{row[1]}</td>
+                <td className="px-2 py-1.5 text-right text-[var(--fg-muted)]">{row[2]}</td>
+                <td className="px-2 py-1.5 text-right text-[var(--fg-subtle)]">{row[3]}</td>
+                <td className="px-3 py-1.5 text-right text-[var(--success)]">{row[4]}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

@@ -57,17 +57,21 @@ export function layoutPatch(patch: Patch): Record<string, NodePosition> {
   });
 
   const total = ordered.length;
-  const columns = total <= 4 ? Math.max(1, total) : total <= 9 ? 3 : total <= 16 ? 3 : 4;
-  const spacingX = 278;
-  const spacingY = 214;
+  const columns = total <= 4 ? Math.max(1, total) : total <= 16 ? 3 : 4;
+  const rows = Math.ceil(total / columns);
+  const spacingX = 246;
+  const spacingY = 182;
 
+  // Column-major placement: a linear workflow reads top-to-bottom inside a
+  // column and wraps once to the next column, instead of zig-zagging across
+  // every row. Edges stay shorter and the canvas reads like a control map.
   const positions: Record<string, NodePosition> = {};
   ordered.forEach((node, index) => {
-    const col = index % columns;
-    const row = Math.floor(index / columns);
+    const col = Math.floor(index / rows);
+    const row = index % rows;
     positions[node.id] = node.position ?? {
       x: col * spacingX + 40,
-      y: row * spacingY + 48,
+      y: row * spacingY + 40,
     };
   });
   return positions;

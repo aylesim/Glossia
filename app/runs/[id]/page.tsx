@@ -96,7 +96,7 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
                 {run.mode} · {run.model}
               </span>
             </div>
-            <h1 className="mt-2 max-w-[760px] font-serif text-3xl leading-tight tracking-[-0.02em] text-[var(--fg)] sm:text-4xl">
+            <h1 className="mt-2 max-w-[760px] text-[28px] font-semibold leading-tight tracking-[-0.03em] text-[var(--fg)] sm:text-[32px]">
               {artifact?.title ?? run.patch.meta?.title ?? "Workflow run"}
             </h1>
             <p className="mt-2 font-mono text-[9.5px] text-[var(--fg-subtle)]">
@@ -118,7 +118,7 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
         </div>
 
         {run.error ? (
-          <div className="mt-5 rounded-xl border border-[var(--danger)]/30 bg-[var(--danger-soft)] px-4 py-3">
+          <div className="mt-5 rounded-md border border-[var(--danger)]/30 bg-[var(--danger-soft)] px-4 py-3">
             <p className="font-mono text-[9px] uppercase tracking-[0.1em] text-[var(--danger)]">
               {run.error.code}
             </p>
@@ -128,14 +128,14 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
         ) : null}
 
         <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-          <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
+          <div className="overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface)]">
             <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-2.5">
               <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--fg-subtle)]">Graph</p>
               <p className="font-mono text-[9px] text-[var(--fg-subtle)]">
                 {run.patch.nodes.length} nodes · {run.patch.edges.length} edges
               </p>
             </div>
-            <div className="h-[420px]">
+            <div className="h-[500px]">
               {domain ? (
                 <RunGraph patch={run.patch} domain={domain} steps={steps} />
               ) : (
@@ -147,11 +147,11 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
           </div>
 
           <div className="space-y-3">
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
+            <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
               <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--fg-subtle)]">Verification</p>
               {artifact ? (
                 <>
-                  <p className="mt-2 font-serif text-3xl text-[var(--success)]">
+                  <p className="mt-2 font-mono text-[24px] tracking-[-0.02em] text-[var(--success)]">
                     {Math.round(artifact.verification.supportRate * 100)}%
                   </p>
                   <p className="mt-1 text-[11px] leading-5 text-[var(--fg-muted)]">
@@ -166,7 +166,7 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
               )}
             </div>
 
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
+            <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
               <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--fg-subtle)]">Steps</p>
               <ul className="mt-2 space-y-1">
                 {run.steps.map((step) => (
@@ -190,10 +190,10 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
 
         {artifact ? (
           <div className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
-            <article className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-6 py-6 sm:px-8">
+            <article className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-6 py-6 sm:px-8">
               <Markdown markdown={artifact.markdown} />
             </article>
-            <aside className="space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] p-4">
+            <aside className="space-y-4 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] p-4">
               <div>
                 <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--fg-subtle)]">Sources</p>
                 <ul className="mt-2 space-y-2">

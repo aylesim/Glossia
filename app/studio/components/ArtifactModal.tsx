@@ -47,14 +47,14 @@ export default function ArtifactModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="artifact-title"
-        className="flex max-h-[92dvh] w-full max-w-[1040px] flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl"
+        className="flex max-h-[92dvh] w-full max-w-[1040px] flex-col overflow-hidden rounded-md border border-[var(--border)] bg-[var(--surface)] shadow-2xl"
       >
         <div className="flex shrink-0 items-center justify-between gap-4 border-b border-[var(--border)] px-5 py-3.5">
           <div className="min-w-0">
             <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-[var(--fg-subtle)]">
               Artifact · verified
             </p>
-            <h2 id="artifact-title" className="mt-0.5 truncate font-serif text-xl text-[var(--fg)]">
+            <h2 id="artifact-title" className="mt-0.5 truncate text-[15px] font-semibold tracking-[-0.01em] text-[var(--fg)]">
               {artifact.title}
             </h2>
           </div>
@@ -69,7 +69,7 @@ export default function ArtifactModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full bg-[var(--accent)] px-3.5 py-1.5 text-[11px] font-medium text-[var(--accent-fg)] hover:brightness-110"
+              className="rounded-full bg-[var(--inverse)] px-3.5 py-1.5 text-[11px] font-medium text-[var(--inverse-fg)] hover:opacity-90"
             >
               Close
             </button>
@@ -86,8 +86,8 @@ export default function ArtifactModal({
               <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--fg-subtle)]">
                 Verification
               </p>
-              <div className="mt-2 rounded-xl border border-[var(--success)]/30 bg-[var(--success-soft)] px-3 py-2.5">
-                <p className="font-serif text-2xl text-[var(--success)]">
+              <div className="mt-2 rounded-md border border-[var(--success)]/30 bg-[var(--success-soft)] px-3 py-2.5">
+                <p className="font-mono text-[22px] tracking-[-0.02em] text-[var(--success)]">
                   {Math.round(verification.supportRate * 100)}%
                 </p>
                 <p className="mt-1 font-mono text-[9px] leading-4 text-[var(--fg-muted)]">
@@ -130,7 +130,7 @@ export default function ArtifactModal({
               </ul>
             </div>
 
-            <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3">
+            <div className="mt-5 rounded-md border border-[var(--border)] bg-[var(--surface)] p-3">
               <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--fg-subtle)]">
                 Deterministic check
               </p>
