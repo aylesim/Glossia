@@ -17,7 +17,6 @@ export default function SiteFooter() {
             >
               Alessandro Miracapillo
             </a>
-            . Typed graphs, execution traces, structural evaluation.
           </p>
         </div>
         <div className="flex flex-wrap gap-x-5 gap-y-1.5 font-mono text-[9px] uppercase tracking-[0.1em] text-[var(--fg-subtle)]">
@@ -27,9 +26,6 @@ export default function SiteFooter() {
           <Link href="/eval" className="hover:text-[var(--fg)]">
             Evaluation
           </Link>
-          <a href="/api/health" className="hover:text-[var(--fg)]">
-            Health
-          </a>
           <a
             href="https://github.com/aylesim/Glossia"
             target="_blank"

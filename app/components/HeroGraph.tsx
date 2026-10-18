@@ -45,9 +45,6 @@ function edgePath(from: string, to: string) {
 export default function HeroGraph() {
   return (
     <div className="border border-[var(--border)] bg-[var(--surface)]">
-      <div className="border-b border-[var(--border)] px-3 py-2 font-mono text-[10px] text-[var(--fg-subtle)]">
-        research-brief · recorded run
-      </div>
       <div className="bg-[var(--bg)] px-2 py-3">
         <svg
           viewBox="0 0 608 180"
