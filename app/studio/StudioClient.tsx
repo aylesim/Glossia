@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CompileResult, Domain, Patch, RunEvent, RunRecord, StepRecord } from "@/lib/ir/types";
 import { DOMAINS, EXECUTABLE_DOMAIN_IDS, RESEARCH_DOMAIN, getDomain } from "@/lib/ir/domains";
+import { artifactCheckLine } from "@/lib/ir/artifact";
 import { describeDiff } from "@/lib/ir/diff";
 import { getNodeType } from "@/lib/ir/query";
 import { MODELS, type ModelInfo } from "@/lib/llm/registry";
@@ -16,23 +17,31 @@ import SettingsModal from "./components/SettingsModal";
 import Timeline from "./components/Timeline";
 import type { InspectorTab, StepView, StudioMode, TimelineItem } from "./types";
 
-const DEFAULT_QUESTION =
+const RESEARCH_INTENT =
   "How should a team ship an LLM workflow to production without losing control? Build a cited brief covering evaluation, observability, human review and prompt injection.";
 
-const EXAMPLES = [
+const PRESETS = [
   {
-    label: "production readiness",
-    text: DEFAULT_QUESTION,
+    id: "research",
+    label: "research brief",
+    domainId: "research-brief",
+    intent: RESEARCH_INTENT,
   },
   {
-    label: "security",
-    text: "Focus on prompt injection and tool scope. Build a short brief with evidence about least privilege and approval gates.",
+    id: "midi",
+    label: "midi phrase",
+    domainId: "midi-remix",
+    intent:
+      "Transpose the phrase up a fifth, keep only notes in C3–G5, quantize to 1/16, and pull the dynamics back 25%.",
   },
   {
-    label: "cost",
-    text: "Where does the cost of an LLM workflow actually go, and how should we control it? Keep the brief practical and cite the sources.",
+    id: "story",
+    label: "storytelling",
+    domainId: "story-scene",
+    intent:
+      "A lighthouse keeper finds a door in the fog that opens onto a city she has never visited. Write it as a tense third-person scene.",
   },
-];
+] as const;
 
 const CATEGORY_ORDER = ["input", "llm", "tool", "transform", "control", "output"] as const;
 const CATEGORY_TONE: Record<string, string> = {
@@ -90,7 +99,7 @@ export default function StudioClient() {
   const [domain, setDomain] = useState<Domain>(RESEARCH_DOMAIN);
   const [domainJson, setDomainJson] = useState(JSON.stringify(RESEARCH_DOMAIN, null, 2));
   const [domainError, setDomainError] = useState("");
-  const [intent, setIntent] = useState(DEFAULT_QUESTION);
+  const [intent, setIntent] = useState(RESEARCH_INTENT);
   const [mode, setMode] = useState<StudioMode>("demo");
   const [provider, setProvider] = useState<"openai" | "openrouter">("openai");
   const [model, setModel] = useState("gpt-4.1-mini");
@@ -317,6 +326,17 @@ export default function StudioClient() {
     setDomainError("");
     resetWorkflow();
     setNotice(`Domain: ${next.name}`);
+  };
+
+  const applyPreset = (preset: (typeof PRESETS)[number]) => {
+    const next = getDomain(preset.domainId);
+    if (!next) return;
+    setDomain(next);
+    setDomainJson(JSON.stringify(next, null, 2));
+    setDomainError("");
+    setIntent(preset.intent);
+    resetWorkflow();
+    setNotice(`${next.name} · ${preset.label}`);
   };
 
   const handleApplyDomain = async () => {
@@ -658,17 +678,34 @@ export default function StudioClient() {
                   />
                 </div>
 
-                <div className="flex flex-wrap gap-1">
-                  {EXAMPLES.map((example) => (
-                    <button
-                      key={example.label}
-                      type="button"
-                      onClick={() => setIntent(example.text)}
-                      className="rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] px-2 py-0.5 font-mono text-[8.5px] uppercase tracking-[0.06em] text-[var(--fg-subtle)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--fg)]"
-                    >
-                      {example.label}
-                    </button>
-                  ))}
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className={monoLabel}>Presets</span>
+                    <span className="font-mono text-[8px] text-[var(--fg-subtle)]">{domain.name}</span>
+                  </div>
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {PRESETS.map((preset) => {
+                      const active = domain.id === preset.domainId;
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => applyPreset(preset)}
+                          className={`rounded-full border px-2 py-0.5 font-mono text-[8.5px] uppercase tracking-[0.06em] transition-colors ${
+                            active
+                              ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--fg)]"
+                              : "border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--fg-subtle)] hover:border-[var(--border-strong)] hover:text-[var(--fg)]"
+                          }`}
+                        >
+                          {preset.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-1.5 font-mono text-[8px] leading-4 text-[var(--fg-subtle)]">
+                    Each preset switches the domain and the intent, so the graph is different.
+                  </p>
                 </div>
 
                 <button
@@ -814,9 +851,7 @@ export default function StudioClient() {
                       ],
                       [
                         "verified",
-                        run?.artifact
-                          ? `${Math.round(run.artifact.verification.supportRate * 100)}%`
-                          : "n/a",
+                        artifactCheckLine(run?.artifact),
                       ],
                     ].map(([label, value]) => (
                       <div key={label} className="flex items-center justify-between gap-3 px-2.5 py-1.5">

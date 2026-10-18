@@ -12,6 +12,9 @@ export const PROMPT_VERSIONS: Record<LlmTask, string> = {
   draftBrief: "draft.v1",
   reviseBrief: "revise.v1",
   answer: "answer.v1",
+  storyBeats: "beats.v1",
+  draftScene: "scene.v1",
+  reviseScene: "scene-revise.v1",
   domain: "domain.v1",
 };
 
@@ -132,6 +135,46 @@ export function buildAnswerPrompt(question: string, style: string): string {
   return `Question: """${question}"""
 Style: ${style}
 Answer in Markdown. Be concrete, avoid filler, and state uncertainty when the corpus does not support a claim.`;
+}
+
+export function buildBeatsPrompt(premise: string, count: number): string {
+  return `Premise: """${premise}"""
+Produce at most ${count} story beats that turn this premise into a scene.
+Each beat needs a concrete anchor: a physical object or place the scene can show, not an abstraction.
+Return JSON: { "beats": [{ "id": "b1", "label": "...", "anchor": "..." }] }.
+Keep the anchors short and literal.`;
+}
+
+export function buildScenePrompt(
+  premise: string,
+  beats: string,
+  pov: string,
+  maxWords: number,
+): string {
+  return `Premise: """${premise}"""
+Point of view: ${pov} person
+Word budget: ${maxWords}
+
+Beats:
+${beats}
+
+Write a single scene in Markdown. Rules:
+- Dramatise the beats in order; do not summarise them.
+- Each beat's anchor must appear literally in the scene.
+- Keep the point of view consistent in narration. Dialogue may use any pronoun.
+- No clichés ("little did", "shivers down", "in that moment", "a testament to").
+- End on an image, not an explanation.
+Return only the scene, with no title and no commentary.`;
+}
+
+export function buildReviseScenePrompt(scene: string): string {
+  return `Critique and revise this scene. Preserve its images and its point of view.
+
+Scene:
+${scene}
+
+Return JSON: { "critique": "one or two concrete issues", "scene": "the revised scene" }.
+Cut explanation before you add anything. Do not change the point of view.`;
 }
 
 export function buildDomainPrompt(description: string): string {

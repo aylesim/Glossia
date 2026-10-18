@@ -38,6 +38,9 @@ A deterministic autofix runs before the repair call for the cheap failures (miss
 | `draftBrief` | Markdown | Prose is the product; forcing it through JSON adds escaping noise. |
 | `reviseBrief` | `{ critique, draft }` | A bounded editorial pass; the prompt forbids new facts. |
 | `answer` | Markdown | Quick-answer domain; states uncertainty when the corpus is thin. |
+| `storyBeats` | `{ beats: [{ id, label, anchor }] }` | Each beat carries a literal anchor the continuity check can find. |
+| `draftScene` | Markdown | Dramatises the beats; the prompt fixes POV and the word budget. |
+| `reviseScene` | `{ critique, scene }` | Cuts explanation without changing POV; a failed pass keeps the draft. |
 
 ## Safety posture
 
@@ -49,6 +52,6 @@ A deterministic autofix runs before the repair call for the cheap failures (miss
 ## Versioning
 
 - Compiler: `compile.v2`; repair: `repair.v2`.
-- Node prompts: `plan.v1`, `extract.v1`, `outline.v1`, `draft.v1`, `revise.v1`, `answer.v1`.
+- Node prompts: `plan.v1`, `extract.v1`, `outline.v1`, `draft.v1`, `revise.v1`, `answer.v1`, `beats.v1`, `scene.v1`, `scene-revise.v1`.
 - Runtime cache includes `CACHE_VERSION`; bump it when prompt or executor semantics change.
 - In a larger system the cache key and the trace would use a content hash of the prompt, not a hand-maintained string.

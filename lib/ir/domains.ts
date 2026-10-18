@@ -351,7 +351,311 @@ export const QUICK_ANSWER_DOMAIN: Domain = {
   nodeTypes: quickNodes,
 };
 
-export const DOMAINS: Domain[] = [RESEARCH_DOMAIN, QUICK_ANSWER_DOMAIN];
+const midiNodes: NodeType[] = [
+  {
+    id: "input.notes",
+    name: "Note phrase",
+    description: "Entry point: a phrase written as C4:96@0 tokens.",
+    category: "input",
+    inputs: [],
+    outputs: [port("signal", "json", "Parsed note signal")],
+    params: [
+      {
+        key: "phrase",
+        type: "string",
+        description: "Tokens like C4:96@0; start is in beats. A token without @ follows the previous one.",
+        required: false,
+        default:
+          "C2:110@0 E4:84@0.18 G4:76@0.4 B4:66@0.62 C5:58@0.9 A4:96@1.12 F#4:104@1.38 G4:88@1.6 E4:44@1.84",
+        ui: "textarea",
+      },
+    ],
+    executor: { kind: "io", ref: "input.notes" },
+  },
+  {
+    id: "transform.transpose",
+    name: "Transpose",
+    description: "Shifts every note by a number of semitones.",
+    category: "transform",
+    inputs: [port("signal", "json", "Note signal")],
+    outputs: [port("signal", "json", "Transposed signal")],
+    params: [
+      {
+        key: "semitones",
+        type: "number",
+        description: "Semitones to add; negative values transpose down.",
+        required: false,
+        default: 0,
+        min: -24,
+        max: 24,
+        ui: "slider",
+      },
+    ],
+    executor: { kind: "transform", ref: "transposeNotes" },
+  },
+  {
+    id: "filter.pitch",
+    name: "Pitch filter",
+    description: "Keeps notes inside a MIDI pitch range (48 = C3, 79 = G5).",
+    category: "transform",
+    inputs: [port("signal", "json", "Note signal")],
+    outputs: [port("signal", "json", "Filtered signal")],
+    params: [
+      {
+        key: "minPitch",
+        type: "number",
+        description: "Lowest MIDI pitch to keep.",
+        required: false,
+        default: 48,
+        min: 0,
+        max: 127,
+        ui: "slider",
+      },
+      {
+        key: "maxPitch",
+        type: "number",
+        description: "Highest MIDI pitch to keep.",
+        required: false,
+        default: 79,
+        min: 0,
+        max: 127,
+        ui: "slider",
+      },
+    ],
+    executor: { kind: "transform", ref: "filterPitch" },
+  },
+  {
+    id: "time.quantize",
+    name: "Quantize",
+    description: "Snaps note onsets to a rhythmic grid.",
+    category: "transform",
+    inputs: [port("signal", "json", "Note signal")],
+    outputs: [port("signal", "json", "Quantized signal")],
+    params: [
+      {
+        key: "grid",
+        type: "enum",
+        description: "Grid to snap onsets to.",
+        required: false,
+        default: "1/16",
+        enum: ["1/4", "1/8", "1/16", "1/32"],
+        ui: "select",
+      },
+    ],
+    executor: { kind: "transform", ref: "quantizeNotes" },
+  },
+  {
+    id: "velocity.dynamics",
+    name: "Shape dynamics",
+    description: "Scales note velocities and enforces a floor.",
+    category: "transform",
+    inputs: [port("signal", "json", "Note signal")],
+    outputs: [port("signal", "json", "Scaled signal")],
+    params: [
+      {
+        key: "factor",
+        type: "number",
+        description: "Velocity multiplier.",
+        required: false,
+        default: 0.75,
+        min: 0.25,
+        max: 1.5,
+        ui: "slider",
+      },
+      {
+        key: "floor",
+        type: "number",
+        description: "Minimum velocity after scaling.",
+        required: false,
+        default: 20,
+        min: 1,
+        max: 64,
+        ui: "slider",
+      },
+    ],
+    executor: { kind: "transform", ref: "shapeVelocity" },
+  },
+  {
+    id: "output.midi",
+    name: "Phrase output",
+    description: "Publishes the transformed phrase and its checks.",
+    category: "output",
+    inputs: [port("signal", "json", "Final note signal")],
+    outputs: [],
+    params: [
+      {
+        key: "title",
+        type: "string",
+        description: "Artifact title.",
+        required: false,
+        default: "MIDI phrase",
+      },
+    ],
+    executor: { kind: "io", ref: "output.midi" },
+  },
+];
+
+export const MIDI_DOMAIN: Domain = {
+  id: "midi-remix",
+  version: "1.0.0",
+  name: "MIDI phrase",
+  description: "A deterministic note pipeline: transpose, filter, quantize, shape dynamics.",
+  semantics:
+    "Every node is a pure transform over a note signal. No model runs; the same analyzer, DAG scheduler, cache and artifact surface are used.",
+  nodeTypes: midiNodes,
+};
+
+const storyNodes: NodeType[] = [
+  {
+    id: "input.premise",
+    name: "Premise",
+    description: "Entry point: the situation the scene must dramatise.",
+    category: "input",
+    inputs: [],
+    outputs: [port("premise", "text", "The story premise")],
+    params: [
+      {
+        key: "premise",
+        type: "string",
+        description: "One or two sentences of situation.",
+        required: true,
+        ui: "textarea",
+      },
+    ],
+    executor: { kind: "io", ref: "input.premise" },
+  },
+  {
+    id: "llm.beats",
+    name: "Story beats",
+    description: "Turns the premise into a small set of dramatic beats.",
+    category: "llm",
+    inputs: [port("premise", "text", "Story premise")],
+    outputs: [port("beats", "json", "Ordered beats with concrete anchors")],
+    params: [
+      {
+        key: "count",
+        type: "number",
+        description: "Number of beats.",
+        required: false,
+        default: 3,
+        min: 2,
+        max: 5,
+        ui: "slider",
+      },
+    ],
+    executor: { kind: "llm", ref: "storyBeats" },
+  },
+  {
+    id: "llm.scene",
+    name: "Draft scene",
+    description: "Writes the scene, then runs a bounded critique/revise pass.",
+    category: "llm",
+    inputs: [
+      port("premise", "text", "Story premise"),
+      port("beats", "json", "Beats to dramatise"),
+    ],
+    outputs: [port("scene", "text", "Markdown scene")],
+    params: [
+      {
+        key: "pov",
+        type: "enum",
+        description: "Narration point of view.",
+        required: false,
+        default: "third",
+        enum: ["third", "first"],
+        ui: "select",
+      },
+      {
+        key: "refine",
+        type: "boolean",
+        description: "Run the internal critique/revise pass.",
+        required: false,
+        default: true,
+        ui: "toggle",
+      },
+      {
+        key: "maxWords",
+        type: "number",
+        description: "Soft word budget.",
+        required: false,
+        default: 220,
+        min: 80,
+        max: 400,
+        ui: "slider",
+      },
+    ],
+    executor: { kind: "llm", ref: "draftScene" },
+  },
+  {
+    id: "tool.continuity",
+    name: "Continuity check",
+    description: "Checks word budget, point of view, beat anchors and clichés.",
+    category: "tool",
+    inputs: [
+      port("scene", "text", "Draft scene"),
+      port("beats", "json", "Beats the scene must cover"),
+    ],
+    outputs: [
+      port("scene", "text", "Scene with the check attached"),
+      port("report", "json", "Structured continuity report"),
+    ],
+    params: [
+      {
+        key: "maxWords",
+        type: "number",
+        description: "Word budget to enforce.",
+        required: false,
+        default: 220,
+        min: 80,
+        max: 400,
+        ui: "slider",
+      },
+      {
+        key: "pov",
+        type: "enum",
+        description: "Expected narration point of view.",
+        required: false,
+        default: "third",
+        enum: ["third", "first"],
+        ui: "select",
+      },
+    ],
+    executor: { kind: "tool", ref: "checkContinuity" },
+  },
+  {
+    id: "output.scene",
+    name: "Scene output",
+    description: "Publishes the scene and its continuity report.",
+    category: "output",
+    inputs: [
+      port("scene", "text", "Checked scene"),
+      port("report", "json", "Continuity report"),
+    ],
+    outputs: [],
+    params: [
+      {
+        key: "title",
+        type: "string",
+        description: "Artifact title.",
+        required: false,
+        default: "Story scene",
+      },
+    ],
+    executor: { kind: "io", ref: "output.scene" },
+  },
+];
+
+export const STORY_DOMAIN: Domain = {
+  id: "story-scene",
+  version: "1.0.0",
+  name: "Story scene",
+  description: "A premise becomes beats and a scene, then a deterministic continuity pass.",
+  semantics:
+    "LLM nodes are probabilistic; the continuity check is deterministic. The critique/revise loop is bounded inside the scene node, so the graph stays a DAG.",
+  nodeTypes: storyNodes,
+};
+
+export const DOMAINS: Domain[] = [RESEARCH_DOMAIN, QUICK_ANSWER_DOMAIN, MIDI_DOMAIN, STORY_DOMAIN];
 
 export const EXECUTABLE_DOMAIN_IDS = new Set(DOMAINS.map((domain) => domain.id));
 

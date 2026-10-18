@@ -189,12 +189,28 @@ export type VerificationReport = {
   checks: VerificationCheck[];
 };
 
+/**
+ * A deterministic check that is not tied to citations.
+ *
+ * Research artifacts report claim-level citation verification. Other domains
+ * (a note transform, a story scene) run their own post-generation checks and
+ * report them in the same place, so the UI does not need a new surface.
+ */
+export type ArtifactCheck = {
+  label: string;
+  detail: string;
+  passed: boolean;
+};
+
 export type Artifact = {
   kind: "markdown";
   title: string;
   markdown: string;
   sources: SourceRef[];
-  verification: VerificationReport;
+  /** Citation verification, present on research artifacts. */
+  verification?: VerificationReport;
+  /** Domain-specific deterministic checks, present on other artifacts. */
+  checks?: ArtifactCheck[];
 };
 
 export type CompileAttempt = {

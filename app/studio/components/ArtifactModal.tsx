@@ -9,7 +9,7 @@ function download(markdown: string, title: string) {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "brief"}.md`;
+  anchor.download = `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "artifact"}.md`;
   anchor.click();
   URL.revokeObjectURL(url);
 }
@@ -33,7 +33,9 @@ export default function ArtifactModal({
   }, [open, onClose]);
 
   if (!open || !artifact) return null;
-  const { verification } = artifact;
+  const verification = artifact.verification;
+  const checks = artifact.checks ?? [];
+  const passedChecks = checks.filter((check) => check.passed).length;
 
   return (
     <div
@@ -52,7 +54,7 @@ export default function ArtifactModal({
         <div className="flex shrink-0 items-center justify-between gap-4 border-b border-[var(--border)] px-5 py-3.5">
           <div className="min-w-0">
             <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-[var(--fg-subtle)]">
-              Artifact · verified
+              {verification ? "Artifact · verified" : checks.length > 0 ? "Artifact · checked" : "Artifact"}
             </p>
             <h2 id="artifact-title" className="mt-0.5 truncate text-[15px] font-semibold tracking-[-0.01em] text-[var(--fg)]">
               {artifact.title}
@@ -82,61 +84,93 @@ export default function ArtifactModal({
           </div>
 
           <aside className="min-h-0 overflow-y-auto border-t border-[var(--border)] bg-[var(--bg-elevated)] px-4 py-5 lg:border-l lg:border-t-0">
-            <div>
-              <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--fg-subtle)]">
-                Verification
-              </p>
-              <div className="mt-2 rounded-md border border-[var(--success)]/30 bg-[var(--success-soft)] px-3 py-2.5">
-                <p className="font-mono text-[22px] tracking-[-0.02em] text-[var(--success)]">
-                  {Math.round(verification.supportRate * 100)}%
+            {verification ? (
+              <div>
+                <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--fg-subtle)]">
+                  Verification
                 </p>
-                <p className="mt-1 font-mono text-[9px] leading-4 text-[var(--fg-muted)]">
-                  {verification.supportedClaims}/{verification.totalClaims} claims supported by an exact or
-                  normalised source quote.
-                </p>
+                <div className="mt-2 rounded-md border border-[var(--success)]/30 bg-[var(--success-soft)] px-3 py-2.5">
+                  <p className="font-mono text-[22px] tracking-[-0.02em] text-[var(--success)]">
+                    {Math.round(verification.supportRate * 100)}%
+                  </p>
+                  <p className="mt-1 font-mono text-[9px] leading-4 text-[var(--fg-muted)]">
+                    {verification.supportedClaims}/{verification.totalClaims} claims supported by an exact or
+                    normalised source quote.
+                  </p>
+                </div>
+                <dl className="mt-3 space-y-1.5">
+                  {[
+                    ["total claims", verification.totalClaims],
+                    ["unsupported", verification.unsupportedClaims],
+                    ["sources used", verification.sourcesUsed],
+                  ].map(([label, value]) => (
+                    <div key={label} className="flex items-center justify-between border-b border-[var(--border)] pb-1.5">
+                      <dt className="font-mono text-[9px] uppercase tracking-[0.08em] text-[var(--fg-subtle)]">
+                        {label}
+                      </dt>
+                      <dd className="font-mono text-[10px] text-[var(--fg)]">{value}</dd>
+                    </div>
+                  ))}
+                </dl>
               </div>
-              <dl className="mt-3 space-y-1.5">
-                {[
-                  ["total claims", verification.totalClaims],
-                  ["unsupported", verification.unsupportedClaims],
-                  ["sources used", verification.sourcesUsed],
-                ].map(([label, value]) => (
-                  <div key={label} className="flex items-center justify-between border-b border-[var(--border)] pb-1.5">
-                    <dt className="font-mono text-[9px] uppercase tracking-[0.08em] text-[var(--fg-subtle)]">
-                      {label}
-                    </dt>
-                    <dd className="font-mono text-[10px] text-[var(--fg)]">{value}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
+            ) : checks.length > 0 ? (
+              <div>
+                <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--fg-subtle)]">
+                  Deterministic checks
+                </p>
+                <div className="mt-2 rounded-md border border-[var(--success)]/30 bg-[var(--success-soft)] px-3 py-2.5">
+                  <p className="font-mono text-[22px] tracking-[-0.02em] text-[var(--success)]">
+                    {Math.round((passedChecks / checks.length) * 100)}%
+                  </p>
+                  <p className="mt-1 font-mono text-[9px] leading-4 text-[var(--fg-muted)]">
+                    {passedChecks}/{checks.length} checks passed after the node produced its output.
+                  </p>
+                </div>
+                <ul className="mt-3 space-y-2">
+                  {checks.map((check) => (
+                    <li key={check.label} className="border-b border-[var(--border)] pb-2">
+                      <p className="flex items-center justify-between gap-2 font-mono text-[9px] uppercase tracking-[0.06em]">
+                        <span className="text-[var(--fg)]">{check.label}</span>
+                        <span className={check.passed ? "text-[var(--success)]" : "text-[var(--danger)]"}>
+                          {check.passed ? "pass" : "fail"}
+                        </span>
+                      </p>
+                      <p className="mt-1 text-[10px] leading-4 text-[var(--fg-muted)]">{check.detail}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
 
-            <div className="mt-5">
-              <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--fg-subtle)]">Sources</p>
-              <ul className="mt-2 space-y-2">
-                {artifact.sources.map((source) => (
-                  <li key={source.id} className="text-[10.5px] leading-4 text-[var(--fg-muted)]">
-                    <span className="font-mono text-[var(--accent)]">[{source.id}]</span>{" "}
-                    <a
-                      href={source.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="underline decoration-[var(--border-strong)] underline-offset-2 hover:decoration-[var(--accent)]"
-                    >
-                      {source.title}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {artifact.sources.length > 0 ? (
+              <div className="mt-5">
+                <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--fg-subtle)]">Sources</p>
+                <ul className="mt-2 space-y-2">
+                  {artifact.sources.map((source) => (
+                    <li key={source.id} className="text-[10.5px] leading-4 text-[var(--fg-muted)]">
+                      <span className="font-mono text-[var(--accent)]">[{source.id}]</span>{" "}
+                      <a
+                        href={source.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="underline decoration-[var(--border-strong)] underline-offset-2 hover:decoration-[var(--accent)]"
+                      >
+                        {source.title}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
 
             <div className="mt-5 rounded-md border border-[var(--border)] bg-[var(--surface)] p-3">
               <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--fg-subtle)]">
                 Deterministic check
               </p>
               <p className="mt-1.5 text-[10.5px] leading-5 text-[var(--fg-muted)]">
-                The verifier runs after the model, not inside it. It compares every claim quote with the
-                source text and fails closed.
+                {verification
+                  ? "The verifier runs after the model, not inside it. It compares every claim quote with the source text and fails closed."
+                  : "The checks run after the node, not inside the model. They are plain code over the produced output."}
               </p>
             </div>
           </aside>

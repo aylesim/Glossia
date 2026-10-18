@@ -6,6 +6,7 @@ import SiteFooter from "@/app/components/SiteFooter";
 import SiteHeader from "@/app/components/SiteHeader";
 import type { RunRecord, StepRecord } from "@/lib/ir/types";
 import { getDomain } from "@/lib/ir/domains";
+import { artifactOutcome } from "@/lib/ir/artifact";
 import { loadRun } from "@/lib/runtime/store";
 import type { StepView } from "@/app/studio/types";
 import RunGraph from "./RunGraph";
@@ -60,6 +61,7 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
   const domain = run.domain ?? getDomain(run.domainId);
   const steps = toStepViews(run);
   const artifact = run.artifact;
+  const outcome = artifactOutcome(artifact);
 
   return (
     <div className="min-h-screen bg-[var(--bg)]">
@@ -148,15 +150,19 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
 
           <div className="space-y-3">
             <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
-              <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--fg-subtle)]">Verification</p>
-              {artifact ? (
+              <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--fg-subtle)]">
+                {outcome?.kind === "checks" ? "Checks" : "Verification"}
+              </p>
+              {outcome ? (
                 <>
                   <p className="mt-2 font-mono text-[24px] tracking-[-0.02em] text-[var(--success)]">
-                    {Math.round(artifact.verification.supportRate * 100)}%
+                    {Math.round(outcome.rate * 100)}%
                   </p>
                   <p className="mt-1 text-[11px] leading-5 text-[var(--fg-muted)]">
-                    {artifact.verification.supportedClaims}/{artifact.verification.totalClaims} claims
-                    supported by a source quote · {artifact.verification.sourcesUsed} sources
+                    {outcome.passed}/{outcome.total}{" "}
+                    {outcome.kind === "verification"
+                      ? `claims supported by a source quote · ${artifact?.verification?.sourcesUsed ?? 0} sources`
+                      : "deterministic checks passed after the node produced its output"}
                   </p>
                 </>
               ) : (
@@ -195,22 +201,43 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
             </article>
             <aside className="space-y-4 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] p-4">
               <div>
-                <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--fg-subtle)]">Sources</p>
-                <ul className="mt-2 space-y-2">
-                  {artifact.sources.map((source) => (
-                    <li key={source.id} className="text-[10.5px] leading-4 text-[var(--fg-muted)]">
-                      <span className="font-mono text-[var(--accent)]">[{source.id}]</span>{" "}
-                      <a
-                        href={source.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="underline decoration-[var(--border-strong)] underline-offset-2 hover:decoration-[var(--accent)]"
-                      >
-                        {source.title}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
+                {artifact.sources.length > 0 ? (
+                  <>
+                    <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--fg-subtle)]">Sources</p>
+                    <ul className="mt-2 space-y-2">
+                      {artifact.sources.map((source) => (
+                        <li key={source.id} className="text-[10.5px] leading-4 text-[var(--fg-muted)]">
+                          <span className="font-mono text-[var(--accent)]">[{source.id}]</span>{" "}
+                          <a
+                            href={source.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="underline decoration-[var(--border-strong)] underline-offset-2 hover:decoration-[var(--accent)]"
+                          >
+                            {source.title}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : artifact.checks ? (
+                  <>
+                    <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--fg-subtle)]">Checks</p>
+                    <ul className="mt-2 space-y-2">
+                      {artifact.checks.map((check) => (
+                        <li key={check.label} className="text-[10.5px] leading-4 text-[var(--fg-muted)]">
+                          <span
+                            className="font-mono"
+                            style={{ color: check.passed ? "var(--success)" : "var(--danger)" }}
+                          >
+                            {check.passed ? "pass" : "fail"}
+                          </span>{" "}
+                          {check.label} — {check.detail}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : null}
               </div>
               <div>
                 <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--fg-subtle)]">Trace</p>

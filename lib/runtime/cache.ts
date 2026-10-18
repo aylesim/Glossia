@@ -16,7 +16,7 @@ export type CacheEntry = {
  */
 // Bump when prompts, executor semantics or output shapes change. In a larger
 // system this would be a prompt/executor content hash.
-const CACHE_VERSION = "2026-10-18.1";
+const CACHE_VERSION = "2026-10-18.2";
 
 export class RunCache {
   private entries = new Map<string, CacheEntry>();

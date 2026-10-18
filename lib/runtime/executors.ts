@@ -17,11 +17,14 @@ import {
   OUTLINE_SCHEMA,
   QUERIES_SCHEMA,
   REVISE_SCHEMA,
+  SCENE_REVISE_SCHEMA,
+  STORY_BEATS_SCHEMA,
   asArray,
   asBoolean,
   asNumber,
   asRecord,
   asString,
+  coerceBeats,
   coerceClaims,
   coerceDraft,
   coerceOutline,
@@ -31,12 +34,32 @@ import type { Chunk, Claim, Evidence, Outline } from "@/lib/research/types";
 import { chunkDocuments, getSource, retrieveEvidence, searchCorpus, tokenize, toDocuments } from "@/lib/research/corpus";
 import { demoClaims, demoOutline, verifyClaims } from "@/lib/research/synthesis";
 import {
+  checkSignal,
+  filterByPitch,
+  parsePhrase,
+  quantizeSignal,
+  shapeVelocity,
+  signalToMarkdown,
+  transposeSignal,
+  type MidiSignal,
+} from "@/lib/midi/notes";
+import {
+  checkContinuity,
+  demoStoryBeats,
+  sceneToMarkdown,
+  type ContinuityReport,
+  type StoryBeat,
+} from "@/lib/story/scene";
+import {
   buildAnswerPrompt,
+  buildBeatsPrompt,
   buildDraftPrompt,
   buildExtractPrompt,
   buildOutlinePrompt,
   buildPlanPrompt,
   buildRevisePrompt,
+  buildReviseScenePrompt,
+  buildScenePrompt,
 } from "@/lib/llm/prompts";
 import { tryParseJson } from "@/lib/llm/adapter";
 
@@ -366,16 +389,207 @@ const outputAnswer: NodeExecutor = async (context) => {
     title: "Answer",
     markdown: answerText,
     sources: [],
-    verification: {
-      totalClaims: 0,
-      supportedClaims: 0,
-      unsupportedClaims: 0,
-      supportRate: 1,
-      sourcesUsed: 0,
-      checks: [],
-    },
+    checks: [
+      {
+        label: "answer present",
+        detail: `${answerText.trim().split(/\s+/).filter(Boolean).length} words`,
+        passed: answerText.trim().length > 0,
+      },
+    ],
   };
   return { outputs: {}, artifact, preview: answerText.slice(0, 120) };
+};
+
+const inputNotes: NodeExecutor = async (context) => {
+  const phrase = asString(context.params.phrase);
+  const signal = parsePhrase(phrase);
+  if (signal.notes.length === 0) {
+    throw new AppError("MISSING_PARAM", "The phrase param did not contain any valid notes.", {
+      status: 422,
+      hint: "Use tokens like C4:96@0.",
+    });
+  }
+  return {
+    outputs: { signal: signal as unknown as JsonValue },
+    preview: `${signal.notes.length} notes`,
+  };
+};
+
+const transposeNotes: NodeExecutor = async (context) => {
+  const signal = requireInput<MidiSignal>(context, "signal");
+  const semitones = asNumber(context.params.semitones, 0);
+  const next = transposeSignal(signal, semitones);
+  return {
+    outputs: { signal: next as unknown as JsonValue },
+    preview: `${semitones > 0 ? "+" : ""}${semitones} semitones`,
+  };
+};
+
+const filterPitch: NodeExecutor = async (context) => {
+  const signal = requireInput<MidiSignal>(context, "signal");
+  const minPitch = asNumber(context.params.minPitch, 48);
+  const maxPitch = asNumber(context.params.maxPitch, 79);
+  const next = filterByPitch(signal, minPitch, maxPitch);
+  return {
+    outputs: { signal: next as unknown as JsonValue },
+    preview: `${signal.notes.length} → ${next.notes.length} notes`,
+  };
+};
+
+const quantizeNotes: NodeExecutor = async (context) => {
+  const signal = requireInput<MidiSignal>(context, "signal");
+  const grid = asString(context.params.grid, "1/16");
+  const next = quantizeSignal(signal, grid);
+  return {
+    outputs: { signal: next as unknown as JsonValue },
+    preview: `grid ${grid}`,
+  };
+};
+
+const shapeDynamics: NodeExecutor = async (context) => {
+  const signal = requireInput<MidiSignal>(context, "signal");
+  const factor = asNumber(context.params.factor, 0.75);
+  const floor = asNumber(context.params.floor, 20);
+  const next = shapeVelocity(signal, factor, floor);
+  return {
+    outputs: { signal: next as unknown as JsonValue },
+    preview: `×${factor} · floor ${floor}`,
+  };
+};
+
+const outputMidi: NodeExecutor = async (context) => {
+  const signal = requireInput<MidiSignal>(context, "signal");
+  const title = asString(context.params.title, "MIDI phrase");
+  const checks = checkSignal(signal);
+  const passed = checks.filter((check) => check.passed).length;
+  const artifact: Artifact = {
+    kind: "markdown",
+    title,
+    markdown: signalToMarkdown(signal, title),
+    sources: [],
+    checks,
+  };
+  return {
+    outputs: {},
+    artifact,
+    preview: `${signal.notes.length} notes · ${passed}/${checks.length} checks`,
+  };
+};
+
+const inputPremise: NodeExecutor = async (context) => {
+  const premise = asString(context.params.premise).trim();
+  if (!premise) {
+    throw new AppError("MISSING_PARAM", "The premise param cannot be empty.", { status: 422 });
+  }
+  return { outputs: { premise }, preview: premise };
+};
+
+const storyBeats: NodeExecutor = async (context) => {
+  const premise = requireInput<string>(context, "premise");
+  const count = asNumber(context.params.count, 3);
+  const response = await context.llm({
+    task: "storyBeats",
+    system: "You structure a story into concrete, filmable beats. Output JSON only.",
+    user: buildBeatsPrompt(premise, count),
+    schema: STORY_BEATS_SCHEMA,
+    schemaName: "story_beats",
+    temperature: 0.4,
+    maxTokens: 700,
+    meta: { premise, count },
+  });
+  const beats = coerceBeats(
+    response.parsed ?? tryParseJson(response.text),
+    demoStoryBeats(premise, count),
+  );
+  return {
+    outputs: { beats: beats as unknown as JsonValue },
+    preview: beats.map((beat) => beat.label).join(" · "),
+  };
+};
+
+const draftScene: NodeExecutor = async (context) => {
+  const premise = requireInput<string>(context, "premise");
+  const beats = inputArray<StoryBeat>(context, "beats");
+  const pov = asString(context.params.pov, "third") === "first" ? "first" : "third";
+  const refine = asBoolean(context.params.refine, true);
+  const maxWords = asNumber(context.params.maxWords, 220);
+
+  const draftResponse = await context.llm({
+    task: "draftScene",
+    system: "You write short literary scenes. You dramatise, you do not summarise.",
+    user: buildScenePrompt(premise, JSON.stringify(beats, null, 2), pov, maxWords),
+    temperature: 0.6,
+    maxTokens: 1_800,
+    meta: { premise, beats, pov, maxWords, refine },
+  });
+  const draft = coerceDraft(draftResponse.parsed ?? draftResponse.text);
+  if (!draft.trim()) {
+    throw new AppError("NODE_OUTPUT_INVALID", "The model returned an empty scene.", {
+      status: 502,
+      retryable: true,
+    });
+  }
+
+  let finalScene = draft;
+  if (refine) {
+    try {
+      const reviseResponse = await context.llm({
+        task: "reviseScene",
+        system: "You are a demanding editor. You cut explanation and preserve the images.",
+        user: buildReviseScenePrompt(draft),
+        schema: SCENE_REVISE_SCHEMA,
+        schemaName: "revised_scene",
+        temperature: 0.3,
+        maxTokens: 1_800,
+        meta: { premise, beats, pov },
+      });
+      const parsed = reviseResponse.parsed ?? tryParseJson(reviseResponse.text);
+      const revised =
+        typeof parsed === "string" ? parsed.trim() : asString(asRecord(parsed).scene).trim();
+      if (revised.length > 120) finalScene = revised;
+    } catch (error) {
+      // A failed polish pass must not destroy a valid scene.
+      if (error instanceof AppError && error.code === "CANCELLED") throw error;
+    }
+  }
+
+  return {
+    outputs: { scene: finalScene },
+    preview: `${finalScene.length} chars${refine ? " · refined" : ""}`,
+  };
+};
+
+const continuityCheck: NodeExecutor = async (context) => {
+  const scene = requireInput<string>(context, "scene");
+  const beats = inputArray<StoryBeat>(context, "beats");
+  const maxWords = asNumber(context.params.maxWords, 220);
+  const pov = asString(context.params.pov, "third") === "first" ? "first" : "third";
+  const report = checkContinuity(scene, beats, { maxWords, pov });
+  return {
+    outputs: {
+      scene,
+      report: report as unknown as JsonValue,
+    },
+    preview: `${report.passed}/${report.total} checks`,
+  };
+};
+
+const outputScene: NodeExecutor = async (context) => {
+  const scene = requireInput<string>(context, "scene");
+  const report = requireInput<ContinuityReport>(context, "report");
+  const title = asString(context.params.title, "Story scene");
+  const artifact: Artifact = {
+    kind: "markdown",
+    title,
+    markdown: sceneToMarkdown(scene, report, title),
+    sources: [],
+    checks: report.checks,
+  };
+  return {
+    outputs: {},
+    artifact,
+    preview: `${report.passed}/${report.total} checks`,
+  };
 };
 
 export const EXECUTORS: Record<string, NodeExecutor> = {
@@ -393,6 +607,17 @@ export const EXECUTORS: Record<string, NodeExecutor> = {
   "output.brief": outputBrief,
   answer,
   "output.answer": outputAnswer,
+  "input.notes": inputNotes,
+  transposeNotes,
+  filterPitch,
+  quantizeNotes,
+  shapeVelocity: shapeDynamics,
+  "output.midi": outputMidi,
+  "input.premise": inputPremise,
+  storyBeats,
+  draftScene,
+  checkContinuity: continuityCheck,
+  "output.scene": outputScene,
 };
 
 export function getExecutor(ref: string): NodeExecutor | undefined {

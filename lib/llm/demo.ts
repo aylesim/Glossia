@@ -1,6 +1,7 @@
 import type { Domain, Patch, Usage } from "@/lib/ir/types";
 import type { Claim, Evidence, Outline } from "@/lib/research/types";
 import { demoAnswer, demoClaims, demoDraft, demoOutline, demoRevisedDraft } from "@/lib/research/synthesis";
+import { demoStoryBeats, demoStoryRevision, demoStoryScene, type StoryBeat } from "@/lib/story/scene";
 import { getDomain } from "@/lib/ir/domains";
 import { AppError, type LlmAdapter, type LlmRequest, type LlmResponse } from "./types";
 
@@ -83,13 +84,83 @@ export function badQuickPatch(question: string): Patch {
   return patch;
 }
 
+export function midiPatch(): Patch {
+  return {
+    version: "2",
+    domainId: "midi-remix",
+    domainVersion: "1.0.0",
+    nodes: [
+      { id: "in", type: "input.notes", params: {} },
+      { id: "tr", type: "transform.transpose", params: { semitones: 7 } },
+      { id: "range", type: "filter.pitch", params: { minPitch: 48, maxPitch: 79 } },
+      { id: "grid", type: "time.quantize", params: { grid: "1/16" } },
+      { id: "dyn", type: "velocity.dynamics", params: { factor: 0.75, floor: 20 } },
+      { id: "out", type: "output.midi", params: { title: "MIDI phrase" } },
+    ],
+    edges: [
+      { id: "e1", from: "in", fromPort: "signal", to: "tr", toPort: "signal" },
+      { id: "e2", from: "tr", fromPort: "signal", to: "range", toPort: "signal" },
+      { id: "e3", from: "range", fromPort: "signal", to: "grid", toPort: "signal" },
+      { id: "e4", from: "grid", fromPort: "signal", to: "dyn", toPort: "signal" },
+      { id: "e5", from: "dyn", fromPort: "signal", to: "out", toPort: "signal" },
+    ],
+    meta: { title: "MIDI phrase", createdBy: "llm", promptVersion: "compile.v2" },
+  };
+}
+
+export function badMidiPatch(): Patch {
+  const patch = midiPatch();
+  const range = patch.nodes.find((node) => node.id === "range");
+  if (range) range.params = { ...range.params, minPitch: "C3", maxPitch: 79 };
+  patch.edges = patch.edges.filter((edge) => edge.id !== "e2");
+  return patch;
+}
+
+export function storyPatch(premise: string): Patch {
+  return {
+    version: "2",
+    domainId: "story-scene",
+    domainVersion: "1.0.0",
+    nodes: [
+      { id: "premise", type: "input.premise", params: { premise } },
+      { id: "beats", type: "llm.beats", params: { count: 3 } },
+      { id: "scene", type: "llm.scene", params: { pov: "third", refine: true, maxWords: 220 } },
+      { id: "check", type: "tool.continuity", params: { maxWords: 220, pov: "third" } },
+      { id: "out", type: "output.scene", params: { title: "Story scene" } },
+    ],
+    edges: [
+      { id: "e1", from: "premise", fromPort: "premise", to: "beats", toPort: "premise" },
+      { id: "e2", from: "premise", fromPort: "premise", to: "scene", toPort: "premise" },
+      { id: "e3", from: "beats", fromPort: "beats", to: "scene", toPort: "beats" },
+      { id: "e4", from: "scene", fromPort: "scene", to: "check", toPort: "scene" },
+      { id: "e5", from: "beats", fromPort: "beats", to: "check", toPort: "beats" },
+      { id: "e6", from: "check", fromPort: "scene", to: "out", toPort: "scene" },
+      { id: "e7", from: "check", fromPort: "report", to: "out", toPort: "report" },
+    ],
+    meta: { title: "Story scene", createdBy: "llm", promptVersion: "compile.v2" },
+  };
+}
+
+export function badStoryPatch(premise: string): Patch {
+  const patch = storyPatch(premise);
+  const check = patch.nodes.find((node) => node.id === "check");
+  if (check) check.params = { ...check.params, pov: "second" };
+  patch.edges = patch.edges.filter((edge) => edge.id !== "e4");
+  return patch;
+}
+
 export function demoPatchForDomain(domain: Domain, question: string, bad = false): Patch {
   if (domain.id === "research-brief") return bad ? badResearchPatch(question) : researchPatch(question);
   if (domain.id === "quick-answer") return bad ? badQuickPatch(question) : quickPatch(question);
+  if (domain.id === "midi-remix") return bad ? badMidiPatch() : midiPatch();
+  if (domain.id === "story-scene") return bad ? badStoryPatch(question) : storyPatch(question);
   throw new AppError(
     "DEMO_DOMAIN_UNSUPPORTED",
     `Demo mode has no recorded compiler fixture for domain "${domain.id}".`,
-    { status: 400, hint: "Switch to live mode or use the research-brief / quick-answer domains." },
+    {
+      status: 400,
+      hint: "Switch to live mode or use the research-brief, midi-remix or story-scene domains.",
+    },
   );
 }
 
@@ -98,6 +169,9 @@ export function hydratePatch(patch: Patch, domain: Domain, intent: string): Patc
   for (const node of next.nodes) {
     if (node.type === "input.question") {
       node.params = { ...node.params, question: intent };
+    }
+    if (node.type === "input.premise") {
+      node.params = { ...node.params, premise: intent };
     }
   }
   next.meta = {
@@ -213,6 +287,33 @@ export class DemoAdapter implements LlmAdapter {
         model: this.model,
         provider: this.provider,
       };
+    }
+
+    if (request.task === "storyBeats") {
+      const premise = String(meta.premise ?? "");
+      const count = Number(meta.count ?? 3);
+      return this.json({ beats: demoStoryBeats(premise, count) }, request);
+    }
+
+    if (request.task === "draftScene") {
+      const premise = String(meta.premise ?? "");
+      const beats = (meta.beats ?? []) as StoryBeat[];
+      const pov = (meta.pov === "first" ? "first" : "third") as "third" | "first";
+      const maxWords = Number(meta.maxWords ?? 220);
+      const scene = demoStoryScene(premise, beats, pov, maxWords);
+      return {
+        text: scene,
+        parsed: scene,
+        usage: usageFor(request.user, scene),
+        model: this.model,
+        provider: this.provider,
+      };
+    }
+
+    if (request.task === "reviseScene") {
+      const scene = String(meta.scene ?? "");
+      const revised = demoStoryRevision(scene);
+      return this.json({ critique: revised.critique, scene: revised.scene }, request);
     }
 
     throw new AppError("DEMO_TASK_UNSUPPORTED", `Demo mode does not implement task "${request.task}".`);

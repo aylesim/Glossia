@@ -43,6 +43,18 @@ The artifact is auditable:
 
 The default corpus has four hand-written sources. The recorded path is deterministic and makes no model calls. Live mode uses the same compiler and runtime with a provider.
 
+### More than one domain
+
+The prototype compiles against a selected type system, not a hard-coded research pipeline. The studio presets switch domain and intent together, so the graph is visibly different:
+
+| Preset | Domain | What runs |
+|--------|--------|-----------|
+| **Research brief** | `research-brief` | Retrieval, claims, draft, citation verification |
+| **MIDI phrase** | `midi-remix` | Transpose, pitch filter, quantize, dynamics — all deterministic, no model |
+| **Story scene** | `story-scene` | Beats, scene draft + bounded revise, deterministic continuity check |
+
+`quick-answer` remains a three-node smoke test for the engine. The analyzer, DAG scheduler, cache, traces and artifact surface are shared by every domain.
+
 ## Running the prototype
 
 ```bash
@@ -54,10 +66,11 @@ Open [http://localhost:3000](http://localhost:3000).
 
 1. Click **Open the prototype**.
 2. Keep **Recorded** mode. No API key is needed.
-3. Click **Compile graph**. The compiler returns a fixture, the analyzer catches an invalid param, and the repair pass fixes the missing edge.
-4. Click **Run**. Inspect the artifact and the per-step trace, cost and output.
-5. Click **Run** again. The content-addressed cache returns the whole graph in milliseconds.
-6. Open `/eval` and run the 10-case structural suite.
+3. Pick a preset — **research brief**, **midi phrase** or **story scene** — to switch the domain and the intent.
+4. Click **Compile graph**. The compiler returns a fixture, the analyzer catches an invalid param, and the repair pass fixes the missing edge.
+5. Click **Run**. Inspect the artifact and the per-step trace, cost and output.
+6. Click **Run** again. The content-addressed cache returns the whole graph in milliseconds.
+7. Open `/eval` and run the 10-case structural suite (research domain).
 
 ### Live mode
 
@@ -219,7 +232,7 @@ Implemented in this slice:
 - Analyzer with actionable issues, deterministic autofix and a model repair loop.
 - DAG runtime, SSE, trace spans, usage/cost, budget, cancellation, cache.
 - Research recipe with retrieval, claim extraction, outline, draft, bounded critique/revise, deterministic citation verification and artifact.
-- Second domain (`quick-answer`) to prove the engine is not hard-wired to research.
+- Three additional domains: a deterministic `midi-remix` note chain, a `story-scene` pipeline with a continuity check, and a three-node `quick-answer` smoke test.
 - Studio (canvas, inspector, timeline, settings, artifact modal), eval lab, run page, landing.
 - 8 API integration tests and a local live-path mock.
 

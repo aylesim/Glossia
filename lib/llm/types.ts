@@ -10,6 +10,9 @@ export type LlmTask =
   | "draftBrief"
   | "reviseBrief"
   | "answer"
+  | "storyBeats"
+  | "draftScene"
+  | "reviseScene"
   | "domain";
 
 export type LlmRequest = {

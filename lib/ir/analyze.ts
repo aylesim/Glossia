@@ -36,6 +36,21 @@ function estimateTokensForType(nodeType: NodeType): { input: number; output: num
   if (ref === "outline") return { input: 1_800, output: 500 };
   if (ref === "draftBrief") return { input: 3_200, output: 1_400 };
   if (ref === "verifyCitations") return { input: 1_200, output: 300 };
+  if (ref === "storyBeats") return { input: 900, output: 450 };
+  if (ref === "draftScene") return { input: 2_200, output: 1_600 };
+  if (
+    ref === "input.notes" ||
+    ref === "output.midi" ||
+    ref === "transposeNotes" ||
+    ref === "filterPitch" ||
+    ref === "quantizeNotes" ||
+    ref === "shapeDynamics" ||
+    ref === "input.premise" ||
+    ref === "output.scene" ||
+    ref === "checkContinuity"
+  ) {
+    return { input: 0, output: 0 };
+  }
   if (nodeType.category === "transform" || nodeType.category === "tool") {
     return { input: 600, output: 600 };
   }

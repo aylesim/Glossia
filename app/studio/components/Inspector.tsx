@@ -1,6 +1,7 @@
 "use client";
 
 import type { Domain, Patch, RunRecord, Span } from "@/lib/ir/types";
+import { artifactOutcome } from "@/lib/ir/artifact";
 import { getNodeType } from "@/lib/ir/query";
 import Markdown from "@/app/components/Markdown";
 import type { InspectorTab, StepView } from "../types";
@@ -55,6 +56,7 @@ export default function Inspector({
   const type = node ? getNodeType(domain, node.type) : null;
   const step = node ? steps[node.id] : null;
   const artifact = run?.artifact;
+  const outcome = artifactOutcome(artifact);
 
   const tabs: { id: InspectorTab; label: string; disabled?: boolean }[] = [
     { id: "configure", label: "Configure" },
@@ -340,16 +342,19 @@ export default function Inspector({
                 </button>
               </div>
 
-              <div className="rounded-md border border-[var(--border)] bg-[var(--success-soft)] px-3 py-2">
-                <p className="font-mono text-[9px] uppercase tracking-[0.1em] text-[var(--success)]">
-                  verified
-                </p>
-                <p className="mt-1 font-mono text-[10.5px] text-[var(--fg-muted)]">
-                  {artifact.verification.supportedClaims}/{artifact.verification.totalClaims} claims supported
-                  {" · "}
-                  {Math.round(artifact.verification.supportRate * 100)}%
-                </p>
-              </div>
+              {outcome ? (
+                <div className="rounded-md border border-[var(--border)] bg-[var(--success-soft)] px-3 py-2">
+                  <p className="font-mono text-[9px] uppercase tracking-[0.1em] text-[var(--success)]">
+                    {outcome.kind === "verification" ? "verified" : "checks"}
+                  </p>
+                  <p className="mt-1 font-mono text-[10.5px] text-[var(--fg-muted)]">
+                    {outcome.passed}/{outcome.total}{" "}
+                    {outcome.kind === "verification" ? "claims supported" : "checks passed"}
+                    {" · "}
+                    {Math.round(outcome.rate * 100)}%
+                  </p>
+                </div>
+              ) : null}
 
               <div className="rounded-md border border-[var(--border)] bg-[var(--bg-elevated)] p-3">
                 <Markdown markdown={artifact.markdown} className="max-h-[60vh] overflow-y-auto pr-1" />

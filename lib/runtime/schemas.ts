@@ -1,4 +1,5 @@
 import type { Claim, Outline } from "@/lib/research/types";
+import type { StoryBeat } from "@/lib/story/scene";
 
 export const QUERIES_SCHEMA = {
   type: "object",
@@ -64,6 +65,39 @@ export const REVISE_SCHEMA = {
   properties: {
     critique: { type: "string" },
     draft: { type: "string" },
+  },
+};
+
+export const STORY_BEATS_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["beats"],
+  properties: {
+    beats: {
+      type: "array",
+      minItems: 2,
+      maxItems: 5,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["id", "label", "anchor"],
+        properties: {
+          id: { type: "string" },
+          label: { type: "string" },
+          anchor: { type: "string" },
+        },
+      },
+    },
+  },
+};
+
+export const SCENE_REVISE_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["critique", "scene"],
+  properties: {
+    critique: { type: "string" },
+    scene: { type: "string" },
   },
 };
 
@@ -160,4 +194,22 @@ export function coerceDraft(value: unknown): string {
   if (typeof value === "string") return value;
   const record = asRecord(value);
   return asString(record.draft);
+}
+
+export function coerceBeats(value: unknown, fallback: StoryBeat[]): StoryBeat[] {
+  const record = asRecord(value);
+  const raw = Array.isArray(record.beats) ? record.beats : asArray(value);
+  const beats: StoryBeat[] = [];
+  for (const entry of raw) {
+    const item = asRecord(entry);
+    const label = asString(item.label).trim();
+    const anchor = asString(item.anchor).trim();
+    if (!label || !anchor) continue;
+    beats.push({
+      id: asString(item.id, `b${beats.length + 1}`),
+      label,
+      anchor,
+    });
+  }
+  return beats.length > 0 ? beats : fallback;
 }

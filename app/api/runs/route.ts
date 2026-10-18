@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { getDomain } from "@/lib/ir/domains";
+import { artifactOutcome } from "@/lib/ir/artifact";
 import { parseDomain } from "@/lib/ir/schema";
 import { startRun } from "@/lib/runtime/runner";
 import { listRuns } from "@/lib/runtime/store";
@@ -75,7 +76,7 @@ export async function GET() {
         costUsd: run.costUsd,
         domainId: run.domainId,
         title: run.artifact?.title,
-        verification: run.artifact?.verification.supportRate,
+        verification: artifactOutcome(run.artifact)?.rate,
       })),
     };
     return Response.json(response);

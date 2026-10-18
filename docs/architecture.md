@@ -13,12 +13,12 @@ intent
   → DAG scheduler                   │
   → node executors (LLM / tool / transform / io)
   → SSE events + trace spans        │
-  → artifact + verification         │
+  → artifact + deterministic checks
   → run record (JSON on disk)       │
   → eval suite ─────────────────────┘
 ```
 
-The important separation is **probabilistic generation vs deterministic checks**. The model proposes a program. The analyzer decides whether it is a legal program. The runtime decides whether it can run. The verifier decides whether the artifact's claims survive contact with the sources.
+The important separation is **probabilistic generation vs deterministic checks**. The model proposes a program. The analyzer decides whether it is a legal program. The runtime decides whether it can run. The verifier decides whether the artifact's claims survive contact with the sources. Other domains use the same seam: the story scene has a continuity check instead of citation verification, and the MIDI phrase is nothing but deterministic transforms.
 
 ## The IR
 
@@ -31,6 +31,8 @@ The important separation is **probabilistic generation vs deterministic checks**
 - `RunEvent` — the SSE contract.
 
 Types are deliberately small: `text`, `json`, `number`, `boolean`, `any`. `json` is for structured payloads; the executor and analyzer know the shape by convention. This keeps the domain language expressive without a full JSON Schema type system inside the graph.
+
+The built-in domains are `research-brief`, `story-scene`, `midi-remix` and the three-node `quick-answer` smoke test. Only the executable refs in `lib/runtime/executors.ts` can run; an imported domain without them is compile-only.
 
 ### Analyzer
 

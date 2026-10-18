@@ -56,6 +56,8 @@ test("models exposes executable domains", async () => {
   const ids = body.domains.map((domain) => domain.id);
   assert.ok(ids.includes("research-brief"));
   assert.ok(ids.includes("quick-answer"));
+  assert.ok(ids.includes("midi-remix"));
+  assert.ok(ids.includes("story-scene"));
   assert.ok(body.models.length >= 4);
 });
 
@@ -106,6 +108,49 @@ test("identical inputs hit the content-addressed cache", async () => {
   assert.ok(second.artifact);
   assert.equal(second.steps.filter((step) => step.status === "cached").length, 12);
   assert.ok(second.durationMs <= 500);
+});
+
+test("the presets are different graphs, not one brief in three costumes", async () => {
+  const midi = await compile(
+    "Transpose the phrase up a fifth, keep only notes in C3-G5, quantize to 1/16, and pull the dynamics back 25%.",
+    "demo",
+    "midi-remix",
+  );
+  assert.equal(midi.status, 200);
+  assert.equal(midi.body.result.ok, true);
+  assert.equal(midi.body.result.attempts.length, 2);
+  assert.equal(midi.body.result.patch.nodes.length, 6);
+  assert.ok(midi.body.result.patch.nodes.every((node) => !node.type.startsWith("llm.")));
+  const midiRun = await waitForRun(
+    (await startRun(midi.body.result.patch, "demo", "midi-remix")).body.runId,
+  );
+  assert.equal(midiRun.status, "completed");
+  assert.ok(midiRun.artifact);
+  assert.equal(midiRun.artifact.verification, undefined);
+  assert.equal(midiRun.artifact.checks.length, 5);
+  assert.ok(midiRun.artifact.checks.every((check) => check.passed));
+  assert.ok(midiRun.artifact.markdown.includes("transpose +7 st"));
+  assert.ok(midiRun.artifact.markdown.includes("quantize 1/16"));
+
+  const story = await compile(
+    "A lighthouse keeper finds a door in the fog that opens onto a city she has never visited. Write it as a tense third-person scene.",
+    "demo",
+    "story-scene",
+  );
+  assert.equal(story.status, 200);
+  assert.equal(story.body.result.ok, true);
+  assert.equal(story.body.result.attempts.length, 2);
+  assert.equal(story.body.result.patch.nodes.length, 5);
+  assert.ok(story.body.result.patch.nodes.some((node) => node.type === "llm.scene"));
+  const storyRun = await waitForRun(
+    (await startRun(story.body.result.patch, "demo", "story-scene")).body.runId,
+  );
+  assert.equal(storyRun.status, "completed");
+  assert.ok(storyRun.artifact);
+  assert.equal(storyRun.artifact.verification, undefined);
+  assert.equal(storyRun.artifact.checks.length, 4);
+  assert.ok(storyRun.artifact.checks.every((check) => check.passed));
+  assert.ok(storyRun.artifact.markdown.includes("## Continuity"));
 });
 
 test("the demo eval suite runs ten structural cases", { timeout: 60_000 }, async () => {

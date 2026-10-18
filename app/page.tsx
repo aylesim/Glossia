@@ -26,7 +26,7 @@ const HYPOTHESES = [
 ];
 
 const LIMITS = [
-  "Ten hand-written cases and one research domain.",
+  "Ten recorded research cases; four domains share the engine.",
   "Four hand-written sources; no live web or PDF ingestion.",
   "Default path uses recorded fixtures.",
   "Structural scoring only.",
