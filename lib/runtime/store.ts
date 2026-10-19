@@ -13,7 +13,15 @@ type ActiveRun = {
   abort: AbortController;
 };
 
-const DATA_DIR = path.join(process.cwd(), ".data");
+function resolveDataDir(): string {
+  if (process.env.GLOSSIA_DATA_DIR) return process.env.GLOSSIA_DATA_DIR;
+  if (process.env.VERCEL === "1" || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    return path.join("/tmp", "glossia");
+  }
+  return path.join(process.cwd(), ".data");
+}
+
+const DATA_DIR = resolveDataDir();
 const RUNS_DIR = path.join(DATA_DIR, "runs");
 const EVAL_DIR = path.join(DATA_DIR, "eval");
 // Next.js can evaluate the same module in separate route bundles. A plain

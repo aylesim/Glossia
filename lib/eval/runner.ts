@@ -160,6 +160,8 @@ export async function runEvalSuite(options: EvalOptions): Promise<EvalReport> {
     },
   };
 
-  await saveEval(report);
+  try {
+    await saveEval(report);
+  } catch {}
   return report;
 }
