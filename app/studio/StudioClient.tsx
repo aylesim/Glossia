@@ -130,8 +130,9 @@ export default function StudioClient() {
 
   const domainForWorkflow = useCallback((): Domain => {
     if (domainPinned) return domain;
+    if (!domainProposal.domainId || domainProposal.confidence !== "high") return domain;
     return getDomain(domainProposal.domainId) ?? domain;
-  }, [domain, domainPinned, domainProposal.domainId]);
+  }, [domain, domainPinned, domainProposal.confidence, domainProposal.domainId]);
 
   useEffect(() => {
     try {
@@ -334,7 +335,9 @@ export default function StudioClient() {
   }, []);
 
   const applyDomainProposal = useCallback(() => {
-    const next = getDomain(domainProposal.domainId);
+    const targetId = domainProposal.domainId ?? domainProposal.closestDomainId;
+    if (!targetId) return;
+    const next = getDomain(targetId);
     if (!next) return;
     setDomain(next);
     setDomainJson(JSON.stringify(next, null, 2));
@@ -342,7 +345,7 @@ export default function StudioClient() {
     setDomainPinned(false);
     resetWorkflow();
     setNotice(`Domain: ${next.name}`);
-  }, [domainProposal.domainId, resetWorkflow]);
+  }, [domainProposal.closestDomainId, domainProposal.domainId, resetWorkflow]);
 
   const handleDomainSelect = (id: string) => {
     const next = getDomain(id);
@@ -399,6 +402,10 @@ export default function StudioClient() {
 
   const handleCompile = async () => {
     if (!intent.trim() || compiling) return;
+    if (!domainPinned && domainProposal.confidence === "unsupported") {
+      setCompileError(domainProposal.reason);
+      return;
+    }
     setCompiling(true);
     setCompileError("");
     setCompile(null);
@@ -718,28 +725,57 @@ export default function StudioClient() {
                 </div>
 
                 {intent.trim().length >= 3 ? (
-                  <div className="rounded-md border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2.5">
+                  <div
+                    className={`rounded-md border px-3 py-2.5 ${
+                      domainProposal.confidence === "unsupported"
+                        ? "border-[var(--danger)]/35 bg-[var(--danger-soft)]"
+                        : domainProposal.confidence === "low"
+                          ? "border-[var(--warning)]/35 bg-[var(--warning-soft)]"
+                          : "border-[var(--border)] bg-[var(--bg-elevated)]"
+                    }`}
+                  >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className={monoLabel}>Suggested domain</p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className={monoLabel}>Suggested domain</p>
+                          <span
+                            className={`font-mono text-[8px] uppercase tracking-[0.08em] ${
+                              domainProposal.confidence === "high"
+                                ? "text-[var(--success)]"
+                                : domainProposal.confidence === "low"
+                                  ? "text-[var(--warning)]"
+                                  : "text-[var(--danger)]"
+                            }`}
+                          >
+                            {domainProposal.confidence}
+                          </span>
+                        </div>
                         <p className="mt-1 text-[12px] font-medium text-[var(--fg)]">{domainProposal.name}</p>
                         <p className="mt-0.5 font-mono text-[9px] leading-4 text-[var(--fg-subtle)]">
                           {domainProposal.reason}
                         </p>
-                        {!domainPinned && domain.id !== domainProposal.domainId ? (
+                        {!domainPinned &&
+                        domainProposal.confidence === "high" &&
+                        domainProposal.domainId &&
+                        domain.id !== domainProposal.domainId ? (
                           <p className="mt-1.5 font-mono text-[8.5px] leading-4 text-[var(--fg-muted)]">
-                            Compile and run use this domain unless you lock the active one.
+                            Compile and run switch to this domain automatically.
+                          </p>
+                        ) : null}
+                        {!domainPinned && domainProposal.confidence === "low" && domainProposal.domainId ? (
+                          <p className="mt-1.5 font-mono text-[8.5px] leading-4 text-[var(--fg-muted)]">
+                            Low confidence — click Use or pick a preset before compiling.
                           </p>
                         ) : null}
                       </div>
-                      {domain.id !== domainProposal.domainId ? (
-                        <button type="button" onClick={applyDomainProposal} className={btnSmall}>
-                          Use
-                        </button>
-                      ) : (
+                      {domainProposal.domainId && domain.id === domainProposal.domainId ? (
                         <span className="shrink-0 font-mono text-[8px] uppercase tracking-[0.08em] text-[var(--success)]">
                           matches
                         </span>
+                      ) : (
+                        <button type="button" onClick={applyDomainProposal} className={btnSmall}>
+                          {domainProposal.domainId ? "Use" : "Closest"}
+                        </button>
                       )}
                     </div>
                     <label className="mt-2.5 flex cursor-pointer items-center gap-2">
