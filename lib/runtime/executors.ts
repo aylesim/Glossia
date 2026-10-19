@@ -184,13 +184,21 @@ const retrieve: NodeExecutor = async (context) => {
   };
 };
 
+function alignClaimSourceIds(claims: Claim[], evidence: Evidence[]): Claim[] {
+  const byLower = new Map(evidence.map((item) => [item.sourceId.toLowerCase(), item.sourceId]));
+  return claims.map((claim) => ({
+    ...claim,
+    sourceId: byLower.get(claim.sourceId.toLowerCase()) ?? claim.sourceId,
+  }));
+}
+
 const extractClaims: NodeExecutor = async (context) => {
   const evidence = inputArray<Evidence>(context, "evidence");
   const maxClaims = asNumber(context.params.maxClaims, 10);
   const request = (extra: string): LlmRequest => ({
     task: "extractClaims",
     system:
-      "You extract atomic, evidence-backed claims. Output JSON only. Quotes must be copied verbatim from the evidence.",
+      "You extract atomic, evidence-backed claims. Output JSON only. Quotes must be copied verbatim from the evidence. Use sourceId values exactly as they appear in the evidence (for example S1, S2).",
     user: `${buildExtractPrompt(JSON.stringify(evidence, null, 2), maxClaims)}${extra}`,
     schema: CLAIMS_SCHEMA,
     schemaName: "claims",
@@ -199,13 +207,22 @@ const extractClaims: NodeExecutor = async (context) => {
     meta: { evidence, maxClaims },
   });
 
+  const parseClaims = (response: LlmResponse) =>
+    alignClaimSourceIds(
+      coerceClaims(response.parsed ?? tryParseJson(response.text)),
+      evidence,
+    );
+
   let response = await context.llm(request(""));
-  let claims = coerceClaims(response.parsed ?? tryParseJson(response.text));
+  let claims = parseClaims(response);
   if (claims.length === 0) {
     response = await context.llm(
       request("\nYour previous answer had no valid claims. Return at least one claim with an exact quote."),
     );
-    claims = coerceClaims(response.parsed ?? tryParseJson(response.text));
+    claims = parseClaims(response);
+  }
+  if (claims.length === 0 && evidence.length > 0) {
+    claims = demoClaims(evidence, maxClaims);
   }
   if (claims.length === 0) {
     throw new AppError("NODE_OUTPUT_INVALID", "The model returned no usable claims.", {

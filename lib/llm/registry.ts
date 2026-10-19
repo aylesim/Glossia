@@ -94,7 +94,7 @@ export const MODELS: ModelInfo[] = [
     inputPricePerMTok: 0.27,
     outputPricePerMTok: 1.1,
     tier: "worker",
-    supportsJsonSchema: true,
+    supportsJsonSchema: false,
   },
   {
     id: "deepseek-reasoner",

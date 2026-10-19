@@ -11,12 +11,16 @@ import {
 } from "./registry";
 
 export function extractJson(text: string): string {
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const stripped = text
+    .replace(/[\s\S]*?<\/think>/gi, "")
+    .replace(/^[\s\S]*?<\/think>\s*/i, "")
+    .trim();
+  const fenced = stripped.match(/```(?:json)?\s*([\s\S]*?)```/i);
   if (fenced?.[1]) return fenced[1].trim();
-  const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
-  if (start !== -1 && end > start) return text.slice(start, end + 1);
-  return text.trim();
+  const start = stripped.indexOf("{");
+  const end = stripped.lastIndexOf("}");
+  if (start !== -1 && end > start) return stripped.slice(start, end + 1);
+  return stripped.trim();
 }
 
 export function tryParseJson(text: string): unknown {
@@ -143,8 +147,16 @@ export class OpenAiAdapter implements LlmAdapter {
           );
         } catch (error) {
           if (!isSchemaUnsupported(error)) throw error;
-          completion = await this.client.chat.completions.create(base, { signal: request.signal });
+          completion = await this.client.chat.completions.create(
+            { ...base, response_format: { type: "json_object" } },
+            { signal: request.signal },
+          );
         }
+      } else if (request.schema) {
+        completion = await this.client.chat.completions.create(
+          { ...base, response_format: { type: "json_object" } },
+          { signal: request.signal },
+        );
       } else {
         completion = await this.client.chat.completions.create(base, { signal: request.signal });
       }

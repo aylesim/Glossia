@@ -132,22 +132,48 @@ export function coerceQueries(value: unknown, fallback: string): string[] {
   return queries.length > 0 ? queries : [fallback];
 }
 
-export function coerceClaims(value: unknown): Claim[] {
+function pickString(record: Record<string, unknown>, keys: string[]): string {
+  for (const key of keys) {
+    const value = asString(record[key]).trim();
+    if (value) return value;
+  }
+  return "";
+}
+
+function coerceConfidence(value: unknown): number {
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return Math.min(1, Math.max(0, parsed));
+  }
+  return Math.min(1, Math.max(0, asNumber(value, 0.7)));
+}
+
+function claimsArray(value: unknown): unknown[] {
+  if (Array.isArray(value)) return value;
   const record = asRecord(value);
-  const raw = Array.isArray(record.claims) ? record.claims : asArray(value);
+  if (Array.isArray(record.claims)) return record.claims;
+  const nested = asRecord(record.data);
+  if (Array.isArray(nested.claims)) return nested.claims;
+  const result = asRecord(record.result);
+  if (Array.isArray(result.claims)) return result.claims;
+  return [];
+}
+
+export function coerceClaims(value: unknown): Claim[] {
+  const raw = claimsArray(value);
   const claims: Claim[] = [];
   for (const entry of raw) {
     const item = asRecord(entry);
-    const text = asString(item.text).trim();
-    const sourceId = asString(item.sourceId).trim();
-    const quote = asString(item.quote).trim();
+    const text = pickString(item, ["text", "claim", "statement", "summary", "content"]);
+    const sourceId = pickString(item, ["sourceId", "source_id", "source", "sourceID", "documentId"]);
+    const quote = pickString(item, ["quote", "excerpt", "evidence", "passage", "citation"]);
     if (!text || !sourceId || !quote) continue;
     claims.push({
       id: asString(item.id, `c${claims.length + 1}`),
       text,
       sourceId,
       quote,
-      confidence: Math.min(1, Math.max(0, asNumber(item.confidence, 0.7))),
+      confidence: coerceConfidence(item.confidence),
     });
   }
   return claims;
