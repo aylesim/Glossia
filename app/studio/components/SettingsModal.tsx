@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { ModelInfo } from "@/lib/llm/registry";
+import type { LiveLlmProviderId, ModelInfo } from "@/lib/llm/registry";
 import type { StudioMode } from "../types";
 
 export default function SettingsModal({
@@ -23,8 +23,8 @@ export default function SettingsModal({
   onClose: () => void;
   mode: StudioMode;
   onModeChange: (mode: StudioMode) => void;
-  provider: "openai" | "openrouter";
-  onProviderChange: (provider: "openai" | "openrouter") => void;
+  provider: LiveLlmProviderId;
+  onProviderChange: (provider: LiveLlmProviderId) => void;
   model: string;
   onModelChange: (model: string) => void;
   apiKey: string;
@@ -114,11 +114,12 @@ export default function SettingsModal({
               </span>
               <select
                 value={provider}
-                onChange={(event) => onProviderChange(event.target.value as "openai" | "openrouter")}
+                onChange={(event) => onProviderChange(event.target.value as LiveLlmProviderId)}
                 className="mt-1.5 w-full rounded-md border border-[var(--border)] bg-[var(--bg-elevated)] px-2.5 py-2 text-[12px] text-[var(--fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40"
               >
                 <option value="openai">OpenAI</option>
                 <option value="openrouter">OpenRouter</option>
+                <option value="deepseek">DeepSeek</option>
               </select>
             </label>
             <label className="block">

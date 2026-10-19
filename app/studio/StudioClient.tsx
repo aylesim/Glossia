@@ -6,7 +6,7 @@ import { DOMAINS, EXECUTABLE_DOMAIN_IDS, RESEARCH_DOMAIN, getDomain } from "@/li
 import { artifactCheckLine } from "@/lib/ir/artifact";
 import { describeDiff } from "@/lib/ir/diff";
 import { getNodeType } from "@/lib/ir/query";
-import { MODELS, type ModelInfo } from "@/lib/llm/registry";
+import { defaultModelFor, MODELS, type LiveLlmProviderId, type ModelInfo } from "@/lib/llm/registry";
 import ThemeToggle from "@/app/components/theme-toggle";
 import Wordmark from "@/app/components/Wordmark";
 import { btnSecondary, btnSmall, field, monoLabel } from "@/app/styles";
@@ -101,7 +101,7 @@ export default function StudioClient() {
   const [domainError, setDomainError] = useState("");
   const [intent, setIntent] = useState(RESEARCH_INTENT);
   const [mode, setMode] = useState<StudioMode>("demo");
-  const [provider, setProvider] = useState<"openai" | "openrouter">("openai");
+  const [provider, setProvider] = useState<LiveLlmProviderId>("openai");
   const [model, setModel] = useState("gpt-4.1-mini");
   const [apiKey, setApiKey] = useState("");
   const [budget, setBudget] = useState(0.25);
@@ -129,7 +129,13 @@ export default function StudioClient() {
       const storedMode = sessionStorage.getItem("glossia.mode");
       if (storedMode === "live" || storedMode === "demo") setMode(storedMode);
       const storedProvider = sessionStorage.getItem("glossia.provider");
-      if (storedProvider === "openai" || storedProvider === "openrouter") setProvider(storedProvider);
+      if (
+        storedProvider === "openai" ||
+        storedProvider === "openrouter" ||
+        storedProvider === "deepseek"
+      ) {
+        setProvider(storedProvider);
+      }
       const storedModel = sessionStorage.getItem("glossia.model");
       if (storedModel) setModel(storedModel);
       const storedKey = sessionStorage.getItem("glossia.api-key");
@@ -472,11 +478,11 @@ export default function StudioClient() {
     }
   };
 
-  const handleProviderChange = (next: "openai" | "openrouter") => {
+  const handleProviderChange = (next: LiveLlmProviderId) => {
     setProvider(next);
     const candidates = models.filter((entry) => entry.provider === next);
     if (!candidates.some((entry) => entry.id === model)) {
-      setModel(candidates[0]?.id ?? (next === "openrouter" ? "openai/gpt-4.1-mini" : "gpt-4.1-mini"));
+      setModel(candidates[0]?.id ?? defaultModelFor(next));
     }
   };
 

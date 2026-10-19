@@ -15,7 +15,7 @@ export type StartRunOptions = {
   domain: Domain;
   mode: "demo" | "live";
   model?: string;
-  provider?: "openai" | "openrouter";
+  provider?: "openai" | "openrouter" | "deepseek";
   apiKey?: string;
   budget?: Partial<BudgetLimits>;
   concurrency?: number;
@@ -87,10 +87,12 @@ export async function startRun(options: StartRunOptions): Promise<RunRecord> {
   return run;
 }
 
-export function providerFromRequest(value: unknown): "openai" | "openrouter" {
-  return value === "openrouter" ? "openrouter" : "openai";
+export function providerFromRequest(value: unknown): "openai" | "openrouter" | "deepseek" {
+  if (value === "openrouter") return "openrouter";
+  if (value === "deepseek") return "deepseek";
+  return "openai";
 }
 
 export function isLiveProvider(value: unknown): value is LlmProviderId {
-  return value === "openai" || value === "openrouter";
+  return value === "openai" || value === "openrouter" || value === "deepseek";
 }

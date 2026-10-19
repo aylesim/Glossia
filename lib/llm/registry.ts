@@ -1,11 +1,12 @@
 import type { Usage } from "@/lib/ir/types";
 
-export type LlmProviderId = "openai" | "openrouter" | "demo";
+export type LiveLlmProviderId = "openai" | "openrouter" | "deepseek";
+export type LlmProviderId = LiveLlmProviderId | "demo";
 
 export type ModelInfo = {
   id: string;
   label: string;
-  provider: "openai" | "openrouter";
+  provider: LiveLlmProviderId;
   contextWindow: number;
   /** Approximate USD per 1M tokens. */
   inputPricePerMTok: number;
@@ -85,6 +86,26 @@ export const MODELS: ModelInfo[] = [
     tier: "worker",
     supportsJsonSchema: false,
   },
+  {
+    id: "deepseek-chat",
+    label: "DeepSeek Chat",
+    provider: "deepseek",
+    contextWindow: 64_000,
+    inputPricePerMTok: 0.27,
+    outputPricePerMTok: 1.1,
+    tier: "worker",
+    supportsJsonSchema: true,
+  },
+  {
+    id: "deepseek-reasoner",
+    label: "DeepSeek Reasoner",
+    provider: "deepseek",
+    contextWindow: 64_000,
+    inputPricePerMTok: 0.55,
+    outputPricePerMTok: 2.19,
+    tier: "planner",
+    supportsJsonSchema: false,
+  },
 ];
 
 const FALLBACK: ModelInfo = {
@@ -98,16 +119,21 @@ const FALLBACK: ModelInfo = {
   supportsJsonSchema: false,
 };
 
-export function getModelInfo(id: string | undefined, provider?: "openai" | "openrouter"): ModelInfo {
+export function getModelInfo(id: string | undefined, provider?: LiveLlmProviderId): ModelInfo {
   const found = MODELS.find((model) => model.id === id);
   if (found) return found;
-  const fallbackProvider = provider ?? (id?.includes("/") ? "openrouter" : "openai");
+  const fallbackProvider =
+    provider ??
+    (id?.includes("/") ? "openrouter" : id?.startsWith("deepseek") ? "deepseek" : "openai");
   return { ...FALLBACK, id: id ?? FALLBACK.id, provider: fallbackProvider };
 }
 
-export function defaultModelFor(provider: "openai" | "openrouter"): string {
+export function defaultModelFor(provider: LiveLlmProviderId): string {
   if (provider === "openrouter") {
     return process.env.OPENROUTER_MODEL?.trim() || "openai/gpt-4.1-mini";
+  }
+  if (provider === "deepseek") {
+    return process.env.DEEPSEEK_MODEL?.trim() || "deepseek-chat";
   }
   return process.env.OPENAI_MODEL?.trim() || "gpt-4.1-mini";
 }

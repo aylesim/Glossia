@@ -87,6 +87,11 @@ OPENAI_MODEL=gpt-4.1-mini
 LLM_PROVIDER=openrouter
 OPENROUTER_API_KEY=...
 OPENROUTER_MODEL=openai/gpt-4.1-mini
+
+# or
+LLM_PROVIDER=deepseek
+DEEPSEEK_API_KEY=...
+DEEPSEEK_MODEL=deepseek-chat
 ```
 
 Any OpenAI-compatible endpoint works, including Ollama, vLLM or a local mock:

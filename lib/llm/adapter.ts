@@ -2,7 +2,13 @@ import OpenAI from "openai";
 import type { ChatCompletion } from "openai/resources/chat/completions";
 import { AppError, type LlmAdapter, type LlmRequest, type LlmResponse } from "./types";
 import { DemoAdapter } from "./demo";
-import { defaultModelFor, getModelInfo, usageFor, type LlmProviderId } from "./registry";
+import {
+  defaultModelFor,
+  getModelInfo,
+  usageFor,
+  type LiveLlmProviderId,
+  type LlmProviderId,
+} from "./registry";
 
 export function extractJson(text: string): string {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
@@ -67,21 +73,28 @@ function mapProviderError(error: unknown): AppError {
   });
 }
 
+function baseUrlForProvider(provider: LiveLlmProviderId): string | undefined {
+  if (provider === "openrouter") {
+    return process.env.OPENROUTER_BASE_URL?.trim() || "https://openrouter.ai/api/v1";
+  }
+  if (provider === "deepseek") {
+    return process.env.DEEPSEEK_BASE_URL?.trim() || "https://api.deepseek.com/v1";
+  }
+  return process.env.OPENAI_BASE_URL?.trim() || undefined;
+}
+
 export class OpenAiAdapter implements LlmAdapter {
-  readonly provider: "openai" | "openrouter";
+  readonly provider: LiveLlmProviderId;
   readonly model: string;
   private client: OpenAI;
   private supportsJsonSchema: boolean;
 
-  constructor(options: { provider: "openai" | "openrouter"; apiKey: string; model: string }) {
+  constructor(options: { provider: LiveLlmProviderId; apiKey: string; model: string }) {
     this.provider = options.provider;
     this.model = options.model;
     const info = getModelInfo(options.model, options.provider);
     this.supportsJsonSchema = info.supportsJsonSchema;
-    const baseURL =
-      options.provider === "openrouter"
-        ? process.env.OPENROUTER_BASE_URL?.trim() || "https://openrouter.ai/api/v1"
-        : process.env.OPENAI_BASE_URL?.trim() || undefined;
+    const baseURL = baseUrlForProvider(options.provider);
     this.client = new OpenAI({
       apiKey: options.apiKey,
       baseURL,
@@ -163,20 +176,30 @@ export class OpenAiAdapter implements LlmAdapter {
 
 export type AdapterOptions = {
   mode: "demo" | "live";
-  provider?: "openai" | "openrouter";
+  provider?: LiveLlmProviderId;
   model?: string;
   apiKey?: string;
 };
 
+function defaultProviderFromEnv(): LiveLlmProviderId {
+  const configured = process.env.LLM_PROVIDER?.trim();
+  if (configured === "openrouter" || configured === "deepseek" || configured === "openai") {
+    return configured;
+  }
+  return "openai";
+}
+
+function envApiKey(provider: LiveLlmProviderId): string | undefined {
+  if (provider === "openrouter") return process.env.OPENROUTER_API_KEY?.trim();
+  if (provider === "deepseek") return process.env.DEEPSEEK_API_KEY?.trim();
+  return process.env.OPENAI_API_KEY?.trim();
+}
+
 export function createAdapter(options: AdapterOptions): LlmAdapter {
   if (options.mode === "demo") return new DemoAdapter();
-  const provider = options.provider ?? (process.env.LLM_PROVIDER === "openrouter" ? "openrouter" : "openai");
+  const provider = options.provider ?? defaultProviderFromEnv();
   const model = options.model?.trim() || defaultModelFor(provider);
-  const key =
-    options.apiKey?.trim() ||
-    (provider === "openrouter"
-      ? process.env.OPENROUTER_API_KEY?.trim()
-      : process.env.OPENAI_API_KEY?.trim());
+  const key = options.apiKey?.trim() || envApiKey(provider);
   if (!key) {
     throw new AppError("PROVIDER_AUTH", `No API key configured for ${provider}.`, {
       status: 401,
@@ -186,10 +209,17 @@ export function createAdapter(options: AdapterOptions): LlmAdapter {
   return new OpenAiAdapter({ provider, apiKey: key, model });
 }
 
-export function providerForModel(model: string): "openai" | "openrouter" {
-  return model.includes("/") ? "openrouter" : "openai";
+export function providerForModel(model: string): LiveLlmProviderId {
+  if (model.includes("/")) return "openrouter";
+  if (model.startsWith("deepseek")) return "deepseek";
+  return "openai";
 }
 
 export function isLlmProvider(value: unknown): value is LlmProviderId {
-  return value === "openai" || value === "openrouter" || value === "demo";
+  return (
+    value === "openai" ||
+    value === "openrouter" ||
+    value === "deepseek" ||
+    value === "demo"
+  );
 }

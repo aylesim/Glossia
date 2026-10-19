@@ -3,7 +3,7 @@ import type { ModelInfo } from "@/lib/llm/registry";
 import type { Domain } from "@/lib/ir/types";
 
 export type ApiMode = "demo" | "live";
-export type ApiProvider = "openai" | "openrouter";
+export type ApiProvider = "openai" | "openrouter" | "deepseek";
 
 export type ApiError = {
   code: string;

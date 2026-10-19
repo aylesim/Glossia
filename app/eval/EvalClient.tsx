@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { EvalReport } from "@/lib/ir/types";
-import { MODELS } from "@/lib/llm/registry";
+import { defaultModelFor, MODELS, type LiveLlmProviderId } from "@/lib/llm/registry";
 import { btnPrimary, btnSecondary, chip, field, monoLabel } from "@/app/styles";
 
 function pct(value: number | null | undefined): string {
@@ -31,7 +31,7 @@ export default function EvalClient() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [mode, setMode] = useState<"demo" | "live">("demo");
-  const [provider, setProvider] = useState<"openai" | "openrouter">("openai");
+  const [provider, setProvider] = useState<LiveLlmProviderId>("openai");
   const [model, setModel] = useState("gpt-4.1-mini");
   const [apiKey, setApiKey] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -43,7 +43,13 @@ export default function EvalClient() {
       const storedModel = sessionStorage.getItem("glossia.model");
       if (storedModel) setModel(storedModel);
       const storedProvider = sessionStorage.getItem("glossia.provider");
-      if (storedProvider === "openai" || storedProvider === "openrouter") setProvider(storedProvider);
+      if (
+        storedProvider === "openai" ||
+        storedProvider === "openrouter" ||
+        storedProvider === "deepseek"
+      ) {
+        setProvider(storedProvider);
+      }
     } catch {
       // ignore
     }
@@ -144,15 +150,16 @@ export default function EvalClient() {
               <select
                 value={provider}
                 onChange={(event) => {
-                  const next = event.target.value as "openai" | "openrouter";
+                  const next = event.target.value as LiveLlmProviderId;
                   setProvider(next);
                   const candidate = MODELS.find((entry) => entry.provider === next);
-                  if (candidate) setModel(candidate.id);
+                  setModel(candidate?.id ?? defaultModelFor(next));
                 }}
                 className={`${field} mt-1 w-[130px] py-1.5 text-[11px]`}
               >
                 <option value="openai">OpenAI</option>
                 <option value="openrouter">OpenRouter</option>
+                <option value="deepseek">DeepSeek</option>
               </select>
             </label>
             <label className="block">
