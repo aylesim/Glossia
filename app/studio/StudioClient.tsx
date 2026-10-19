@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CompileResult, Domain, Patch, RunEvent, RunRecord, StepRecord } from "@/lib/ir/types";
 import { DOMAINS, EXECUTABLE_DOMAIN_IDS, RESEARCH_DOMAIN, getDomain } from "@/lib/ir/domains";
+import { proposeDomainFromIntent } from "@/lib/ir/propose-domain";
 import { artifactCheckLine } from "@/lib/ir/artifact";
 import { describeDiff } from "@/lib/ir/diff";
 import { getNodeType } from "@/lib/ir/query";
@@ -119,10 +120,18 @@ export default function StudioClient() {
   const [artifactOpen, setArtifactOpen] = useState(false);
   const [leftTab, setLeftTab] = useState<"compile" | "domain" | "nodes">("compile");
   const [notice, setNotice] = useState("");
+  const [domainPinned, setDomainPinned] = useState(false);
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
   const esRef = useRef<EventSource | null>(null);
   const runIdRef = useRef<string | null>(null);
+
+  const domainProposal = useMemo(() => proposeDomainFromIntent(intent), [intent]);
+
+  const domainForWorkflow = useCallback((): Domain => {
+    if (domainPinned) return domain;
+    return getDomain(domainProposal.domainId) ?? domain;
+  }, [domain, domainPinned, domainProposal.domainId]);
 
   useEffect(() => {
     try {
@@ -324,12 +333,24 @@ export default function StudioClient() {
     setStartedAt(null);
   }, []);
 
+  const applyDomainProposal = useCallback(() => {
+    const next = getDomain(domainProposal.domainId);
+    if (!next) return;
+    setDomain(next);
+    setDomainJson(JSON.stringify(next, null, 2));
+    setDomainError("");
+    setDomainPinned(false);
+    resetWorkflow();
+    setNotice(`Domain: ${next.name}`);
+  }, [domainProposal.domainId, resetWorkflow]);
+
   const handleDomainSelect = (id: string) => {
     const next = getDomain(id);
     if (!next) return;
     setDomain(next);
     setDomainJson(JSON.stringify(next, null, 2));
     setDomainError("");
+    setDomainPinned(true);
     resetWorkflow();
     setNotice(`Domain: ${next.name}`);
   };
@@ -341,6 +362,7 @@ export default function StudioClient() {
     setDomainJson(JSON.stringify(next, null, 2));
     setDomainError("");
     setIntent(preset.intent);
+    setDomainPinned(false);
     resetWorkflow();
     setNotice(`${next.name} · ${preset.label}`);
   };
@@ -367,6 +389,7 @@ export default function StudioClient() {
       }
       setDomain(data.domain);
       setDomainJson(JSON.stringify(data.domain, null, 2));
+      setDomainPinned(true);
       resetWorkflow();
       setNotice(`Applied ${data.domain.name}`);
     } catch (error) {
@@ -386,12 +409,17 @@ export default function StudioClient() {
     setSelectedNodeId(null);
     setInspectorTab("configure");
     try {
+      const activeDomain = domainForWorkflow();
+      if (!domainPinned && activeDomain.id !== domain.id) {
+        setDomain(activeDomain);
+        setDomainJson(JSON.stringify(activeDomain, null, 2));
+      }
       const response = await fetch("/api/compile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          domainId: domain.id,
-          domainJson: domain,
+          domainId: activeDomain.id,
+          domainJson: activeDomain,
           intent: intent.trim(),
           mode,
           provider,
@@ -432,12 +460,17 @@ export default function StudioClient() {
     setNow(Date.now());
     setArtifactOpen(false);
     try {
+      const activeDomain = domainForWorkflow();
+      if (!domainPinned && activeDomain.id !== domain.id) {
+        setDomain(activeDomain);
+        setDomainJson(JSON.stringify(activeDomain, null, 2));
+      }
       const response = await fetch("/api/runs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          domainId: domain.id,
-          domainJson: domain,
+          domainId: activeDomain.id,
+          domainJson: activeDomain,
           patch,
           mode,
           provider,
@@ -684,6 +717,45 @@ export default function StudioClient() {
                   />
                 </div>
 
+                {intent.trim().length >= 3 ? (
+                  <div className="rounded-md border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className={monoLabel}>Suggested domain</p>
+                        <p className="mt-1 text-[12px] font-medium text-[var(--fg)]">{domainProposal.name}</p>
+                        <p className="mt-0.5 font-mono text-[9px] leading-4 text-[var(--fg-subtle)]">
+                          {domainProposal.reason}
+                        </p>
+                        {!domainPinned && domain.id !== domainProposal.domainId ? (
+                          <p className="mt-1.5 font-mono text-[8.5px] leading-4 text-[var(--fg-muted)]">
+                            Compile and run use this domain unless you lock the active one.
+                          </p>
+                        ) : null}
+                      </div>
+                      {domain.id !== domainProposal.domainId ? (
+                        <button type="button" onClick={applyDomainProposal} className={btnSmall}>
+                          Use
+                        </button>
+                      ) : (
+                        <span className="shrink-0 font-mono text-[8px] uppercase tracking-[0.08em] text-[var(--success)]">
+                          matches
+                        </span>
+                      )}
+                    </div>
+                    <label className="mt-2.5 flex cursor-pointer items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={domainPinned}
+                        onChange={(event) => setDomainPinned(event.target.checked)}
+                        className="size-3.5 rounded border-[var(--border)]"
+                      />
+                      <span className="font-mono text-[8.5px] text-[var(--fg-muted)]">
+                        Lock active domain ({domain.name})
+                      </span>
+                    </label>
+                  </div>
+                ) : null}
+
                 <div>
                   <div className="flex items-center justify-between">
                     <span className={monoLabel}>Presets</span>
@@ -710,7 +782,7 @@ export default function StudioClient() {
                     })}
                   </div>
                   <p className="mt-1.5 font-mono text-[8px] leading-4 text-[var(--fg-subtle)]">
-                    Each preset switches the domain and the intent, so the graph is different.
+                    Presets set example intent and domain. Otherwise the suggestion follows your text.
                   </p>
                 </div>
 
