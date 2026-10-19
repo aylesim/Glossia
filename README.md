@@ -15,10 +15,9 @@ This is not a product. The current study asks whether deterministic checks and a
 | Stage | What happens | What it tests |
 |-------|--------------|---------------|
 | **Compile** | Intent to typed graph, deterministic analysis, bounded repair | Structured generation, JSON Schema, graph validation |
-| **Run** | DAG scheduler, SSE events, retries, budget, cancellation, cache | Orchestration and failure handling |
-| **Evaluate** | Trace spans, token and cost accounting, citation verification, structural suite | Whether a run can be compared and checked |
+| **Run** | DAG scheduler, SSE events, retries, budget, cancellation, cache, traces and cost | Orchestration, failure handling, artifact checks |
 
-The app has three surfaces: a landing page, the prototype (`/studio`), and an evaluation page (`/eval`). A completed run is also a read-only page (`/runs/[id]`).
+The app has two main surfaces: a landing page and the prototype (`/studio`). A completed run is also a read-only page (`/runs/[id]`).
 
 ## Research case
 
@@ -70,7 +69,6 @@ Open [http://localhost:3000](http://localhost:3000).
 4. Click **Compile graph**. The compiler returns a fixture, the analyzer catches an invalid param, and the repair pass fixes the missing edge.
 5. Click **Run**. Inspect the artifact and the per-step trace, cost and output.
 6. Click **Run** again. The content-addressed cache returns the whole graph in milliseconds.
-7. Open `/eval` and run the 10-case structural suite (research domain).
 
 ### Live mode
 
@@ -125,7 +123,6 @@ flowchart LR
   R --> AR[Artifact + verification]
   E --> UI[Studio / run page]
   AR --> UI
-  P --> EV[Eval suite]
 ```
 
 ```text
@@ -134,12 +131,10 @@ lib/
   llm/         adapter, recorded adapter, prompts, repair, model registry
   runtime/     budget, cache, DAG executor, node executors, event store
   research/    corpus, retrieval, claim synthesis, deterministic verification
-  eval/        golden set, metrics, report runner
 app/
   studio/      canvas, inspector, timeline, settings, artifact modal
-  eval/        eval lab
   runs/[id]/   read-only run page
-  api/         compile, runs, SSE, cancel, eval, models, health
+  api/         compile, runs, SSE, cancel, models, health
 ```
 
 ### The IR
@@ -179,25 +174,6 @@ The repair loop gets the exact issue list and the original output, and returns a
 
 The verifier normalises both the claim quote and the source text, then checks containment. It records the method (`exact_quote`, `normalized_quote`, `missing`). The artifact's confidence statement is derived from that report.
 
-## Eval lab
-
-The suite is structural, not a leaderboard: it checks whether the compiler produced a valid graph with the expected steps and data-flow shape.
-
-| Metric | What it means | Latest recorded suite |
-|--------|---------------|-------------------|
-| pass rate | valid graph and ≥ 60% node recall | **100%** (10/10) |
-| node recall | expected node types present | **1.00** |
-| node precision | generated types that were expected | **0.82** |
-| edge F1 | multiset of `(fromType, toType)` | **0.70** |
-| param accuracy | expected params match | **1.00** |
-| attempts | compile calls including repair | **2.00** |
-| p50 latency | per compile | **0.5s** |
-| cost | per suite | **$0.00** in recorded mode |
-
-Recorded mode uses fixture patches, so these numbers describe the pipeline and the analyzer, not the model. Live mode runs the same cases against a real model and records the real cost and latency.
-
-![Eval lab](public/screenshots/eval.png)
-
 ## Tests
 
 ```bash
@@ -206,7 +182,7 @@ npm run typecheck
 npm run test:ci      # build + production server + API integration tests
 ```
 
-`test:ci` starts the production server on port 3100 and runs `tests/api.test.mjs`. The tests cover compile + repair, a complete run with verification, cache hits, the 10-case eval suite, invalid graph rejection and cancellation. The local mock provider keeps the live adapter path testable without spending money.
+`test:ci` starts the production server on port 3100 and runs `tests/api.test.mjs`. The tests cover compile + repair, a complete run with verification, cache hits, invalid graph rejection and cancellation. The local mock provider keeps the live adapter path testable without spending money.
 
 To include the live adapter path in the test run:
 
@@ -225,7 +201,6 @@ This is a focused POC, not a production platform. The important boundaries are e
 - **The corpus is hand-written.** The retrieval path is real (chunking, lexical ranking, top-K, source diversity), but it is not a live web search or PDF ingestion pipeline.
 - **The recorded compiler returns fixture patches.** It exercises the same analyzer and repair loop as live mode. The live compiler is the real path.
 - **No auth, tenancy or billing.** BYOK is deliberate for a POC.
-- **Eval is structural.** There is no calibrated LLM judge yet; the rubric and human calibration are in the roadmap (`docs/PIANO-V2.md`, F4).
 - **Graph editing is read-only.** You can compile and run, inspect every node and artifact, but not drag new nodes onto the canvas yet.
 
 ## What is implemented vs planned
@@ -238,7 +213,7 @@ Implemented in this slice:
 - DAG runtime, SSE, trace spans, usage/cost, budget, cancellation, cache.
 - Research recipe with retrieval, claim extraction, outline, draft, bounded critique/revise, deterministic citation verification and artifact.
 - Three additional domains: a deterministic `midi-remix` note chain, a `story-scene` pipeline with a continuity check, and a three-node `quick-answer` smoke test.
-- Studio (canvas, inspector, timeline, settings, artifact modal), eval lab, run page, landing.
+- Studio (canvas, inspector, timeline, settings, artifact modal), run page, landing.
 - 8 API integration tests and a local live-path mock.
 
 Next, in the plan's F4–F6: database persistence, share links, graph editing, a calibrated judge, prompt version A/B, a provider beyond OpenAI-compatible, and deployment hardening.

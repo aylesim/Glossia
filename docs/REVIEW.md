@@ -50,13 +50,7 @@ This is the "edit one node, re-run only what changed" seam. The key includes exe
 - Set the token budget to 1000 and run in live mode against the mock provider: the run stops with `BUDGET_EXCEEDED` and keeps the partial trace.
 - Start a run and click **Stop**: the status becomes `cancelled` and the remaining steps are `skipped`.
 
-## 6. Evaluate it (60s)
-
-Open `/eval` and click **Run eval suite**. Ten structural cases run in about five seconds in demo mode. The report shows pass rate, node recall/precision, edge F1, params, attempts, latency and cost per case. Click a row to see missing/extra types and issues.
-
-The demo suite measures the pipeline, not the model. Switch to live to measure a real model; the key stays in the tab.
-
-## 7. Read the trace (30s)
+## 6. Read the trace (30s)
 
 Back in `/studio`, click any node and open **Run** or **Trace**:
 
@@ -78,7 +72,6 @@ Back in `/studio`, click any node and open **Run** or **Trace**:
 | Budget / cache | `lib/runtime/budget.ts`, `lib/runtime/cache.ts` |
 | Run registry / SSE | `lib/runtime/store.ts`, `app/api/runs/[id]/stream/route.ts` |
 | Verification | `lib/research/synthesis.ts` |
-| Eval | `lib/eval/runner.ts`, `app/eval/EvalClient.tsx` |
 | Studio | `app/studio/StudioClient.tsx` |
 
 ## Questions the project is designed to answer

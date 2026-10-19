@@ -23,9 +23,6 @@ export default function SiteFooter() {
           <Link href="/studio" className="hover:text-[var(--fg)]">
             Prototype
           </Link>
-          <Link href="/eval" className="hover:text-[var(--fg)]">
-            Evaluation
-          </Link>
           <a
             href="https://github.com/aylesim/Glossia"
             target="_blank"

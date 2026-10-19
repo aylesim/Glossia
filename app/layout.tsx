@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Glossia · typed graphs for LLM workflows",
     description:
-      "A research prototype for typed LLM workflows, with a deterministic analyzer, a DAG runtime and a ten-case structural evaluation.",
+      "A research prototype for typed LLM workflows, with a deterministic analyzer and a DAG runtime.",
     type: "website",
   },
 };

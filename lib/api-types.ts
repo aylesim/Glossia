@@ -1,4 +1,4 @@
-import type { CompileResult, EvalReport, RunRecord } from "@/lib/ir/types";
+import type { CompileResult, RunRecord } from "@/lib/ir/types";
 import type { ModelInfo } from "@/lib/llm/registry";
 import type { Domain } from "@/lib/ir/types";
 
@@ -51,19 +51,6 @@ export type RunsListResponse = {
     verification?: number;
   }[];
 };
-
-export type EvalRequest = {
-  mode: ApiMode;
-  limit?: number;
-  domainId?: string;
-  provider?: ApiProvider;
-  model?: string;
-  apiKey?: string;
-};
-
-export type EvalResponse =
-  | { report: EvalReport }
-  | (ErrorResponse & { report?: EvalReport });
 
 export type ModelsResponse = {
   domains: {

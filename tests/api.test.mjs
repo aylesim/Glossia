@@ -154,20 +154,6 @@ test("the presets are different graphs, not one brief in three costumes", async 
   assert.ok(storyRun.artifact.markdown.includes("## Continuity"));
 });
 
-test("the demo eval suite runs ten structural cases", { timeout: 60_000 }, async () => {
-  const { status, body } = await request("/api/eval", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ mode: "demo", limit: 10 }),
-  });
-  assert.equal(status, 200);
-  assert.ok(body.report);
-  assert.equal(body.report.summary.total, 10);
-  assert.equal(body.report.summary.passed, 10);
-  assert.ok(body.report.summary.avgNodeRecall >= 0.8);
-  assert.ok(body.report.summary.avgEdgeF1 >= 0.5);
-});
-
 test("invalid graphs are rejected before execution", async () => {
   const { status, body } = await request("/api/runs", {
     method: "POST",

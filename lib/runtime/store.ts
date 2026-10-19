@@ -1,7 +1,7 @@
 import "server-only";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import type { EvalReport, RunEvent, RunRecord } from "@/lib/ir/types";
+import type { RunEvent, RunRecord } from "@/lib/ir/types";
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 export type RunEventDraft = DistributiveOmit<RunEvent, "seq" | "runId" | "at">;
@@ -23,7 +23,6 @@ function resolveDataDir(): string {
 
 const DATA_DIR = resolveDataDir();
 const RUNS_DIR = path.join(DATA_DIR, "runs");
-const EVAL_DIR = path.join(DATA_DIR, "eval");
 // Next.js can evaluate the same module in separate route bundles. A plain
 // module-level Map would give the POST route and the SSE route different views
 // of the same run. Pin the active registry to globalThis so every route in the
@@ -152,30 +151,6 @@ export async function listRuns(limit = 20): Promise<RunRecord[]> {
   return [...byId.values()]
     .sort((a, b) => (a.startedAt < b.startedAt ? 1 : -1))
     .slice(0, limit);
-}
-
-export async function saveEval(report: EvalReport): Promise<void> {
-  await ensureDir(EVAL_DIR);
-  await writeJson(path.join(EVAL_DIR, `${report.id}.json`), report);
-  await writeJson(path.join(EVAL_DIR, "latest.json"), report);
-}
-
-export async function loadLatestEval(): Promise<EvalReport | undefined> {
-  try {
-    const raw = await fs.readFile(path.join(EVAL_DIR, "latest.json"), "utf8");
-    return JSON.parse(raw) as EvalReport;
-  } catch {
-    return undefined;
-  }
-}
-
-export async function loadEval(id: string): Promise<EvalReport | undefined> {
-  try {
-    const raw = await fs.readFile(path.join(EVAL_DIR, `${id}.json`), "utf8");
-    return JSON.parse(raw) as EvalReport;
-  } catch {
-    return undefined;
-  }
 }
 
 export function activeRunCount(): number {

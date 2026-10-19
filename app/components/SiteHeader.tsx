@@ -15,12 +15,6 @@ export default function SiteHeader() {
           >
             Prototype
           </Link>
-          <Link
-            href="/eval"
-            className="rounded-md px-2.5 py-1.5 text-[12px] text-[var(--fg-muted)] transition-colors hover:bg-[var(--surface-raised)] hover:text-[var(--fg)]"
-          >
-            Evaluation
-          </Link>
           <a
             href="https://github.com/aylesim/Glossia"
             target="_blank"

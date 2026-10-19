@@ -8,14 +8,13 @@ intent
   → candidate patch
   → deterministic autofix
   → analyzer (schema, domain, params, ports, DAG, reachability, limits)
-  → repair (LLM, max 2 attempts)  ──┐
-  → validated patch                 │
-  → DAG scheduler                   │
+  → repair (LLM, max 2 attempts)
+  → validated patch
+  → DAG scheduler
   → node executors (LLM / tool / transform / io)
-  → SSE events + trace spans        │
+  → SSE events + trace spans
   → artifact + deterministic checks
-  → run record (JSON on disk)       │
-  → eval suite ─────────────────────┘
+  → run record (JSON on disk)
 ```
 
 The important separation is **probabilistic generation vs deterministic checks**. The model proposes a program. The analyzer decides whether it is a legal program. The runtime decides whether it can run. The verifier decides whether the artifact's claims survive contact with the sources. Other domains use the same seam: the story scene has a continuity check instead of citation verification, and the MIDI phrase is nothing but deterministic transforms.
@@ -125,23 +124,10 @@ interface LlmAdapter {
 
 The verifier runs after the model. It does not ask the model whether it is right.
 
-## Eval
-
-`lib/eval/runner.ts` runs the same compiler against a structural golden set:
-
-- pass if valid and node recall ≥ 0.6;
-- node recall/precision by type;
-- edge F1 on the multiset of `(fromType, toType)`;
-- params, attempts, latency, cost;
-- p50/p95 and aggregate report saved to `.data/eval/`.
-
-Demo and live differ only by the adapter.
-
 ## Frontend
 
 - Landing: server component; static SVG hero; proof copy.
 - Studio: one client component with a canvas (`@xyflow/react`), inspector, timeline, settings and artifact modal. State is local to the tab; keys are in `sessionStorage`.
-- Eval lab: client; fetches/runs the suite and expands a case row.
 - Run page: server; loads the run from `.data` and renders a read-only graph, trace and artifact.
 
 The canvas uses a deterministic wrapped grid layout rather than a single 3,700px strip: a 12-node chain needs to fit a split-pane. The reader sees a storyboard, not a horizontal scroll.
