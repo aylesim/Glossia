@@ -351,6 +351,80 @@ export const QUICK_ANSWER_DOMAIN: Domain = {
   nodeTypes: quickNodes,
 };
 
+const openIntentNodes: NodeType[] = [
+  {
+    id: "input.intent",
+    name: "Intent",
+    description: "The user goal this workflow must accomplish.",
+    category: "input",
+    inputs: [],
+    outputs: [port("intent", "text", "Full user intent")],
+    params: [
+      {
+        key: "intent",
+        type: "string",
+        description: "What the workflow should do.",
+        required: true,
+        ui: "textarea",
+      },
+    ],
+    executor: { kind: "io", ref: "input.intent" },
+  },
+  {
+    id: "llm.task",
+    name: "Task step",
+    description: "One LLM step with a specific instruction (plan, draft, transform, review, etc.).",
+    category: "llm",
+    inputs: [
+      port("intent", "text", "Original user intent"),
+      port("context", "text", "Output from a previous step", { required: false }),
+    ],
+    outputs: [port("result", "text", "Step output")],
+    params: [
+      {
+        key: "instruction",
+        type: "string",
+        description: "What this step must do.",
+        required: true,
+        ui: "textarea",
+      },
+    ],
+    executor: { kind: "llm", ref: "genericTask" },
+  },
+  {
+    id: "output.markdown",
+    name: "Markdown output",
+    description: "Publishes the final deliverable.",
+    category: "output",
+    inputs: [port("content", "text", "Final markdown")],
+    outputs: [],
+    params: [
+      {
+        key: "title",
+        type: "string",
+        description: "Artifact title.",
+        required: false,
+        default: "Result",
+      },
+    ],
+    executor: { kind: "io", ref: "output.markdown" },
+  },
+];
+
+export const OPEN_INTENT_DOMAIN: Domain = {
+  id: "open-intent",
+  version: "1.0.0",
+  name: "Open intent",
+  description: "Compile any intent into a small DAG of generic task steps, then run it.",
+  semantics: `The compiler chooses how many llm.task nodes you need (usually 1–4).
+Always start with input.intent wired to every task's intent port.
+Chain tasks through the context port when later steps depend on earlier output.
+End with exactly one output.markdown node connected to the final result.
+For multimodal asks (images, video, APIs you cannot call), plan honestly in text and produce the best textual deliverable (brief, spec, prompt pack, checklist).
+Never use research-only nodes (search, citations) unless the user explicitly needs a cited brief.`,
+  nodeTypes: openIntentNodes,
+};
+
 const midiNodes: NodeType[] = [
   {
     id: "input.notes",
@@ -655,7 +729,13 @@ export const STORY_DOMAIN: Domain = {
   nodeTypes: storyNodes,
 };
 
-export const DOMAINS: Domain[] = [RESEARCH_DOMAIN, QUICK_ANSWER_DOMAIN, MIDI_DOMAIN, STORY_DOMAIN];
+export const DOMAINS: Domain[] = [
+  OPEN_INTENT_DOMAIN,
+  RESEARCH_DOMAIN,
+  QUICK_ANSWER_DOMAIN,
+  MIDI_DOMAIN,
+  STORY_DOMAIN,
+];
 
 export const EXECUTABLE_DOMAIN_IDS = new Set(DOMAINS.map((domain) => domain.id));
 
@@ -664,7 +744,7 @@ export function getDomain(id: string): Domain | undefined {
 }
 
 export function getDefaultDomain(): Domain {
-  return RESEARCH_DOMAIN;
+  return OPEN_INTENT_DOMAIN;
 }
 
 export function formatDomainContext(domain: Domain): string {

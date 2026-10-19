@@ -16,6 +16,7 @@ export const PROMPT_VERSIONS: Record<LlmTask, string> = {
   draftScene: "scene.v1",
   reviseScene: "scene-revise.v1",
   domain: "domain.v1",
+  genericStep: "task.v1",
 };
 
 export const PATCH_SYSTEM = `You are Glossia, a compiler that turns product intent into a typed graph program.
@@ -40,7 +41,18 @@ Rules:
 - every required input port must have exactly one incoming edge.
 - params may only use keys declared on that node type; respect types and enums.
 - no cycles; bounded loops belong inside composite nodes.
-- output only the JSON object, with no markdown fences and no prose.`;
+- output only the JSON object, with no markdown fences and no prose.${
+    domain.id === "open-intent"
+      ? `
+
+Open-intent rules:
+- Use only input.intent, llm.task, and output.markdown.
+- Use 1–4 llm.task nodes; give each a distinct instruction param.
+- Wire input.intent to every task's intent port.
+- Chain tasks via context when a step needs the previous result.
+- The last task must feed output.markdown.content.`
+      : ""
+  }`;
 }
 
 export function buildRepairPrompt(

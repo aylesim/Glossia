@@ -2,7 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CompileResult, Domain, Patch, RunEvent, RunRecord, StepRecord } from "@/lib/ir/types";
-import { DOMAINS, EXECUTABLE_DOMAIN_IDS, RESEARCH_DOMAIN, getDomain } from "@/lib/ir/domains";
+import {
+  DOMAINS,
+  EXECUTABLE_DOMAIN_IDS,
+  OPEN_INTENT_DOMAIN,
+  RESEARCH_DOMAIN,
+  getDomain,
+} from "@/lib/ir/domains";
 import { proposeDomainFromIntent } from "@/lib/ir/propose-domain";
 import { artifactCheckLine } from "@/lib/ir/artifact";
 import { describeDiff } from "@/lib/ir/diff";
@@ -97,10 +103,10 @@ function apiMessage(data: unknown, fallback: string): string {
 
 export default function StudioClient() {
   const [models, setModels] = useState<ModelInfo[]>(MODELS);
-  const [domain, setDomain] = useState<Domain>(RESEARCH_DOMAIN);
-  const [domainJson, setDomainJson] = useState(JSON.stringify(RESEARCH_DOMAIN, null, 2));
+  const [domain, setDomain] = useState<Domain>(OPEN_INTENT_DOMAIN);
+  const [domainJson, setDomainJson] = useState(JSON.stringify(OPEN_INTENT_DOMAIN, null, 2));
   const [domainError, setDomainError] = useState("");
-  const [intent, setIntent] = useState(RESEARCH_INTENT);
+  const [intent, setIntent] = useState("");
   const [mode, setMode] = useState<StudioMode>("demo");
   const [provider, setProvider] = useState<LiveLlmProviderId>("openai");
   const [model, setModel] = useState("gpt-4.1-mini");
@@ -402,10 +408,6 @@ export default function StudioClient() {
 
   const handleCompile = async () => {
     if (!intent.trim() || compiling) return;
-    if (!domainPinned && domainProposal.confidence === "unsupported") {
-      setCompileError(domainProposal.reason);
-      return;
-    }
     setCompiling(true);
     setCompileError("");
     setCompile(null);

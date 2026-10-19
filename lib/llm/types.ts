@@ -13,7 +13,8 @@ export type LlmTask =
   | "storyBeats"
   | "draftScene"
   | "reviseScene"
-  | "domain";
+  | "domain"
+  | "genericStep";
 
 export type LlmRequest = {
   task: LlmTask;

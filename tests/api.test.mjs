@@ -58,6 +58,7 @@ test("models exposes executable domains", async () => {
   assert.ok(ids.includes("quick-answer"));
   assert.ok(ids.includes("midi-remix"));
   assert.ok(ids.includes("story-scene"));
+  assert.ok(ids.includes("open-intent"));
   assert.ok(body.models.length >= 4);
 });
 

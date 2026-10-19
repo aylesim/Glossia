@@ -30,7 +30,10 @@ function emptyStats(): PatchStats {
 
 function estimateTokensForType(nodeType: NodeType): { input: number; output: number } {
   const ref = nodeType.executor.ref;
-  if (ref === "input.question" || ref === "output.brief") return { input: 80, output: 40 };
+  if (ref === "input.question" || ref === "input.intent" || ref === "output.brief" || ref === "output.markdown") {
+    return { input: 80, output: 40 };
+  }
+  if (ref === "genericTask") return { input: 1_400, output: 900 };
   if (ref === "plan") return { input: 900, output: 350 };
   if (ref === "extractClaims") return { input: 2_400, output: 900 };
   if (ref === "outline") return { input: 1_800, output: 500 };

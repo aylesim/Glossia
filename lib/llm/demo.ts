@@ -76,6 +76,41 @@ export function quickPatch(question: string): Patch {
   };
 }
 
+export function openIntentPatch(intent: string): Patch {
+  return {
+    version: "2",
+    domainId: "open-intent",
+    domainVersion: "1.0.0",
+    nodes: [
+      { id: "in", type: "input.intent", params: { intent } },
+      {
+        id: "plan",
+        type: "llm.task",
+        params: { instruction: "Break the intent into clear steps. Output a numbered plan only." },
+      },
+      {
+        id: "work",
+        type: "llm.task",
+        params: { instruction: "Execute the plan and produce the full deliverable." },
+      },
+      { id: "out", type: "output.markdown", params: { title: "Result" } },
+    ],
+    edges: [
+      { id: "e1", from: "in", fromPort: "intent", to: "plan", toPort: "intent" },
+      { id: "e2", from: "in", fromPort: "intent", to: "work", toPort: "intent" },
+      { id: "e3", from: "plan", fromPort: "result", to: "work", toPort: "context" },
+      { id: "e4", from: "work", fromPort: "result", to: "out", toPort: "content" },
+    ],
+    meta: { title: "Open workflow", createdBy: "llm", promptVersion: "compile.v2" },
+  };
+}
+
+export function badOpenIntentPatch(intent: string): Patch {
+  const patch = openIntentPatch(intent);
+  patch.edges = patch.edges.filter((edge) => edge.id !== "e3");
+  return patch;
+}
+
 export function badQuickPatch(question: string): Patch {
   const patch = quickPatch(question);
   const answer = patch.nodes.find((node) => node.id === "answer");
@@ -154,12 +189,13 @@ export function demoPatchForDomain(domain: Domain, question: string, bad = false
   if (domain.id === "quick-answer") return bad ? badQuickPatch(question) : quickPatch(question);
   if (domain.id === "midi-remix") return bad ? badMidiPatch() : midiPatch();
   if (domain.id === "story-scene") return bad ? badStoryPatch(question) : storyPatch(question);
+  if (domain.id === "open-intent") return bad ? badOpenIntentPatch(question) : openIntentPatch(question);
   throw new AppError(
     "DEMO_DOMAIN_UNSUPPORTED",
     `Demo mode has no recorded compiler fixture for domain "${domain.id}".`,
     {
       status: 400,
-      hint: "Switch to live mode or use the research-brief, midi-remix or story-scene domains.",
+      hint: "Switch to live mode or use a built-in domain.",
     },
   );
 }
@@ -172,6 +208,9 @@ export function hydratePatch(patch: Patch, domain: Domain, intent: string): Patc
     }
     if (node.type === "input.premise") {
       node.params = { ...node.params, premise: intent };
+    }
+    if (node.type === "input.intent") {
+      node.params = { ...node.params, intent };
     }
   }
   next.meta = {
@@ -274,6 +313,24 @@ export class DemoAdapter implements LlmAdapter {
       const tone = (meta.tone ?? "analyst") as "analyst" | "executive" | "technical";
       const revised = demoRevisedDraft(question, outline, claims, tone);
       return this.json({ critique: revised.critique, draft: revised.draft }, request);
+    }
+
+    if (request.task === "genericStep") {
+      const intent = String(meta.intent ?? "");
+      const instruction = String(meta.instruction ?? "");
+      const context = String(meta.context ?? "");
+      const planLike = /plan|break|steps|numbered/i.test(instruction);
+      const text = planLike
+        ? `1. Clarify the goal and constraints\n2. Gather or simulate required inputs\n3. Produce the deliverable\n4. Sanity-check against the intent\n\n_Focus: ${intent.slice(0, 160)}_`
+        : context
+          ? `## Prior work\n\n${context.slice(0, 600)}\n\n## Deliverable\n\nRecorded output for: ${intent.slice(0, 200)}`
+          : `## Result\n\nDemo output for: ${intent.slice(0, 280)}\n\n_Switch to live mode for a real model run._`;
+      return {
+        text,
+        usage: usageFor(request.user, text),
+        model: this.model,
+        provider: this.provider,
+      };
     }
 
     if (request.task === "answer") {

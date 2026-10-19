@@ -119,6 +119,53 @@ const inputQuestion: NodeExecutor = async (context) => {
   return { outputs: { question }, preview: question };
 };
 
+const inputIntent: NodeExecutor = async (context) => {
+  const intent = asString(context.params.intent).trim();
+  if (!intent) {
+    throw new AppError("MISSING_PARAM", "The intent param cannot be empty.", { status: 422 });
+  }
+  return { outputs: { intent }, preview: intent.slice(0, 160) };
+};
+
+const genericTask: NodeExecutor = async (context) => {
+  const instruction = asString(context.params.instruction, "Complete this step.").trim();
+  const intent = requireInput<string>(context, "intent");
+  const prior = asString(context.inputs.context).trim();
+  const user = prior
+    ? `User intent:\n${intent}\n\nPrior step output:\n${prior}\n\nThis step must:\n${instruction}`
+    : `User intent:\n${intent}\n\nThis step must:\n${instruction}`;
+  const response = await context.llm({
+    task: "genericStep",
+    system:
+      "You are one step in a compiled workflow. Follow the step instruction. Output only this step's result.",
+    user,
+    temperature: 0.4,
+    maxTokens: 2_800,
+    meta: { intent, instruction, context: prior },
+  });
+  const text = coerceDraft(response.parsed ?? response.text) || response.text;
+  return { outputs: { result: text }, preview: text.slice(0, 160) };
+};
+
+const outputMarkdown: NodeExecutor = async (context) => {
+  const content = requireInput<string>(context, "content");
+  const title = asString(context.params.title, "Result");
+  const artifact: Artifact = {
+    kind: "markdown",
+    title,
+    markdown: content,
+    sources: [],
+    checks: [
+      {
+        label: "deliverable present",
+        detail: `${content.trim().split(/\s+/).filter(Boolean).length} words`,
+        passed: content.trim().length > 0,
+      },
+    ],
+  };
+  return { outputs: {}, artifact, preview: content.slice(0, 120) };
+};
+
 const plan: NodeExecutor = async (context) => {
   const question = requireInput<string>(context, "question");
   const maxQueries = asNumber(context.params.maxQueries, 3);
@@ -610,7 +657,10 @@ const outputScene: NodeExecutor = async (context) => {
 };
 
 export const EXECUTORS: Record<string, NodeExecutor> = {
+  "input.intent": inputIntent,
   "input.question": inputQuestion,
+  genericTask,
+  "output.markdown": outputMarkdown,
   plan,
   search,
   fetch: fetchDocuments,
