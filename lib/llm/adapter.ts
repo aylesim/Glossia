@@ -32,6 +32,37 @@ export function tryParseJson(text: string): unknown {
   }
 }
 
+export function extractCompletionText(completion: ChatCompletion): string {
+  const message = completion.choices[0]?.message;
+  if (!message) return "";
+
+  const content = typeof message.content === "string" ? message.content.trim() : "";
+  if (content) return content;
+
+  if (Array.isArray(message.content)) {
+    const joined = message.content
+      .map((part) => {
+        if (typeof part === "string") return part;
+        if (part && typeof part === "object" && "text" in part && typeof part.text === "string") {
+          return part.text;
+        }
+        return "";
+      })
+      .filter(Boolean)
+      .join("\n")
+      .trim();
+    if (joined) return joined;
+  }
+
+  const extra = message as unknown as Record<string, unknown>;
+  for (const key of ["reasoning_content", "reasoning", "text"]) {
+    const value = extra[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+
+  return "";
+}
+
 function isSchemaUnsupported(error: unknown): boolean {
   if (!(error instanceof OpenAI.APIError)) return false;
   if (![400, 404, 422].includes(error.status)) return false;
@@ -120,55 +151,77 @@ export class OpenAiAdapter implements LlmAdapter {
       { role: "system" as const, content: request.system },
       { role: "user" as const, content: request.user },
     ];
+    const tokenBudget = request.maxTokens
+      ? this.model.includes("reasoner")
+        ? Math.max(request.maxTokens, 8_000)
+        : request.maxTokens
+      : this.model.includes("reasoner")
+        ? 8_000
+        : undefined;
     const base = {
       model: this.model,
       messages,
       temperature: request.temperature ?? 0.2,
-      ...(request.maxTokens ? { max_tokens: request.maxTokens } : {}),
+      ...(tokenBudget ? { max_tokens: tokenBudget } : {}),
+    };
+
+    const call = async (
+      body: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming,
+    ): Promise<ChatCompletion> => {
+      try {
+        return await this.client.chat.completions.create(body, { signal: request.signal });
+      } catch (error) {
+        throw mapProviderError(error);
+      }
     };
 
     let completion: ChatCompletion;
-    try {
-      if (request.schema && this.supportsJsonSchema) {
-        try {
-          completion = await this.client.chat.completions.create(
-            {
-              ...base,
-              response_format: {
-                type: "json_schema",
-                json_schema: {
-                  name: request.schemaName ?? "glossia_output",
-                  schema: request.schema,
-                  strict: false,
-                },
-              },
+    let usedStructured = false;
+    if (request.schema && this.supportsJsonSchema) {
+      try {
+        usedStructured = true;
+        completion = await call({
+          ...base,
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: request.schemaName ?? "glossia_output",
+              schema: request.schema,
+              strict: false,
             },
-            { signal: request.signal },
-          );
-        } catch (error) {
-          if (!isSchemaUnsupported(error)) throw error;
-          completion = await this.client.chat.completions.create(
-            { ...base, response_format: { type: "json_object" } },
-            { signal: request.signal },
-          );
-        }
-      } else if (request.schema) {
-        completion = await this.client.chat.completions.create(
-          { ...base, response_format: { type: "json_object" } },
-          { signal: request.signal },
-        );
-      } else {
-        completion = await this.client.chat.completions.create(base, { signal: request.signal });
+          },
+        });
+      } catch (error) {
+        if (!isSchemaUnsupported(error)) throw error;
+        usedStructured = true;
+        completion = await call({ ...base, response_format: { type: "json_object" } });
       }
-    } catch (error) {
-      throw mapProviderError(error);
+    } else if (request.schema) {
+      usedStructured = true;
+      completion = await call({ ...base, response_format: { type: "json_object" } });
+    } else {
+      completion = await call(base);
     }
 
-    const text = completion.choices[0]?.message?.content ?? "";
+    let text = extractCompletionText(completion);
+    if (!text.trim() && usedStructured) {
+      completion = await call(base);
+      text = extractCompletionText(completion);
+    }
+    if (!text.trim()) {
+      completion = await call({
+        ...base,
+        max_tokens: Math.min(16_384, (tokenBudget ?? 2_048) * 2),
+      });
+      text = extractCompletionText(completion);
+    }
     if (!text.trim()) {
       throw new AppError("EMPTY_RESPONSE", "The provider returned an empty response.", {
         status: 502,
         retryable: true,
+        hint: this.model.includes("reasoner")
+          ? "Try deepseek-chat for workflow steps, or increase the run budget."
+          : "Retry or switch model.",
       });
     }
     const usage = completion.usage;
